@@ -8,4 +8,8 @@ public class UserMapper {
        return new User(userDTO.getFirstname(), userDTO.getLastname(), userDTO.getEmail(), userDTO.getPassword());
 
     }
+
+    public static UserDTO userToUserDTO(User user) {
+        return new UserDTO(user.getName(), user.getSurname(),  user.getEmail(), user.getPassword());
+    }
 }

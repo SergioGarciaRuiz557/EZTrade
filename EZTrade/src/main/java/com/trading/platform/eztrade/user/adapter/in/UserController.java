@@ -4,8 +4,10 @@ import com.trading.platform.eztrade.user.adapter.in.DTOs.UserDTO;
 import com.trading.platform.eztrade.user.adapter.mapper.UserMapper;
 import com.trading.platform.eztrade.user.application.ports.in.RegisterUserUserCase;
 import com.trading.platform.eztrade.user.domain.User;
+import com.trading.platform.eztrade.user.domain.exceptions.UserExistsException;
 import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,9 +19,8 @@ public class UserController {
         this.registerUserUserCase = registerUserUserCase;
     }
     @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public String registerUser(@RequestBody UserDTO userDTO) throws ChangeSetPersister.NotFoundException {
+    public ResponseEntity<UserDTO> registerUser(@RequestBody UserDTO userDTO) throws UserExistsException {
         User user = UserMapper.userDTOToUser(userDTO);
-        return registerUserUserCase.registerUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(UserMapper.userToUserDTO(registerUserUserCase.registerUser(user)));
     }
 }
