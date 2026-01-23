@@ -1,7 +1,6 @@
 package com.trading.platform.eztrade.security.configuration;
 
 import com.trading.platform.eztrade.security.filter.JwtAuthFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,13 +17,13 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-public class AuthConfig {
+public class AuthenticationConfig {
     private final AuthenticationProvider authenticationProvider;
 
     @Qualifier("handlerExceptionResolver")
     private final HandlerExceptionResolver handlerExceptionResolver;
 
-    public AuthConfig(AuthenticationProvider authenticationProvider, HandlerExceptionResolver handlerExceptionResolver) {
+    public AuthenticationConfig(AuthenticationProvider authenticationProvider, HandlerExceptionResolver handlerExceptionResolver) {
         this.authenticationProvider = authenticationProvider;
         this.handlerExceptionResolver = handlerExceptionResolver;
     }
@@ -41,10 +40,12 @@ public class AuthConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/user/register",
-                                "/api/user/login"
+                                "/auth/login"
 
                         ).permitAll()
-                        //.hasAuthority("ADMIN")
+                        .requestMatchers(
+                                "/api/user"
+                        ).authenticated()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session ->
