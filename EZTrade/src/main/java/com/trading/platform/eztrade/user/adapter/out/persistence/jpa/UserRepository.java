@@ -1,4 +1,4 @@
-package com.trading.platform.eztrade.user.adapter.out;
+package com.trading.platform.eztrade.user.adapter.out.persistence.jpa;
 
 
 import com.trading.platform.eztrade.user.domain.User;
