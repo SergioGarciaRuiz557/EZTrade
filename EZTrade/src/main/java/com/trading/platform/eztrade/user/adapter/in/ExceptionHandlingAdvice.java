@@ -8,11 +8,27 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.Collections;
-import java.util.Map;
-
+/**
+ * Manejador global de excepciones para el contexto web.
+ * <p>
+ * Intercepta las excepciones específicas de la capa de dominio y
+ * las transforma en respuestas HTTP estandarizadas utilizando
+ * {@link ProblemDetail}.
+ */
 @ControllerAdvice
-public class ExceptionHandlingAdvice{
+public class ExceptionHandlingAdvice {
+
+    /**
+     * Maneja la excepción {@link UserExistsException} cuando se intenta registrar
+     * un usuario que ya existe en el sistema.
+     * <p>
+     * Devuelve una respuesta HTTP con estado <strong>409 CONFLICT</strong> y un cuerpo
+     * de tipo {@link ProblemDetail} que contiene un título descriptivo y
+     * el mensaje de la excepción como detalle.
+     *
+     * @param ex excepción lanzada cuando ya existe un usuario con los mismos datos
+     * @return objeto {@link ProblemDetail} con la información del error
+     */
     @ExceptionHandler(UserExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     @ResponseBody
@@ -23,3 +39,4 @@ public class ExceptionHandlingAdvice{
         return pd;
     }
 }
+
