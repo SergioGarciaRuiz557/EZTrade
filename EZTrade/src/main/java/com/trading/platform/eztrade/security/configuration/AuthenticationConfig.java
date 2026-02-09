@@ -1,6 +1,8 @@
 package com.trading.platform.eztrade.security.configuration;
 
 import com.trading.platform.eztrade.security.filter.JwtAuthFilter;
+import com.trading.platform.eztrade.security.filter.UserAccessFilter;
+import com.trading.platform.eztrade.security.jwt.JwtService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,6 +12,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -38,6 +41,11 @@ public class AuthenticationConfig {
     @Qualifier("handlerExceptionResolver")
     private final HandlerExceptionResolver handlerExceptionResolver;
 
+    private final UserAccessFilter userAccessFilter;
+
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
+
     /**
      * Crea una nueva instancia de la configuración de autenticación.
      *
@@ -45,20 +53,29 @@ public class AuthenticationConfig {
      * @param handlerExceptionResolver resolvedor de excepciones para el filtro JWT
      */
     public AuthenticationConfig(AuthenticationProvider authenticationProvider,
-                                HandlerExceptionResolver handlerExceptionResolver) {
+                                HandlerExceptionResolver handlerExceptionResolver,
+                                UserAccessFilter userAccessFilter,
+                                JwtService jwtService,
+                                UserDetailsService userDetailsService) {
         this.authenticationProvider = authenticationProvider;
         this.handlerExceptionResolver = handlerExceptionResolver;
+        this.userAccessFilter = userAccessFilter;
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
     }
 
     /**
      * Define el filtro de autenticación JWT que se ejecutará antes del
-     * filtro UsernamePasswordAuthenticationFilter.
+     * filtro {@link UsernamePasswordAuthenticationFilter}.
+     * <p>
+     * El filtro utiliza {@link JwtService} para extraer y validar el token y
+     * {@link UserDetailsService} para cargar los detalles del usuario asociado.
      *
-     * @return instancia configurada de JwtAuthFilter
+     * @return instancia configurada de {@link JwtAuthFilter}
      */
     @Bean
     public JwtAuthFilter jwtAuthFilter() {
-        return new JwtAuthFilter(handlerExceptionResolver);
+        return new JwtAuthFilter(jwtService, userDetailsService, handlerExceptionResolver);
     }
 
     /**
@@ -95,8 +112,7 @@ public class AuthenticationConfig {
                 )
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(userAccessFilter, JwtAuthFilter.class)
                 .build();
     }
 }
-
-

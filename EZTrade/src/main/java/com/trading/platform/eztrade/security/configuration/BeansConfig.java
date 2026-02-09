@@ -10,6 +10,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 
 /**
  * Configuración de beans relacionados con la autenticación y la seguridad.
@@ -78,5 +80,29 @@ public class BeansConfig {
         return new BCryptPasswordEncoder();
     }
 
-}
+    /**
+     * Servicio de expresiones de seguridad reutilizable.
+     * Permite verificar si el usuario autenticado es administrador o es el mismo usuario
+     * al que se hace referencia por email.
+     */
+    @Bean
+    public SecurityPermissionEvaluator securityPermissionEvaluator() {
+        return new SecurityPermissionEvaluator();
+    }
 
+    public static class SecurityPermissionEvaluator {
+        public boolean isAdminOrSameUser(Authentication authentication, String email) {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return false;
+            }
+            Object principal = authentication.getPrincipal();
+            if (!(principal instanceof UserDetails userDetails)) {
+                return false;
+            }
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_ADMIN".equals(a.getAuthority()));
+            boolean isSameUser = email != null && email.equalsIgnoreCase(userDetails.getUsername());
+            return isAdmin || isSameUser;
+        }
+    }
+}

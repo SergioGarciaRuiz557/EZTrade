@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,14 +29,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     /**
      * Servicio responsable de la generación, validación y renovación de tokens JWT.
      */
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     /**
      * Servicio usado para cargar los detalles del usuario asociado al token.
      */
-    @Autowired
-    private UserDetailsService userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     /**
      * Resolver centralizado de excepciones para delegar el manejo de errores
@@ -46,11 +45,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     /**
      * Crea una nueva instancia del filtro JWT.
      *
+     * @param jwtService            servicio de gestión de tokens JWT (extracción y validación)
+     * @param userDetailsService    servicio para cargar los detalles del usuario asociado al token
      * @param handlerExceptionResolver componente usado para resolver excepciones
      *                                 durante la ejecución del filtro
      */
     @Autowired
-    public JwtAuthFilter(HandlerExceptionResolver handlerExceptionResolver) {
+    public JwtAuthFilter(JwtService jwtService,
+                         UserDetailsService userDetailsService,
+                         @Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver) {
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
         this.handlerExceptionResolver = handlerExceptionResolver;
     }
 
@@ -72,7 +77,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
      * @throws ServletException si ocurre un error a nivel de servlet
      * @throws IOException      si se produce un error de E/S durante el filtrado
      */
-
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
