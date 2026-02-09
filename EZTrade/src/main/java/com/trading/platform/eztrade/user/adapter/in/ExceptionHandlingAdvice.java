@@ -1,6 +1,7 @@
 package com.trading.platform.eztrade.user.adapter.in;
 
 import com.trading.platform.eztrade.user.domain.exceptions.UserExistsException;
+import com.trading.platform.eztrade.user.domain.exceptions.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -38,5 +39,25 @@ public class ExceptionHandlingAdvice {
         pd.setDetail(ex.getMessage());
         return pd;
     }
-}
 
+    /**
+     * Maneja la excepción {@link UserNotFoundException} cuando se intenta acceder
+     * a un usuario que no existe en el sistema.
+     * <p>
+     * Devuelve una respuesta HTTP con estado <strong>404 NOT FOUND</strong> y un cuerpo
+     * de tipo {@link ProblemDetail} que contiene un título descriptivo y
+     * el mensaje de la excepción como detalle.
+     *
+     * @param ex excepción lanzada cuando no se encuentra un usuario con los datos proporcionados
+     * @return objeto {@link ProblemDetail} con la información del error
+     */
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public ProblemDetail handleUserNotFoundException(UserNotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        pd.setTitle("User not found");
+        pd.setDetail(ex.getMessage());
+        return pd;
+    }
+}

@@ -28,6 +28,9 @@ public class LoginRequest {
     @NotBlank
     private String password;
 
+    public LoginRequest(String mail, String pwd123) {
+    }
+
     /**
      * Devuelve el correo electrónico del usuario.
      *
