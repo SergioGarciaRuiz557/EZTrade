@@ -1,18 +1,25 @@
+/**
+ * <h2>UserNotFoundException</h2>
+ *
+ * <p><strong>Módulo:</strong> Domain</p>
+ * <p><strong>Capa:</strong> Domain</p>
+ *
+ * <p><strong>Responsabilidad:</strong><br/>
+ * Encapsula lógica de negocio pura del dominio.</p>
+ *
+ * <p><strong>Rol arquitectónico:</strong><br/>
+ * Forma parte de la arquitectura hexagonal del módulo, manteniendo separación
+ * entre dominio, aplicación e infraestructura mediante puertos y adaptadores.
+ * Está gestionado por Spring Modulith.</p>
+ */
+
 package com.trading.platform.eztrade.user.domain.exceptions;
 
-/**
- * Excepción de dominio que indica que el usuario solicitado
- * no existe en el sistema.
- * <p>
- * Suele lanzarse desde la capa de aplicación cuando una operación
- * de búsqueda de usuario no devuelve resultados.
- */
 public class UserNotFoundException extends RuntimeException {
-
     /**
-     * Crea una nueva instancia de la excepción con el mensaje detallado.
-     *
-     * @param message descripción del motivo por el que no se ha encontrado el usuario
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @param message dato de entrada requerido por la operación.
+     * @return resultado devuelto por la operación.
      */
     public UserNotFoundException(String message) {
         super(message);

@@ -1,26 +1,20 @@
+/**
+ * <h2>Role</h2>
+ *
+ * <p><strong>Módulo:</strong> User</p>
+ * <p><strong>Capa:</strong> Domain</p>
+ *
+ * <p><strong>Responsabilidad:</strong><br/>
+ * Encapsula lógica de negocio pura del dominio.</p>
+ *
+ * <p><strong>Rol arquitectónico:</strong><br/>
+ * Forma parte de la arquitectura hexagonal del módulo, manteniendo separación
+ * entre dominio, aplicación e infraestructura mediante puertos y adaptadores.
+ * Está gestionado por Spring Modulith.</p>
+ */
+
 package com.trading.platform.eztrade.user.domain;
 
-/**
- * Enumeración que representa los distintos roles que puede tener un usuario
- * dentro de la plataforma.
- * <p>
- * Los roles se utilizan para gestionar la autorización y determinar
- * los permisos de acceso a los distintos recursos del sistema.
- */
 public enum Role {
-
-    /**
-     * Rol con privilegios administrativos.
-     * <p>
-     * Suele tener acceso a operaciones de gestión avanzadas
-     * y configuración del sistema.
-     */
-    ADMIN,
-
-    /**
-     * Rol por defecto para los usuarios finales de la aplicación.
-     * <p>
-     * Dispone de permisos básicos para operar en la plataforma.
-     */
-    USER;
+    ADMIN, USER;
 }

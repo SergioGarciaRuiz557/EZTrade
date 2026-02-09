@@ -1,3 +1,18 @@
+/**
+ * <h2>User</h2>
+ *
+ * <p><strong>Módulo:</strong> User</p>
+ * <p><strong>Capa:</strong> Domain</p>
+ *
+ * <p><strong>Responsabilidad:</strong><br/>
+ * Encapsula lógica de negocio pura del dominio.</p>
+ *
+ * <p><strong>Rol arquitectónico:</strong><br/>
+ * Forma parte de la arquitectura hexagonal del módulo, manteniendo separación
+ * entre dominio, aplicación e infraestructura mediante puertos y adaptadores.
+ * Está gestionado por Spring Modulith.</p>
+ */
+
 package com.trading.platform.eztrade.user.domain;
 
 import jakarta.persistence.*;
@@ -8,66 +23,37 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Entidad de dominio que representa a un usuario de la plataforma.
- * <p>
- * Implementa {@link UserDetails} para integrarse con el módulo de
- * seguridad de Spring y actuar como sujeto autenticado.
- */
 @Entity
 @Table(name = "user")
 public class User implements UserDetails {
-
-    /**
-     * Identificador único del usuario en la base de datos.
-     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    /**
-     * Nombre de pila del usuario.
-     */
     private String name;
-
-    /**
-     * Apellidos del usuario.
-     */
     private String surname;
 
-    /**
-     * Correo electrónico del usuario.
-     * <p>
-     * Debe ser único en el sistema y se utiliza como nombre de usuario
-     * para el proceso de autenticación.
-     */
     @Column(unique = true)
     private String email;
-
-    /**
-     * Contraseña del usuario codificada.
-     */
     private String password;
 
-    /**
-     * Rol asignado al usuario dentro de la plataforma.
-     */
     @Enumerated(EnumType.STRING)
     private Role role;
-
     /**
-     * Constructor sin argumentos requerido por JPA.
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @return resultado devuelto por la operación.
      */
-    public User() {}
 
+    public User(){}
     /**
-     * Crea un nuevo usuario con los datos básicos.
-     *
-     * @param name nombre del usuario
-     * @param surname apellidos del usuario
-     * @param email correo electrónico único del usuario
-     * @param password contraseña (normalmente codificada antes de persistir)
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @param name dato de entrada requerido por la operación.
+     * @param surname dato de entrada requerido por la operación.
+     * @param email dato de entrada requerido por la operación.
+     * @param password dato de entrada requerido por la operación.
+     * @return resultado devuelto por la operación.
      */
+
     public User(String name, String surname, String email, String password) {
         this.name = name;
         this.surname = surname;
@@ -75,115 +61,99 @@ public class User implements UserDetails {
         this.password = password;
     }
 
-    /**
-     * Devuelve las autoridades concedidas al usuario a partir de su rol.
-     *
-     * @return colección con la autoridad correspondiente al rol del usuario
-     */
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(role.name()));
     }
 
-    /**
-     * Devuelve el identificador de autenticación del usuario.
-     *
-     * @return el correo electrónico del usuario
-     */
     @Override
+    /**
+     * Obtiene información del estado interno del objeto.
+     * @return resultado devuelto por la operación.
+     */
     public String getUsername() {
         return email;
     }
 
-    /**
-     * Devuelve la contraseña del usuario.
-     *
-     * @return contraseña codificada
-     */
     @Override
+    /**
+     * Obtiene información del estado interno del objeto.
+     * @return resultado devuelto por la operación.
+     */
     public String getPassword() {
         return password;
     }
-
     /**
-     * Devuelve el nombre del usuario.
-     *
-     * @return nombre
+     * Obtiene información del estado interno del objeto.
+     * @return resultado devuelto por la operación.
      */
+
     public String getName() {
         return name;
     }
-
     /**
-     * Establece el nombre del usuario.
-     *
-     * @param name nombre a asignar
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @param name dato de entrada requerido por la operación.
      */
+
     public void setName(String name) {
         this.name = name;
     }
-
     /**
-     * Devuelve los apellidos del usuario.
-     *
-     * @return apellidos
+     * Obtiene información del estado interno del objeto.
+     * @return resultado devuelto por la operación.
      */
+
     public String getSurname() {
         return surname;
     }
-
     /**
-     * Establece los apellidos del usuario.
-     *
-     * @param surname apellidos a asignar
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @param surname dato de entrada requerido por la operación.
      */
+
     public void setSurname(String surname) {
         this.surname = surname;
     }
-
     /**
-     * Devuelve el correo electrónico del usuario.
-     *
-     * @return email
+     * Obtiene información del estado interno del objeto.
+     * @return resultado devuelto por la operación.
      */
+
     public String getEmail() {
         return email;
     }
-
     /**
-     * Establece el correo electrónico del usuario.
-     *
-     * @param email email a asignar
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @param email dato de entrada requerido por la operación.
      */
+
     public void setEmail(String email) {
         this.email = email;
     }
-
     /**
-     * Establece la contraseña del usuario.
-     *
-     * @param password contraseña (preferiblemente ya codificada)
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @param password dato de entrada requerido por la operación.
      */
+
     public void setPassword(String password) {
         this.password = password;
     }
-
     /**
-     * Devuelve el rol del usuario.
-     *
-     * @return rol asignado
+     * Obtiene información del estado interno del objeto.
+     * @return resultado devuelto por la operación.
      */
+
     public Role getRole() {
         return role;
     }
-
     /**
-     * Establece el rol del usuario.
-     *
-     * @param role rol a asignar
+     * Ejecuta la operación principal asociada al caso de uso.
+     * @param role dato de entrada requerido por la operación.
      */
+
     public void setRole(Role role) {
         this.role = role;
     }
 }
-
