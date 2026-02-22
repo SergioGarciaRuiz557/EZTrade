@@ -1,6 +1,7 @@
 package com.trading.platform.eztrade.user.adapter.in;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.trading.platform.eztrade.security.configuration.BeansConfig;
 import com.trading.platform.eztrade.user.adapter.in.DTOs.UserDTO;
 import com.trading.platform.eztrade.user.application.ports.in.GetUserUserCase;
 import com.trading.platform.eztrade.user.application.ports.in.RegisterUserUserCase;
@@ -9,9 +10,14 @@ import com.trading.platform.eztrade.user.domain.exceptions.UserExistsException;
 import com.trading.platform.eztrade.user.domain.exceptions.UserNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -26,18 +32,19 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(UserControllerTest.TestConfig.class)
 class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @MockitoBean
+    @Autowired
     private RegisterUserUserCase registerUserUserCase;
 
-    @MockitoBean
+    @Autowired
     private GetUserUserCase getUserUserCase;
 
     @Test
@@ -105,4 +112,23 @@ class UserControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+    @TestConfiguration
+    static class TestConfig {
+
+        @Bean
+        RegisterUserUserCase registerUserUserCase() {
+            return Mockito.mock(RegisterUserUserCase.class);
+        }
+
+        @Bean
+        GetUserUserCase getUserUserCase() {
+            return Mockito.mock(GetUserUserCase.class);
+        }
+
+        @Bean
+        BeansConfig.SecurityPermissionEvaluator securityPermissionEvaluator() {
+            return Mockito.mock(BeansConfig.SecurityPermissionEvaluator.class);
+        }
+    }
 }
+
