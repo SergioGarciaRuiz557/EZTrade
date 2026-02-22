@@ -27,10 +27,3 @@ jobs:
     - name: Build & Test (backend)
       working-directory: EZTrade/backend
       run: mvn -B clean verify
-
-    # 4️⃣ Generar grafo de dependencias con depgraph
-    - name: Update dependency graph
-      uses: advanced-security/maven-dependency-submission-action@v4
-      with:
-        directory: EZTrade/backend
-        token: ${{ secrets.DEPENDENCY_GRAPH_TOKEN }}
