@@ -102,8 +102,11 @@ public class AuthenticationConfig {
                                 "/api/user/register",
                                 "/auth/login"
                         ).permitAll()
+                        // Endpoints protegidos que requieren usuario autenticado
                         .requestMatchers(
-                                "/api/user"
+                                "/api/user",
+                                "/api/v1/market/**",
+                                "/ws/market/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

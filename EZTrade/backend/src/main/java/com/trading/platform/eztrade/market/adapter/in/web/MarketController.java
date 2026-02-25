@@ -1,12 +1,12 @@
 package com.trading.platform.eztrade.market.adapter.in.web;
 
-import com.trading.platform.eztrade.market.application.ports.in.GetCurrentPricesUseCase;
-import com.trading.platform.eztrade.market.application.ports.in.GetInstrumentsUseCase;
-import com.trading.platform.eztrade.market.domain.Instrument;
+import com.trading.platform.eztrade.market.application.ports.in.GetPriceUserCase;
 import com.trading.platform.eztrade.market.domain.MarketPrice;
+import com.trading.platform.eztrade.market.domain.Symbol;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -18,29 +18,18 @@ import java.util.List;
 @RequestMapping("/api/v1/market")
 public class MarketController {
 
-    private final GetInstrumentsUseCase getInstrumentsUseCase;
-    private final GetCurrentPricesUseCase getCurrentPricesUseCase;
+    private final GetPriceUserCase getPriceUserCase;
 
-    public MarketController(GetInstrumentsUseCase getInstrumentsUseCase,
-                            GetCurrentPricesUseCase getCurrentPricesUseCase) {
-        this.getInstrumentsUseCase = getInstrumentsUseCase;
-        this.getCurrentPricesUseCase = getCurrentPricesUseCase;
+    public MarketController(GetPriceUserCase getPriceUserCase) {
+        this.getPriceUserCase = getPriceUserCase;
     }
 
-    /**
-     * Devuelve la lista de instrumentos financieros disponibles.
-     */
-    @GetMapping("/instruments")
-    public ResponseEntity<List<Instrument>> getInstruments() {
-        return ResponseEntity.ok(getInstrumentsUseCase.getInstruments());
+
+    @GetMapping("/get-price")
+    public ResponseEntity<MarketPrice> getInstruments(@RequestParam Symbol symbol) {
+        return ResponseEntity.ok(getPriceUserCase.getPrice(symbol));
     }
 
-    /**
-     * Devuelve la lista de precios de mercado actuales.
-     */
-    @GetMapping("/prices")
-    public ResponseEntity<List<MarketPrice>> getPrices() {
-        return ResponseEntity.ok(getCurrentPricesUseCase.getCurrentPrices());
-    }
+
 }
 
