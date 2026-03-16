@@ -98,9 +98,12 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
         TradeOrder executed = tradeOrderRepositoryPort.save(current.execute());
 
         domainEventPublisherPort.publish(new OrderExecutedEvent(
-                executed.id(),
+                executed.id().value(),
                 executed.owner(),
                 executed.symbol(),
+                executed.side().name(),
+                executed.quantity().value(),
+                executed.price().value(),
                 LocalDateTime.now()
         ));
 
