@@ -1,14 +1,11 @@
 package com.trading.platform.eztrade.wallet.adapter.in.events;
 
-import com.trading.platform.eztrade.trading.domain.OrderId;
-import com.trading.platform.eztrade.trading.domain.OrderSide;
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderCancelledUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderExecutedUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderPlacedUseCase;
-import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderPlacedUseCase.OrderPlacedCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,10 +41,10 @@ class TradingEventsListenerTest {
     @DisplayName("delegates OrderPlacedEvent")
     void delegates_order_placed_event() {
         OrderPlacedEvent event = new OrderPlacedEvent(
-                new OrderId(100L),
+                100L,
                 "user@demo.com",
                 "IBM",
-                OrderSide.BUY,
+                "BUY",
                 new BigDecimal("1"),
                 new BigDecimal("100"),
                 LocalDateTime.now()
@@ -56,13 +52,13 @@ class TradingEventsListenerTest {
 
         listener.on(event);
 
-        verify(handleOrderPlacedUseCase).handle(any(OrderPlacedCommand.class));
+        verify(handleOrderPlacedUseCase).handle(event);
     }
 
     @Test
     @DisplayName("delegates OrderCancelledEvent")
     void delegates_order_cancelled_event() {
-        OrderCancelledEvent event = new OrderCancelledEvent(new OrderId(101L), "user@demo.com", "IBM", LocalDateTime.now());
+        OrderCancelledEvent event = new OrderCancelledEvent(101L, "user@demo.com", "IBM", LocalDateTime.now());
 
         listener.on(event);
 

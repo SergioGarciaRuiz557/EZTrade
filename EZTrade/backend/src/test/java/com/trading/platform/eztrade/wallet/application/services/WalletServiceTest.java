@@ -1,12 +1,11 @@
 package com.trading.platform.eztrade.wallet.application.services;
 
-import com.trading.platform.eztrade.trading.domain.OrderId;
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.out.DomainEventPublisherPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.LedgerEntryRepositoryPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.WalletAccountRepositoryPort;
-import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderPlacedUseCase.OrderPlacedCommand;
 import com.trading.platform.eztrade.wallet.domain.LedgerEntry;
 import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.ReferenceType;
@@ -53,9 +52,10 @@ class WalletServiceTest {
     @Test
     @DisplayName("OrderPlaced BUY reserva fondos y publica FundsReservedEvent")
     void placed_buy_reserves_funds() {
-        OrderPlacedCommand event = new OrderPlacedCommand(
-                "1",
+        OrderPlacedEvent event = new OrderPlacedEvent(
+                1L,
                 "user@demo.com",
+                "IBM",
                 "BUY",
                 new BigDecimal("2"),
                 new BigDecimal("100"),
@@ -84,9 +84,10 @@ class WalletServiceTest {
     @Test
     @DisplayName("OrderPlaced BUY sin saldo publica InsufficientFundsEvent")
     void placed_buy_without_balance_publishes_insufficient_event() {
-        OrderPlacedCommand event = new OrderPlacedCommand(
-                "2",
+        OrderPlacedEvent event = new OrderPlacedEvent(
+                2L,
                 "user@demo.com",
+                "IBM",
                 "BUY",
                 new BigDecimal("2"),
                 new BigDecimal("100"),
@@ -108,7 +109,7 @@ class WalletServiceTest {
     @Test
     @DisplayName("OrderCancelled libera fondos reservados")
     void cancelled_order_releases_funds() {
-        OrderCancelledEvent event = new OrderCancelledEvent(new OrderId(3L), "user@demo.com", "IBM", LocalDateTime.now());
+        OrderCancelledEvent event = new OrderCancelledEvent(3L, "user@demo.com", "IBM", LocalDateTime.now());
 
         LedgerEntry reserveEntry = LedgerEntry.newEntry(
                 "user@demo.com",
