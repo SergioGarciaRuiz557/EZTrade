@@ -16,8 +16,15 @@ import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad JPA para una transacción del wallet (entrada del histórico de movimientos).
+ * <p>
+ * Se ha renombrado desde "LedgerEntry" para mejorar la claridad del dominio. A nivel de base de datos se conserva el
+ * nombre de tabla/índices para evitar una migración obligatoria.
+ */
 @Entity
 @Table(
+        // Mantenemos el nombre de tabla existente para no romper la base de datos sin migración.
         name = "wallet_ledger_entry",
         indexes = {
                 @Index(name = "idx_wallet_ledger_owner_occurred", columnList = "owner, occurredAt")
@@ -26,7 +33,7 @@ import java.time.LocalDateTime;
                 @UniqueConstraint(name = "uk_wallet_ledger_owner_ref_movement", columnNames = {"owner", "referenceId", "movementType"})
         }
 )
-public class LedgerEntryJpaEntity {
+public class WalletTransactionJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

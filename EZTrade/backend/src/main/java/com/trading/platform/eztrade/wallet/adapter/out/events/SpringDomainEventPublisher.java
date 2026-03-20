@@ -5,6 +5,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 @Component
+/**
+ * Adaptador de salida que implementa {@link DomainEventPublisherPort} usando el bus de eventos de Spring.
+ * <p>
+ * Convierte la intención de "publicar un evento de dominio" en una llamada a
+ * {@link ApplicationEventPublisher#publishEvent(Object)}.
+ */
 public class SpringDomainEventPublisher implements DomainEventPublisherPort {
 
     private final ApplicationEventPublisher eventPublisher;

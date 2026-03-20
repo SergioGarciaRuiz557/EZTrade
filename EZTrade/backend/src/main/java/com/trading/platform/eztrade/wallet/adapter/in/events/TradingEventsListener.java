@@ -10,6 +10,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
+/**
+ * Adaptador de entrada basado en eventos Spring.
+ * <p>
+ * Escucha eventos del módulo de trading (publicados dentro del mismo proceso mediante Spring events) y delega en los
+ * casos de uso del módulo wallet. Mantener el listener separado del servicio permite desacoplar el mecanismo de
+ * transporte (Spring events) de la lógica de aplicación.
+ */
 public class TradingEventsListener {
 
     private final HandleOrderPlacedUseCase handleOrderPlacedUseCase;
@@ -26,6 +33,7 @@ public class TradingEventsListener {
 
     @EventListener
     public void on(OrderPlacedEvent event) {
+        // Delegación directa al caso de uso.
         handleOrderPlacedUseCase.handle(event);
     }
 

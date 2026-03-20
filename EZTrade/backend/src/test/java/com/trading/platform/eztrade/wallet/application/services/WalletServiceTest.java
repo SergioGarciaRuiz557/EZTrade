@@ -4,9 +4,9 @@ import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.out.DomainEventPublisherPort;
-import com.trading.platform.eztrade.wallet.application.ports.out.LedgerEntryRepositoryPort;
+import com.trading.platform.eztrade.wallet.application.ports.out.WalletTransactionRepositoryPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.WalletAccountRepositoryPort;
-import com.trading.platform.eztrade.wallet.domain.LedgerEntry;
+import com.trading.platform.eztrade.wallet.domain.WalletTransaction;
 import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.ReferenceType;
 import com.trading.platform.eztrade.wallet.domain.WalletAccount;
@@ -41,7 +41,7 @@ class WalletServiceTest {
     private WalletAccountRepositoryPort walletAccountRepository;
 
     @Mock
-    private LedgerEntryRepositoryPort ledgerEntryRepository;
+    private WalletTransactionRepositoryPort ledgerEntryRepository;
 
     @Mock
     private DomainEventPublisherPort eventPublisher;
@@ -67,7 +67,7 @@ class WalletServiceTest {
         given(walletAccountRepository.findByOwnerForUpdate("user@demo.com"))
                 .willReturn(Optional.of(WalletAccount.rehydrate("user@demo.com", new BigDecimal("500"), BigDecimal.ZERO)));
         given(walletAccountRepository.save(any(WalletAccount.class))).willAnswer(i -> i.getArgument(0));
-        given(ledgerEntryRepository.save(any(LedgerEntry.class))).willAnswer(i -> i.getArgument(0));
+        given(ledgerEntryRepository.save(any(WalletTransaction.class))).willAnswer(i -> i.getArgument(0));
 
         walletService.handle(event);
 
@@ -102,7 +102,7 @@ class WalletServiceTest {
         walletService.handle(event);
 
         verify(walletAccountRepository, never()).save(any(WalletAccount.class));
-        verify(ledgerEntryRepository, never()).save(any(LedgerEntry.class));
+        verify(ledgerEntryRepository, never()).save(any(WalletTransaction.class));
         verify(eventPublisher).publish(any(InsufficientFundsEvent.class));
     }
 
@@ -111,7 +111,7 @@ class WalletServiceTest {
     void cancelled_order_releases_funds() {
         OrderCancelledEvent event = new OrderCancelledEvent(3L, "user@demo.com", "IBM", LocalDateTime.now());
 
-        LedgerEntry reserveEntry = LedgerEntry.newEntry(
+        WalletTransaction reserveEntry = WalletTransaction.newEntry(
                 "user@demo.com",
                 MovementType.RESERVE,
                 new BigDecimal("120"),
@@ -134,7 +134,7 @@ class WalletServiceTest {
         given(walletAccountRepository.findByOwnerForUpdate("user@demo.com"))
                 .willReturn(Optional.of(WalletAccount.rehydrate("user@demo.com", new BigDecimal("380"), new BigDecimal("120"))));
         given(walletAccountRepository.save(any(WalletAccount.class))).willAnswer(i -> i.getArgument(0));
-        given(ledgerEntryRepository.save(any(LedgerEntry.class))).willAnswer(i -> i.getArgument(0));
+        given(ledgerEntryRepository.save(any(WalletTransaction.class))).willAnswer(i -> i.getArgument(0));
 
         walletService.handle(event);
 
@@ -160,7 +160,7 @@ class WalletServiceTest {
         given(walletAccountRepository.findByOwnerForUpdate("user@demo.com"))
                 .willReturn(Optional.of(WalletAccount.rehydrate("user@demo.com", new BigDecimal("300"), BigDecimal.ZERO)));
         given(walletAccountRepository.save(any(WalletAccount.class))).willAnswer(i -> i.getArgument(0));
-        given(ledgerEntryRepository.save(any(LedgerEntry.class))).willAnswer(i -> i.getArgument(0));
+        given(ledgerEntryRepository.save(any(WalletTransaction.class))).willAnswer(i -> i.getArgument(0));
 
         walletService.handle(event);
 

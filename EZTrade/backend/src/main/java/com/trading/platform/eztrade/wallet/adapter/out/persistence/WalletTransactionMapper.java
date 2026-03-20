@@ -1,15 +1,18 @@
 package com.trading.platform.eztrade.wallet.adapter.out.persistence;
 
-import com.trading.platform.eztrade.wallet.adapter.out.persistence.jpa.LedgerEntryJpaEntity;
-import com.trading.platform.eztrade.wallet.domain.LedgerEntry;
+import com.trading.platform.eztrade.wallet.adapter.out.persistence.jpa.WalletTransactionJpaEntity;
+import com.trading.platform.eztrade.wallet.domain.WalletTransaction;
 
-final class LedgerEntryMapper {
+/**
+ * Mapper (paquete-privado) dominio &lt;-&gt; JPA para {@link WalletTransaction}.
+ */
+final class WalletTransactionMapper {
 
-    private LedgerEntryMapper() {
+    private WalletTransactionMapper() {
     }
 
-    static LedgerEntry toDomain(LedgerEntryJpaEntity entity) {
-        return new LedgerEntry(
+    static WalletTransaction toDomain(WalletTransactionJpaEntity entity) {
+        return new WalletTransaction(
                 entity.getId(),
                 entity.getOwner(),
                 entity.getMovementType(),
@@ -25,8 +28,8 @@ final class LedgerEntryMapper {
         );
     }
 
-    static LedgerEntryJpaEntity toEntity(LedgerEntry entry) {
-        LedgerEntryJpaEntity entity = new LedgerEntryJpaEntity();
+    static WalletTransactionJpaEntity toEntity(WalletTransaction entry) {
+        WalletTransactionJpaEntity entity = new WalletTransactionJpaEntity();
         entity.setId(entry.id());
         entity.setOwner(entry.owner());
         entity.setMovementType(entry.movementType());

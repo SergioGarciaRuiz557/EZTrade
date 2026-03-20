@@ -11,6 +11,12 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "wallet_account")
+/**
+ * Entidad JPA para persistir el estado actual de una cuenta wallet.
+ * <p>
+ * Nota: el modelo de dominio es inmutable ({@link com.trading.platform.eztrade.wallet.domain.WalletAccount}), mientras
+ * que esta entidad es mutable por requisitos de JPA.
+ */
 public class WalletAccountJpaEntity {
 
     @Id
@@ -18,6 +24,7 @@ public class WalletAccountJpaEntity {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    /** Owner es único: hay una única cuenta wallet por usuario. */
     private String owner;
 
     @Column(nullable = false, precision = 19, scale = 8)

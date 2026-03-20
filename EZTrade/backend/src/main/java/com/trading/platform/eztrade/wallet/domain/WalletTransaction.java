@@ -5,24 +5,45 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Registro auditable e inmutable de un movimiento del wallet.
+ * Registro auditable e inmutable de un movimiento monetario del wallet.
+ * <p>
+ * Este modelo sustituye el término "Ledger" por "Transaction" para hacerlo más intuitivo: en la práctica sigue
+ * representando una entrada del histórico de movimientos (libro mayor/ledger) y contiene deltas y balances resultantes.
+ * <p>
+ * La combinación (owner, referenceId, movementType) se usa como clave natural para idempotencia.
  */
-public record LedgerEntry(
+public record WalletTransaction(
         Long id,
+        /** Identificador del usuario/propietario del wallet. */
         String owner,
+        /** Clasificación del movimiento (depósito, reserva, liberación, liquidación, etc.). */
         MovementType movementType,
+        /** Importe principal del movimiento (siempre positivo en el dominio). */
         BigDecimal amount,
+        /** Variación aplicada al saldo disponible (puede ser positiva, cero o negativa). */
         BigDecimal availableDelta,
+        /** Variación aplicada al saldo reservado (puede ser positiva, cero o negativa). */
         BigDecimal reservedDelta,
+        /** Saldo disponible resultante tras aplicar el movimiento. */
         BigDecimal availableBalanceAfter,
+        /** Saldo reservado resultante tras aplicar el movimiento. */
         BigDecimal reservedBalanceAfter,
+        /** Tipo/origen de la referencia (orden, ajuste manual...). */
         ReferenceType referenceType,
+        /** Identificador de referencia (p. ej. orderId o identificador externo del ajuste manual). */
         String referenceId,
+        /** Texto libre para facilitar auditoría/histórico. */
         String description,
+        /** Momento "efectivo" del movimiento (normalmente el de ocurrencia del evento que lo dispara). */
         LocalDateTime occurredAt
 ) {
 
-    public LedgerEntry {
+    /**
+     * Constructor canónico del record.
+     * <p>
+     * Aquí se validan invariantes para asegurar que cualquier instancia es consistente.
+     */
+    public WalletTransaction {
         owner = validateOwner(owner);
         movementType = Objects.requireNonNull(movementType, "Movement type is required");
         amount = validatePositive(amount, "Amount must be greater than zero");
@@ -37,18 +58,21 @@ public record LedgerEntry(
         occurredAt = Objects.requireNonNull(occurredAt, "OccurredAt is required");
     }
 
-    public static LedgerEntry newEntry(String owner,
-                                       MovementType movementType,
-                                       BigDecimal amount,
-                                       BigDecimal availableDelta,
-                                       BigDecimal reservedDelta,
-                                       BigDecimal availableBalanceAfter,
-                                       BigDecimal reservedBalanceAfter,
-                                       ReferenceType referenceType,
-                                       String referenceId,
-                                       String description,
-                                       LocalDateTime occurredAt) {
-        return new LedgerEntry(
+    /**
+     * Factoría para crear una transacción nueva (sin id), dejando que la persistencia asigne el identificador.
+     */
+    public static WalletTransaction newEntry(String owner,
+                                             MovementType movementType,
+                                             BigDecimal amount,
+                                             BigDecimal availableDelta,
+                                             BigDecimal reservedDelta,
+                                             BigDecimal availableBalanceAfter,
+                                             BigDecimal reservedBalanceAfter,
+                                             ReferenceType referenceType,
+                                             String referenceId,
+                                             String description,
+                                             LocalDateTime occurredAt) {
+        return new WalletTransaction(
                 null,
                 owner,
                 movementType,
