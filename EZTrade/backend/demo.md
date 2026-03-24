@@ -11,9 +11,8 @@ Realizaremos la trayectoria típica de un inversor en EZTrade:
 2. **Autenticación:** Iniciar sesión y obtener un token JWT.
 3. **Billetera:** Consultar fondos y depositar dinero.
 4. **Mercado:** Consultar el precio en tiempo real de un instrumento (ej. AAPL).
-5. **Trading:** Lanzar una orden de compra para adquirir acciones.
-6. **Cartera:** Verificar que los activos se han añadido al portafolio.
-7. **Notificaciones:** Recibir la alerta de que la orden se ejecutó con éxito.
+5. **Trading:** Crear y ejecutar una orden de compra para adquirir acciones.
+6. **Notificaciones:** Confirmar la ejecución y la actualización de cartera vía eventos notificados.
 
 ---
 
@@ -31,10 +30,11 @@ journey
       Depositar $1000: 5: Wallet
     section 3. Operativa
       Ver precio AAPL: 5: Market
-      Comprar 2 AAPL: 5: Trading
+      Crear orden compra 2 AAPL: 5: Trading
+      Ejecutar orden: 5: Trading
     section 4. Resultados
-      Ver AAPL en Cartera: 5: Portfolio
-      Notificación Compra: 5: Notifications
+      Notificación ORDER_EXECUTED: 5: Notifications
+      Notificación PORTFOLIO_VALUATION_UPDATED: 4: Notifications
 ```
 
 ---
@@ -110,29 +110,30 @@ Antes de operar, nos aseguramos de tener dinero fiduciario disponible.
 
 **Petición para Depositar:**
 ```http
-POST /api/wallet/deposit
+POST /api/v1/wallet/deposit
 Authorization: Bearer <token>
 Content-Type: application/json
 
 {
   "amount": 1000.00,
-  "currency": "USD"
+  "referenceId": "demo-deposit-001",
+  "description": "Ingreso inicial para demo"
 }
 ```
 
 **Consultar Balance:**
 ```http
-GET /api/wallet/balance
+GET /api/v1/wallet/balance
 Authorization: Bearer <token>
 ```
-*El sistema deberá devolver un balance disponible de 1000 USD.*
+*El sistema deberá devolver un balance disponible de 1000.00 y reservado de 0.00.*
 
 ### Paso 3: Consultar el Mercado (Market)
 Vamos a buscar el precio actual de la acción de Apple (AAPL) antes de comprar.
 
 **Petición:**
 ```http
-GET /api/market/price/AAPL
+GET /api/v1/market/get-price?symbol=AAPL
 Authorization: Bearer <token>
 ```
 
@@ -146,7 +147,7 @@ Authorization: Bearer <token>
 ```
 
 ### Paso 4: Ejecutar una Orden de Compra (Trading)
-Decidimos comprar 2 acciones de AAPL a precio de mercado (Market Order). La operación costará aproximadamente $300.
+Decidimos comprar 2 acciones de AAPL con precio 150. La operación costará aproximadamente $300.
 
 ```mermaid
 sequenceDiagram
@@ -155,16 +156,16 @@ sequenceDiagram
     participant Market
     participant Wallet
     
-    Usuario->>Trading: POST /api/trading/order (Comprar 2 AAPL)
+    Usuario->>Trading: POST /api/v1/trading/orders (Comprar 2 AAPL)
     Trading->>Market: Validar Precio (150$)
     Trading->>Wallet: Retener 300$
     Wallet-->>Trading: Fondos OK
-    Trading-->>Usuario: Orden Ejecutada Creada
+    Trading-->>Usuario: Orden creada (PENDING)
 ```
 
 **Petición:**
 ```http
-POST /api/trading/order
+POST /api/v1/trading/orders
 Authorization: Bearer <token>
 Content-Type: application/json
 
@@ -172,37 +173,45 @@ Content-Type: application/json
   "symbol": "AAPL",
   "side": "BUY",
   "quantity": 2,
-  "type": "MARKET"
+  "price": 150
 }
 ```
 
-### Paso 5: Verificar la Cartera (Portfolio)
-Tras la ejecución, verificamos que las 2 acciones de AAPL están en nuestro poder y el dinero fue descontado.
+### Paso 5: Ejecutar la Orden
+Con el `id` devuelto en la creación, ejecutamos la orden para disparar los eventos de dominio.
 
 **Petición:**
 ```http
-GET /api/portfolio
+POST /api/v1/trading/orders/{orderId}/execute
 Authorization: Bearer <token>
 ```
+
+### Paso 6: Verificar resultado desde Notifications
+La confirmación del resultado del trade se observa desde el módulo **notifications** (no desde un endpoint REST de portfolio en esta demo).
+
+Se esperan al menos estas notificaciones:
+- `ORDER_EXECUTED`: confirma que la orden se ejecutó.
+- `PORTFOLIO_VALUATION_UPDATED`: confirma actualización agregada de cartera.
+
+Canales disponibles en el backend actual:
+- Logs (`LoggingEmailNotificationAdapter` y `LoggingPushNotificationAdapter`).
+- WebSocket usuario en `/user/queue/notifications` (si hay broker/cliente conectado).
+- Inbox persistido en BD (adaptador `InboxNotificationAdapter`).
 
 **Respuesta Esperada:**
 ```json
 {
-  "totalValue": 300.00,
-  "positions": [
-    {
-      "symbol": "AAPL",
-      "quantity": 2,
-      "averageEntryPrice": 150.00,
-      "currentPrice": 150.00
-    }
-  ]
+  "type": "ORDER_EXECUTED",
+  "title": "Orden ejecutada",
+  "body": "La orden #123 fue ejecutada: BUY 2 AAPL @ 150.",
+  "occurredAt": "2026-03-24T10:05:00"
 }
 ```
-*Si consultamos el `Wallet` nuevamente, el balance disponible debe ser `$700.00`.*
 
-### Paso 6: Observar Notificaciones
-En el momento exacto en que la orden se ejecutó en el Paso 4, el módulo de **Trading** emitió un `OrderExecutedEvent`. El módulo de **Notifications** lo capturó.
+*Tras la ejecución, si consultas `GET /api/v1/wallet/balance`, el balance disponible debe reflejar el débito asociado (aprox. `$700.00`).*
+
+### Paso 7: Observar Notificaciones en Tiempo Real
+En el momento exacto en que la orden se ejecutó en el Paso 5, el módulo de **Trading** emitió un `OrderExecutedEvent`. El módulo de **Notifications** lo capturó.
 
 Si estuviéramos conectados por **WebSocket**, nuestro cliente recibiría un mensaje similar a este:
 

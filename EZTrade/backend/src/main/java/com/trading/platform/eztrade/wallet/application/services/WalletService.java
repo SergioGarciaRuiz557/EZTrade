@@ -4,6 +4,7 @@ import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.in.AdjustWalletFundsUseCase;
+import com.trading.platform.eztrade.wallet.application.ports.in.GetWalletBalanceUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderCancelledUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderExecutedUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderPlacedUseCase;
@@ -56,7 +57,8 @@ import java.util.Locale;
 public class WalletService implements HandleOrderPlacedUseCase,
         HandleOrderCancelledUseCase,
         HandleOrderExecutedUseCase,
-        AdjustWalletFundsUseCase {
+        AdjustWalletFundsUseCase,
+        GetWalletBalanceUseCase {
 
     private static final String ORDER_SETTLEMENT_DEBIT = "DEBIT";
     private static final String ORDER_SETTLEMENT_CREDIT = "CREDIT";
@@ -202,6 +204,14 @@ public class WalletService implements HandleOrderPlacedUseCase,
     @Override
     public void chargeFee(AdjustCommand command) {
         processManualCommand(command, MovementType.FEE, "Fee charged", account -> account.chargeFee(command.amount()));
+    }
+
+    @Override
+    public BalanceView getBalance(String owner) {
+        String validatedOwner = validateOwner(owner);
+        WalletAccount account = walletAccountRepository.findByOwner(validatedOwner)
+                .orElseGet(() -> WalletAccount.open(validatedOwner));
+        return new BalanceView(account.availableBalance(), account.reservedBalance());
     }
 
     private void settleBuy(OrderExecutedEvent event) {

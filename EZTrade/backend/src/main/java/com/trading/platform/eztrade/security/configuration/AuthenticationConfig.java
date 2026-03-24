@@ -106,7 +106,8 @@ public class AuthenticationConfig {
                         .requestMatchers(
                                 "/api/user",
                                 "/api/v1/market/**",
-                                "/api/v1/trading/**"
+                                "/api/v1/trading/**",
+                                "/api/v1/wallet/**"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

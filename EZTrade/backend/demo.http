@@ -38,28 +38,29 @@ Content-Type: application/json
 
 ### Paso 2.1: Depositar Fondos en el Wallet
 # Nos aseguramos de tener dinero fiduciario disponible.
-POST http://localhost:8088/api/wallet/deposit
+POST http://localhost:8088/api/v1/wallet/deposit
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 
 {
   "amount": 1000.00,
-  "currency": "USD"
+  "referenceId": "demo-deposit-001",
+  "description": "Ingreso inicial para demo"
 }
 
 ### Paso 2.2: Consultar Balance
 # Verificamos que tenemos los 1000 USD de balance disponible.
-GET http://localhost:8088/api/wallet/balance
+GET http://localhost:8088/api/v1/wallet/balance
 Authorization: Bearer {{auth_token}}
 
 ### Paso 3: Consultar el Mercado (Market)
 # Buscamos el precio actual de la acción de Apple (AAPL) antes de comprar.
-GET http://localhost:8088/api/market/price/AAPL
+GET http://localhost:8088/api/v1/market/get-price?symbol=AAPL
 Authorization: Bearer {{auth_token}}
 
 ### Paso 4: Ejecutar una Orden de Compra (Trading)
-# Compramos 2 acciones de AAPL a precio de mercado (Market Order).
-POST http://localhost:8088/api/trading/order
+# Compramos 2 acciones de AAPL a 150 (orden limitada para demo).
+POST http://localhost:8088/api/v1/trading/orders
 Authorization: Bearer {{auth_token}}
 Content-Type: application/json
 
@@ -67,11 +68,19 @@ Content-Type: application/json
   "symbol": "AAPL",
   "side": "BUY",
   "quantity": 2,
-  "type": "MARKET"
+  "price": 150
 }
 
-### Paso 5: Verificar la Cartera (Portfolio)
-# Verificamos que las acciones de AAPL están en nuestro poder.
-GET http://localhost:8088/api/portfolio
+> {%
+    // Guardamos el id para ejecutar la orden en el siguiente paso
+    client.global.set("order_id", response.body.id);
+%}
+
+### Paso 5: Ejecutar la orden creada
+POST http://localhost:8088/api/v1/trading/orders/{{order_id}}/execute
 Authorization: Bearer {{auth_token}}
+
+### Paso 6: Verificar resultado desde Notifications
+# El backend no expone un endpoint REST de lectura de notifications en esta demo.
+# La confirmación se observa por canales del módulo notifications (logs/WS/inbox persistido).
 
