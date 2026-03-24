@@ -61,12 +61,12 @@ El sistema está dividido en los siguientes módulos de dominio lógicos de nego
 - **Workflow:** El usuario solicita una orden. El módulo de Trading valida el precio de mercado actual (llamando a Market), verifica y bloquea los fondos/activos (interactuando con Wallet y Portfolio), y si todo es correcto, ejecuta la orden. Emite un evento `OrderExecutedEvent`.
 
 ### 3. Portfolio (Cartera)
-- **Función:** Mantiene el registro de las posiciones de los usuarios (acciones o criptomonedas poseídas) y el valor total de su cartera.
-- **Workflow:** Escucha los eventos del módulo de Trading para abrir o cerrar posiciones. Regularmente, solicita precios al módulo `Market` para actualizar la valoración de la cartera y emite el evento `PortfolioValuationUpdatedEvent`.
+- **Función:** Mantiene el registro de las posiciones de los usuarios (acciones o criptomonedas poseídas) y una proyección de lectura del valor total de su cartera y efectivo disponible.
+- **Workflow:** Escucha los eventos del módulo de Trading para abrir o cerrar posiciones, y eventos de Wallet para mantener su vista de liquidez al día. Regularmente, solicita precios al módulo `Market` para actualizar la valoración de la cartera y emite el evento `PortfolioValuationUpdatedEvent`.
 
 ### 4. Wallet (Billetera)
-- **Función:** Gestiona el balance de efectivo (fiat) de los usuarios. Procesa depósitos, retiros y retenciones de fondos.
-- **Workflow:** Escucha los eventos de Trading para descontar dinero en compras o añadir dinero y comisiones en ventas. Mantiene el historial de transacciones (WalletTransaction).
+- **Función:** Gestiona el balance de efectivo (fiat) de los usuarios (dinero disponible vs reservado). Procesa depósitos, retiros y retenciones de fondos. Es la **fuente de la verdad** del capital.
+- **Workflow:** Escucha los eventos de Trading para descontar dinero en compras o añadir dinero en ventas. Emite eventos propios (como `AvailableCashUpdatedEvent`) para notificar al resto del sistema. Mantiene el historial inmutable de transacciones (WalletTransaction/Ledger).
 
 ### 5. Notifications (Notificaciones)
 - **Función:** Sistema transversal encargado de alertar al usuario de lo que ocurre en su cuenta.
@@ -134,6 +134,7 @@ graph TD
     %% Comunicación por Eventos (Desacoplada)
     Trd -.->|Eventos de Orden| Wlt
     Trd -.->|Eventos de Orden| Ptf
+    Wlt -.->|Eventos de Liquidez| Ptf
     Ptf -.->|Eventos de Cartera| Not
     Trd -.->|Eventos de Orden| Not
     Wlt -.->|Eventos de Billetera| Not

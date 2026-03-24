@@ -107,7 +107,8 @@ public class AuthenticationConfig {
                                 "/api/user",
                                 "/api/v1/market/**",
                                 "/api/v1/trading/**",
-                                "/api/v1/wallet/**"
+                                "/api/v1/wallet/**",
+                                "/api/portfolio"
                         ).authenticated()
                         .anyRequest().authenticated()
                 )

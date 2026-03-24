@@ -10,6 +10,7 @@ import com.trading.platform.eztrade.wallet.domain.WalletTransaction;
 import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.ReferenceType;
 import com.trading.platform.eztrade.wallet.domain.WalletAccount;
+import com.trading.platform.eztrade.wallet.domain.events.AvailableCashUpdatedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReleasedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReservedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsSettledEvent;
@@ -77,8 +78,9 @@ class WalletServiceTest {
         assertThat(accountCaptor.getValue().reservedBalance()).isEqualByComparingTo("200");
 
         ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(eventPublisher).publish(eventCaptor.capture());
-        assertThat(eventCaptor.getValue()).isInstanceOf(FundsReservedEvent.class);
+        verify(eventPublisher, atLeastOnce()).publish(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues()).anyMatch(FundsReservedEvent.class::isInstance);
+        assertThat(eventCaptor.getAllValues()).anyMatch(AvailableCashUpdatedEvent.class::isInstance);
     }
 
     @Test
@@ -168,7 +170,10 @@ class WalletServiceTest {
         verify(walletAccountRepository).save(accountCaptor.capture());
         assertThat(accountCaptor.getValue().availableBalance()).isEqualByComparingTo("450");
 
-        verify(eventPublisher).publish(any(FundsSettledEvent.class));
+        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeastOnce()).publish(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues()).anyMatch(FundsSettledEvent.class::isInstance);
+        assertThat(eventCaptor.getAllValues()).anyMatch(AvailableCashUpdatedEvent.class::isInstance);
     }
 }
 

@@ -2,10 +2,11 @@ package com.trading.platform.eztrade.portfolio.application.services;
 
 import com.trading.platform.eztrade.portfolio.application.ports.in.GetPortfolioUseCase;
 import com.trading.platform.eztrade.portfolio.application.ports.in.HandleOrderExecutedUseCase;
-import com.trading.platform.eztrade.portfolio.application.ports.out.CashAccountRepositoryPort;
+import com.trading.platform.eztrade.portfolio.application.ports.in.HandleWalletCashUpdatedUseCase;
+import com.trading.platform.eztrade.portfolio.application.ports.out.CashProjectionRepositoryPort;
 import com.trading.platform.eztrade.portfolio.application.ports.out.DomainEventPublisherPort;
 import com.trading.platform.eztrade.portfolio.application.ports.out.PositionRepositoryPort;
-import com.trading.platform.eztrade.portfolio.domain.CashAccount;
+import com.trading.platform.eztrade.portfolio.domain.CashProjection;
 import com.trading.platform.eztrade.portfolio.domain.PortfolioDomainException;
 import com.trading.platform.eztrade.portfolio.domain.PortfolioSnapshot;
 import com.trading.platform.eztrade.portfolio.domain.Position;
@@ -15,6 +16,7 @@ import com.trading.platform.eztrade.portfolio.domain.events.PositionIncreasedEve
 import com.trading.platform.eztrade.portfolio.domain.events.PositionOpenedEvent;
 import com.trading.platform.eztrade.portfolio.domain.events.PositionReducedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.wallet.domain.events.AvailableCashUpdatedEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,17 +30,17 @@ import java.util.Locale;
  */
 @Service
 @Transactional
-public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfolioUseCase {
+public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfolioUseCase, HandleWalletCashUpdatedUseCase {
 
     private final PositionRepositoryPort positionRepository;
-    private final CashAccountRepositoryPort cashAccountRepository;
+    private final CashProjectionRepositoryPort cashProjectionRepository;
     private final DomainEventPublisherPort eventPublisher;
 
     public PortfolioService(PositionRepositoryPort positionRepository,
-                            CashAccountRepositoryPort cashAccountRepository,
+                            CashProjectionRepositoryPort cashProjectionRepository,
                             DomainEventPublisherPort eventPublisher) {
         this.positionRepository = positionRepository;
-        this.cashAccountRepository = cashAccountRepository;
+        this.cashProjectionRepository = cashProjectionRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -48,14 +50,11 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
         String symbol = normalizeSymbol(event.symbol());
         BigDecimal quantity = positive(event.quantity(), "Quantity");
         BigDecimal price = positive(event.price(), "Price");
-        BigDecimal grossAmount = quantity.multiply(price);
-
-        CashAccount cashAccount = cashAccountRepository.findByOwner(owner).orElseGet(() -> CashAccount.open(owner));
 
         Side side = parseSide(event.side());
         switch (side) {
-            case BUY -> handleBuy(owner, symbol, quantity, price, grossAmount, cashAccount);
-            case SELL -> handleSell(owner, symbol, quantity, price, grossAmount, cashAccount);
+            case BUY -> handleBuy(owner, symbol, quantity, price);
+            case SELL -> handleSell(owner, symbol, quantity, price);
         }
 
         PortfolioSnapshot snapshot = getByOwner(owner);
@@ -79,19 +78,30 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                 .map(Position::realizedPnl)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal cashAvailable = cashAccountRepository.findByOwner(owner)
-                .map(CashAccount::availableCash)
+        BigDecimal cashAvailable = cashProjectionRepository.findByOwner(owner)
+                .map(CashProjection::availableCash)
                 .orElse(BigDecimal.ZERO);
 
         return new PortfolioSnapshot(owner, cashAvailable, totalCostBasis, totalRealizedPnl, positions);
     }
 
+    @Override
+    public void handle(AvailableCashUpdatedEvent event) {
+        if (event.owner() == null || event.owner().isBlank()) {
+            throw new PortfolioDomainException("Owner is required");
+        }
+        if (event.availableCash() == null) {
+            throw new PortfolioDomainException("Available cash is required");
+        }
+
+        LocalDateTime updatedAt = event.occurredAt() == null ? LocalDateTime.now() : event.occurredAt();
+        cashProjectionRepository.save(new CashProjection(event.owner(), event.availableCash(), updatedAt));
+    }
+
     private void handleBuy(String owner,
                            String symbol,
                            BigDecimal quantity,
-                           BigDecimal price,
-                           BigDecimal grossAmount,
-                           CashAccount cashAccount) {
+                           BigDecimal price) {
         Position current = positionRepository.findByOwnerAndSymbol(owner, symbol).orElse(null);
         Position saved;
 
@@ -114,16 +124,12 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                     LocalDateTime.now()
             ));
         }
-
-        cashAccountRepository.save(cashAccount.debit(grossAmount));
     }
 
     private void handleSell(String owner,
                             String symbol,
                             BigDecimal quantity,
-                            BigDecimal price,
-                            BigDecimal grossAmount,
-                            CashAccount cashAccount) {
+                            BigDecimal price) {
         Position current = positionRepository.findByOwnerAndSymbol(owner, symbol)
                 .orElseThrow(() -> new PortfolioDomainException("Position not found for symbol: " + symbol));
 
@@ -150,8 +156,6 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                     LocalDateTime.now()
             ));
         }
-
-        cashAccountRepository.save(cashAccount.credit(grossAmount));
     }
 
     private static String normalizeSymbol(String symbol) {

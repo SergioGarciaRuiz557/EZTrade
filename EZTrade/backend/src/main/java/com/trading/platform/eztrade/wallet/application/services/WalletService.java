@@ -16,6 +16,7 @@ import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.ReferenceType;
 import com.trading.platform.eztrade.wallet.domain.WalletAccount;
 import com.trading.platform.eztrade.wallet.domain.WalletDomainException;
+import com.trading.platform.eztrade.wallet.domain.events.AvailableCashUpdatedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReleasedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReservedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsSettledEvent;
@@ -125,6 +126,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 updated.reservedBalance(),
                 LocalDateTime.now()
         ));
+        publishAvailableCashUpdated(owner, updated.availableBalance(), "ORDER_PLACED", orderRef, now(event.occurredAt()));
     }
 
     @Override
@@ -188,6 +190,11 @@ public class WalletService implements HandleOrderPlacedUseCase,
             case BUY -> settleBuy(event);
             case SELL -> settleSell(event);
         }
+
+        String owner = validateOwner(event.owner());
+        String orderRef = String.valueOf(event.orderId());
+        BigDecimal availableCash = getBalance(owner).availableBalance();
+        publishAvailableCashUpdated(owner, availableCash, "ORDER_EXECUTED", orderRef, now(event.occurredAt()));
     }
 
     @Override
@@ -388,6 +395,20 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 account.reservedBalance(),
                 reason,
                 LocalDateTime.now()
+        ));
+    }
+
+    private void publishAvailableCashUpdated(String owner,
+                                             BigDecimal availableCash,
+                                             String trigger,
+                                             String referenceId,
+                                             LocalDateTime occurredAt) {
+        eventPublisher.publish(new AvailableCashUpdatedEvent(
+                owner,
+                availableCash,
+                trigger,
+                referenceId,
+                occurredAt
         ));
     }
 

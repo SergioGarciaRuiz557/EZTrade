@@ -84,3 +84,7 @@ Authorization: Bearer {{auth_token}}
 # El backend no expone un endpoint REST de lectura de notifications en esta demo.
 # La confirmación se observa por canales del módulo notifications (logs/WS/inbox persistido).
 
+### Paso 6.1 (Opcional): Consultar cartera por API
+GET http://localhost:8088/api/portfolio
+Authorization: Bearer {{auth_token}}
+

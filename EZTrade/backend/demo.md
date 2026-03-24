@@ -198,6 +198,12 @@ Canales disponibles en el backend actual:
 - WebSocket usuario en `/user/queue/notifications` (si hay broker/cliente conectado).
 - Inbox persistido en BD (adaptador `InboxNotificationAdapter`).
 
+**Verificación opcional por API de portfolio:**
+```http
+GET /api/portfolio
+Authorization: Bearer <token>
+```
+
 **Respuesta Esperada:**
 ```json
 {
