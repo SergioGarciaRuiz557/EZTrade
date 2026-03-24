@@ -22,6 +22,14 @@ public interface UserRepository {
     Optional<User> findByEmail(String username);
 
     /**
+     * Busca un usuario por su username.
+     *
+     * @param username nombre de usuario
+     * @return un {@link Optional} con el usuario si existe
+     */
+    Optional<User> findByUsername(String username);
+
+    /**
      * Persiste un usuario en el sistema.
      * <p>
      * Si el usuario ya existe, se actualiza su información; en caso contrario,

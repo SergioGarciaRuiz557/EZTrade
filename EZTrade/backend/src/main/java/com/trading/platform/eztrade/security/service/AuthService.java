@@ -41,18 +41,18 @@ public class AuthService {
     }
 
     /**
-     * Autentica a un usuario con su email y contraseña y genera un token JWT.
+     * Autentica a un usuario con email o username y contraseña y genera un token JWT.
      *
-     * @param email    correo electrónico del usuario
+     * @param identifier email o username del usuario
      * @param password contraseña en texto plano del usuario
      * @return token JWT asociado al usuario autenticado
      * @throws org.springframework.security.core.AuthenticationException
      *         si las credenciales no son válidas
      */
-    public String login(String email, String password) {
+    public String login(String identifier, String password) {
         Authentication authentication =
                 authenticationManager.authenticate(
-                        new UsernamePasswordAuthenticationToken(email, password)
+                        new UsernamePasswordAuthenticationToken(identifier, password)
                 );
 
         return jwtService.generateToken(

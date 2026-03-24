@@ -41,7 +41,7 @@ public class AuthController {
      * Recibe las credenciales del usuario, delega la autenticación en
      * el {@code AuthService} y, si es correcta, devuelve un token JWT.
      *
-     * @param request objeto con el email y la contraseña del usuario
+     * @param request objeto con el identificador (email o username) y la contraseña del usuario
      * @return respuesta HTTP 200 con el token JWT en el cuerpo
      */
     @PostMapping("/login")
@@ -49,7 +49,7 @@ public class AuthController {
             @RequestBody @Valid LoginRequest request) {
 
         String token = authService.login(
-                request.getEmail(),
+                request.getIdentifier(),
                 request.getPassword()
         );
 

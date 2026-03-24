@@ -1,0 +1,77 @@
+### Paso 0: Registro (Sign Up)
+# Antes de poder iniciar sesión, necesitamos crear un usuario en el sistema.
+POST http://localhost:8088/api/user/register
+Content-Type: application/json
+
+{
+  "firstname": "Demo",
+  "lastname": "User",
+  "username": "demoUser",
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Paso 1: Autenticación (Login)
+# Ahora que el usuario existe, nos autenticamos para obtener un Token JWT.
+# Se puede iniciar sesión con email o username.
+POST http://localhost:8088/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Paso 1 (Alternativo): Autenticación con username
+POST http://localhost:8088/auth/login
+Content-Type: application/json
+
+{
+  "username": "demoUser",
+  "password": "password123"
+}
+
+> {%
+    // Guardamos el token para las siguientes peticiones
+    client.global.set("auth_token", response.body.token);
+%}
+
+### Paso 2.1: Depositar Fondos en el Wallet
+# Nos aseguramos de tener dinero fiduciario disponible.
+POST http://localhost:8088/api/wallet/deposit
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "amount": 1000.00,
+  "currency": "USD"
+}
+
+### Paso 2.2: Consultar Balance
+# Verificamos que tenemos los 1000 USD de balance disponible.
+GET http://localhost:8088/api/wallet/balance
+Authorization: Bearer {{auth_token}}
+
+### Paso 3: Consultar el Mercado (Market)
+# Buscamos el precio actual de la acción de Apple (AAPL) antes de comprar.
+GET http://localhost:8088/api/market/price/AAPL
+Authorization: Bearer {{auth_token}}
+
+### Paso 4: Ejecutar una Orden de Compra (Trading)
+# Compramos 2 acciones de AAPL a precio de mercado (Market Order).
+POST http://localhost:8088/api/trading/order
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "symbol": "AAPL",
+  "side": "BUY",
+  "quantity": 2,
+  "type": "MARKET"
+}
+
+### Paso 5: Verificar la Cartera (Portfolio)
+# Verificamos que las acciones de AAPL están en nuestro poder.
+GET http://localhost:8088/api/portfolio
+Authorization: Bearer {{auth_token}}
+

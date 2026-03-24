@@ -50,6 +50,7 @@ public class UserService implements RegisterUserUserCase, GetUserUserCase {
      */
     public User registerUser(User user) throws UserExistsException {
         if (userRepository.findByEmail(user.getEmail()).isPresent()) throw new UserExistsException("User already exists");
+        if (userRepository.findByUsername(user.getUsernameValue()).isPresent()) throw new UserExistsException("User already exists");
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(Role.USER);
@@ -65,6 +66,8 @@ public class UserService implements RegisterUserUserCase, GetUserUserCase {
      * @return resultado devuelto por la operación.
      */
     public User getUser(String username) throws UserNotFoundException {
-        return userRepository.findByEmail(username).orElseThrow(()->new UserNotFoundException("User not found"));
+        return userRepository.findByEmail(username)
+                .or(() -> userRepository.findByUsername(username))
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }

@@ -50,8 +50,8 @@ class UserControllerTest {
     @Test
     @DisplayName("POST /api/user/register devuelve 201 y el UserDTO creado")
     void registerUser_returns201WithBody() throws Exception {
-        UserDTO request = new UserDTO("John", "Doe", "john.doe@test.com", "pwd123");
-        User saved = new User("John", "Doe", "john.doe@test.com", "encoded");
+        UserDTO request = new UserDTO("John", "Doe", "johnny", "john.doe@test.com", "pwd123");
+        User saved = new User("John", "Doe", "johnny", "john.doe@test.com", "encoded");
 
         given(registerUserUserCase.registerUser(any(User.class))).willReturn(saved);
 
@@ -62,13 +62,14 @@ class UserControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.firstname", is("John")))
                 .andExpect(jsonPath("$.lastname", is("Doe")))
+                .andExpect(jsonPath("$.username", is("johnny")))
                 .andExpect(jsonPath("$.email", is("john.doe@test.com")));
     }
 
     @Test
     @DisplayName("POST /api/user/register devuelve 409 cuando el usuario ya existe")
     void registerUser_returns409WhenUserExists() throws Exception {
-        UserDTO request = new UserDTO("John", "Doe", "john.doe@test.com", "pwd123");
+        UserDTO request = new UserDTO("John", "Doe", "johnny", "john.doe@test.com", "pwd123");
 
         doThrow(new UserExistsException("User already exists"))
                 .when(registerUserUserCase).registerUser(any(User.class));
@@ -88,7 +89,7 @@ class UserControllerTest {
     @DisplayName("GET /api/user devuelve 200 y el UserDTO cuando existe")
     void getUser_returns200WhenExists() throws Exception {
         String email = "john.doe@test.com";
-        User user = new User("John", "Doe", email, "pwd123");
+        User user = new User("John", "Doe", "johnny", email, "pwd123");
 
         given(getUserUserCase.getUser(eq(email))).willReturn(user);
 
@@ -97,6 +98,7 @@ class UserControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.firstname", is("John")))
                 .andExpect(jsonPath("$.lastname", is("Doe")))
+                .andExpect(jsonPath("$.username", is("johnny")))
                 .andExpect(jsonPath("$.email", is(email)));
     }
 

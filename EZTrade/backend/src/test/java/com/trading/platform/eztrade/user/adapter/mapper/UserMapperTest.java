@@ -12,13 +12,14 @@ class UserMapperTest {
     @Test
     @DisplayName("userDTOToUser mapea correctamente de UserDTO a User")
     void userDTOToUser_mapsCorrectly() {
-        UserDTO dto = new UserDTO("John", "Doe", "john.doe@test.com", "pwd123");
+        UserDTO dto = new UserDTO("John", "Doe", "johnny", "john.doe@test.com", "pwd123");
 
         User user = UserMapper.userDTOToUser(dto);
 
         assertThat(user).isNotNull();
         assertThat(user.getName()).isEqualTo("John");
         assertThat(user.getSurname()).isEqualTo("Doe");
+        assertThat(user.getUsernameValue()).isEqualTo("johnny");
         assertThat(user.getEmail()).isEqualTo("john.doe@test.com");
         assertThat(user.getPassword()).isEqualTo("pwd123");
     }
@@ -26,13 +27,14 @@ class UserMapperTest {
     @Test
     @DisplayName("userToUserDTO mapea correctamente de User a UserDTO")
     void userToUserDTO_mapsCorrectly() {
-        User user = new User("John", "Doe", "john.doe@test.com", "pwd123");
+        User user = new User("John", "Doe", "johnny", "john.doe@test.com", "pwd123");
 
         UserDTO dto = UserMapper.userToUserDTO(user);
 
         assertThat(dto).isNotNull();
         assertThat(dto.getFirstname()).isEqualTo("John");
         assertThat(dto.getLastname()).isEqualTo("Doe");
+        assertThat(dto.getUsername()).isEqualTo("johnny");
         assertThat(dto.getEmail()).isEqualTo("john.doe@test.com");
         assertThat(dto.getPassword()).isEqualTo("pwd123");
     }

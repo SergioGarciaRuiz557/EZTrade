@@ -38,6 +38,11 @@ public class UserRepository implements com.trading.platform.eztrade.user.applica
         return jpaUserRepository.findByEmail(username);
     }
 
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return jpaUserRepository.findByUsername(username);
+    }
+
     /**
      * Persiste un usuario en la base de datos.
      * <p>

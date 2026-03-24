@@ -34,6 +34,9 @@ public class User implements UserDetails {
     private String surname;
 
     @Column(unique = true)
+    private String username;
+
+    @Column(unique = true)
     private String email;
     private String password;
 
@@ -54,11 +57,16 @@ public class User implements UserDetails {
      * @return resultado devuelto por la operación.
      */
 
-    public User(String name, String surname, String email, String password) {
+    public User(String name, String surname, String username, String email, String password) {
         this.name = name;
         this.surname = surname;
+        this.username = username;
         this.email = email;
         this.password = password;
+    }
+
+    public User(String name, String surname, String email, String password) {
+        this(name, surname, null, email, password);
     }
 
 
@@ -117,6 +125,15 @@ public class User implements UserDetails {
     public void setSurname(String surname) {
         this.surname = surname;
     }
+
+    public String getUsernameValue() {
+        return username;
+    }
+
+    public void setUsernameValue(String username) {
+        this.username = username;
+    }
+
     /**
      * Obtiene información del estado interno del objeto.
      * @return resultado devuelto por la operación.

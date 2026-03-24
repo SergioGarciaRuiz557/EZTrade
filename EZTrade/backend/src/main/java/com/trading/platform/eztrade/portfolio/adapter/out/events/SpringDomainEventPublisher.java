@@ -4,7 +4,7 @@ import com.trading.platform.eztrade.portfolio.application.ports.out.DomainEventP
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-@Component
+@Component("portfolioDomainEventPublisher")
 public class SpringDomainEventPublisher implements DomainEventPublisherPort {
 
     private final ApplicationEventPublisher eventPublisher;

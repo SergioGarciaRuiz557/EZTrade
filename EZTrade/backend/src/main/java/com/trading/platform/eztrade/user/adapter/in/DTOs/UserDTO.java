@@ -35,6 +35,15 @@ public class UserDTO {
     private String lastname;
 
     /**
+     * Nombre de usuario del usuario.
+     * <p>
+     * Campo obligatorio y único a nivel de persistencia.
+     */
+    @NotNull(message = "The username is mandatory")
+    @NotBlank(message = "The username is mandatory")
+    private String username;
+
+    /**
      * Correo electrónico del usuario.
      * <p>
      * Campo obligatorio, debe tener un formato de email válido
@@ -68,12 +77,14 @@ public class UserDTO {
      *
      * @param firstname nombre del usuario
      * @param lastname apellidos del usuario
+     * @param username nombre de usuario
      * @param email correo electrónico del usuario
      * @param password contraseña del usuario
      */
-    public UserDTO(String firstname, String lastname, String email, String password) {
+    public UserDTO(String firstname, String lastname, String username, String email, String password) {
         this.firstname = firstname;
         this.lastname = lastname;
+        this.username = username;
         this.email = email;
         this.password = password;
     }
@@ -112,6 +123,24 @@ public class UserDTO {
      */
     public void setLastname(String lastname) {
         this.lastname = lastname;
+    }
+
+    /**
+     * Devuelve el nombre de usuario.
+     *
+     * @return nombre de usuario
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * Establece el nombre de usuario.
+     *
+     * @param username nombre de usuario
+     */
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     /**
