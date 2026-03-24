@@ -94,4 +94,25 @@ class JwtAuthFilterTest {
         verify(filterChain).doFilter(request, response);
         verifyNoMoreInteractions(handlerExceptionResolver);
     }
+
+    @Test
+    @DisplayName("doFilterInternal con token expirado no autentica al usuario")
+    void doFilterInternal_withExpiredToken_doesNotAuthenticate() throws ServletException, IOException {
+        SecurityContextHolder.clearContext();
+
+        String token = "expired-token";
+        String email = "john.doe@test.com";
+        UserDetails userDetails = new User(email, "pwd123", List.of());
+
+        given(request.getHeader("Authorization")).willReturn("Bearer " + token);
+        given(jwtService.extractUsername(token)).willReturn(email);
+        given(userDetailsService.loadUserByUsername(email)).willReturn(userDetails);
+        given(jwtService.isTokenValid(token, userDetails)).willReturn(true);
+        given(jwtService.isTokenExpired(token)).willReturn(true);
+
+        jwtAuthFilter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        verify(filterChain).doFilter(request, response);
+    }
 }

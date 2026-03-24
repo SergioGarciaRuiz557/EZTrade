@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  * Implementa el puerto {@link DomainEventPublisherPort} para desacoplar la
  * capa de aplicacion de la tecnologia concreta de publicacion.
  */
-@Component
+@Component("tradingDomainEventPublisher")
 public class SpringDomainEventPublisher implements DomainEventPublisherPort {
 
     private final ApplicationEventPublisher eventPublisher;

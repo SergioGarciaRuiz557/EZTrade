@@ -11,8 +11,9 @@ El módulo **Wallet** es el responsable de gestionar la contabilidad de efectivo
    - **Reserva de Fondos**: Al recibir una orden `BUY` (`OrderPlacedEvent`), reserva el importe necesario.
    - **Liberación de Fondos**: Si una orden se cancela (`OrderCancelledEvent`), libera los fondos reservados.
    - **Liquidación (Settlement)**: Al ejecutarse una orden (`OrderExecutedEvent`), consume el saldo reservado (compra) o abona al disponible (venta).
-3. **Ajustes Manuales**: Permite depósitos y retiros manuales (administración o integración con pasarelas de pago).
-4. **Auditoría**: Cada movimiento genera una `WalletTransaction` que actúa como libro mayor (Ledger).
+3. **Publicación de Eventos de Estado**: Emite `AvailableCashUpdatedEvent` al alterar saldos producto de interacciones de negocio, asegurando que otros módulos (como `portfolio`) mantengan proyecciones al día.
+4. **Ajustes Manuales**: Permite depósitos y retiros manuales (administración o integración con pasarelas de pago).
+5. **Auditoría**: Cada movimiento genera una `WalletTransaction` que actúa como libro mayor (Ledger).
 
 ## Arquitectura y Componentes
 Este módulo sigue una arquitectura hexagonal (Ports & Adapters).
@@ -45,8 +46,15 @@ classDiagram
         +handle(OrderExecutedEvent)
     }
 
+    class AvailableCashUpdatedEvent {
+        <<Domain Event>>
+        +String owner
+        +BigDecimal availableCash
+    }
+
     WalletService --> WalletAccount : Gestiona
     WalletService --> WalletTransaction : Registra
+    WalletService ..> AvailableCashUpdatedEvent : Publica
 ```
 
 ## Explicación de Clases y Código
@@ -170,6 +178,9 @@ public class WalletService implements HandleOrderPlacedUseCase, ... {
 
         // 5. Publicar evento de dominio (Integración)
         eventPublisher.publish(new FundsReservedEvent(...));
+        
+        // 6. Publicar actualización de estado para integración (ej. Portfolio)
+        publishAvailableCashUpdated(owner, updated.availableBalance(), ...);
     }
 }
 ```
@@ -216,6 +227,7 @@ sequenceDiagram
     participant Repo as WalletRepository
     participant Account as WalletAccount
     participant Ledger as WalletTransactionRepository
+    participant EventBus as Domain Events
 
     TradingModule->>Listener: Publica OrderPlacedEvent
     Listener->>Service: handle(OrderPlacedEvent)
@@ -225,8 +237,8 @@ sequenceDiagram
     Account-->>Service: Retorna Nueva Instancia (balance actualizado)
     Service->>Repo: Guarda Account Actualizada
     Service->>Ledger: Guarda WalletTransaction (RESERVE)
-    Service->>TradingModule: Publica FundsReservedEvent
+    Service->>EventBus: Publica FundsReservedEvent
+    Service->>EventBus: Publica AvailableCashUpdatedEvent (para otros módulos)
 ```
 
 Esta estructura garantiza que el dinero nunca se pierda ni se duplique, manteniendo una traza perfecta de cada céntimo movido.
-

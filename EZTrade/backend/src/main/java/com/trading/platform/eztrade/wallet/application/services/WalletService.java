@@ -4,6 +4,7 @@ import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.in.AdjustWalletFundsUseCase;
+import com.trading.platform.eztrade.wallet.application.ports.in.GetWalletBalanceUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderCancelledUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderExecutedUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderPlacedUseCase;
@@ -15,6 +16,7 @@ import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.ReferenceType;
 import com.trading.platform.eztrade.wallet.domain.WalletAccount;
 import com.trading.platform.eztrade.wallet.domain.WalletDomainException;
+import com.trading.platform.eztrade.wallet.domain.events.AvailableCashUpdatedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReleasedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReservedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsSettledEvent;
@@ -56,7 +58,8 @@ import java.util.Locale;
 public class WalletService implements HandleOrderPlacedUseCase,
         HandleOrderCancelledUseCase,
         HandleOrderExecutedUseCase,
-        AdjustWalletFundsUseCase {
+        AdjustWalletFundsUseCase,
+        GetWalletBalanceUseCase {
 
     private static final String ORDER_SETTLEMENT_DEBIT = "DEBIT";
     private static final String ORDER_SETTLEMENT_CREDIT = "CREDIT";
@@ -123,6 +126,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 updated.reservedBalance(),
                 LocalDateTime.now()
         ));
+        publishAvailableCashUpdated(owner, updated.availableBalance(), "ORDER_PLACED", orderRef, now(event.occurredAt()));
     }
 
     @Override
@@ -186,6 +190,11 @@ public class WalletService implements HandleOrderPlacedUseCase,
             case BUY -> settleBuy(event);
             case SELL -> settleSell(event);
         }
+
+        String owner = validateOwner(event.owner());
+        String orderRef = String.valueOf(event.orderId());
+        BigDecimal availableCash = getBalance(owner).availableBalance();
+        publishAvailableCashUpdated(owner, availableCash, "ORDER_EXECUTED", orderRef, now(event.occurredAt()));
     }
 
     @Override
@@ -202,6 +211,14 @@ public class WalletService implements HandleOrderPlacedUseCase,
     @Override
     public void chargeFee(AdjustCommand command) {
         processManualCommand(command, MovementType.FEE, "Fee charged", account -> account.chargeFee(command.amount()));
+    }
+
+    @Override
+    public BalanceView getBalance(String owner) {
+        String validatedOwner = validateOwner(owner);
+        WalletAccount account = walletAccountRepository.findByOwner(validatedOwner)
+                .orElseGet(() -> WalletAccount.open(validatedOwner));
+        return new BalanceView(account.availableBalance(), account.reservedBalance());
     }
 
     private void settleBuy(OrderExecutedEvent event) {
@@ -378,6 +395,20 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 account.reservedBalance(),
                 reason,
                 LocalDateTime.now()
+        ));
+    }
+
+    private void publishAvailableCashUpdated(String owner,
+                                             BigDecimal availableCash,
+                                             String trigger,
+                                             String referenceId,
+                                             LocalDateTime occurredAt) {
+        eventPublisher.publish(new AvailableCashUpdatedEvent(
+                owner,
+                availableCash,
+                trigger,
+                referenceId,
+                occurredAt
         ));
     }
 

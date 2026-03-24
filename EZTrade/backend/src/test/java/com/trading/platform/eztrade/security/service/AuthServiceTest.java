@@ -34,11 +34,11 @@ class AuthServiceTest {
     @Test
     @DisplayName("login autentica al usuario y devuelve el token generado")
     void login_authenticatesAndReturnsToken() {
-        String email = "john.doe@test.com";
+        String identifier = "johnny";
         String password = "pwd123";
         String expectedToken = "token-jwt";
 
-        UserDetails userDetails = new User(email, password, List.of());
+        UserDetails userDetails = new User("john.doe@test.com", password, List.of());
         Authentication authentication =
                 new UsernamePasswordAuthenticationToken(userDetails, password, userDetails.getAuthorities());
 
@@ -46,7 +46,7 @@ class AuthServiceTest {
                 .willReturn(authentication);
         given(jwtService.generateToken(userDetails)).willReturn(expectedToken);
 
-        String token = authService.login(email, password);
+        String token = authService.login(identifier, password);
 
         assertThat(token).isEqualTo(expectedToken);
     }

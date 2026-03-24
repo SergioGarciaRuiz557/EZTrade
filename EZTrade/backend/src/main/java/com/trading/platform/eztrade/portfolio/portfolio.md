@@ -1,4 +1,3 @@
-
 # Módulo `portfolio`
 
 > **Ubicación**: `src/main/java/com/trading/platform/eztrade/portfolio/`
@@ -6,7 +5,7 @@
 Este módulo modela y mantiene la **cartera** de un usuario:
 
 * **Posiciones** por símbolo (cantidad, coste medio y PnL realizado).
-* **Cash disponible**.
+* **Cash disponible** (mediante una proyección local de sólo lectura sincronizada con el módulo de `wallet`).
 * Reacciona a ejecuciones de órdenes emitidas por `trading`.
 * Publica eventos cuando cambian posiciones y cuando se recalcula una “valoración” agregada de la cartera.
 
@@ -21,7 +20,7 @@ La descripción oficial del módulo y sus límites están en `portfolio/package-
 Según `portfolio/package-info.java` (**4–10**), portfolio:
 
 1. Mantiene posiciones por usuario y símbolo.
-2. Mantiene el cash disponible por usuario.
+2. Contiene una vista del cash disponible por usuario basada en eventos del módulo `wallet`.
 3. Reacciona a eventos de ejecución de órdenes (`trading`).
 4. Publica eventos de cambios de posición y de valoración agregada.
 
@@ -31,14 +30,15 @@ Según `portfolio/package-info.java` (**12–16**):
 
 * No ejecuta órdenes (pertenece a `trading`).
 * No consulta precios de mercado directamente (no hay dependencia directa con `market`).
+* No decide la mutación real del cash del usuario de manera transaccional. Esto es propiedad exclusiva de `wallet`.
 
 ### Dependencias permitidas (Spring Modulith)
 
 El módulo está declarado como `@ApplicationModule` con:
 
-* `allowedDependencies = {"trading :: events"}`
+* `allowedDependencies = {"trading :: events", "wallet :: events"}`
 
-en `portfolio/package-info.java` (**18–20**). Es decir: **portfolio sólo puede depender del submódulo de eventos de trading**, y el acoplamiento se materializa en el evento `OrderExecutedEvent`.
+en `portfolio/package-info.java` (**18–20**). Es decir: **portfolio sólo puede depender de submódulos de eventos tanto de trading como de wallet**.
 
 ---
 
@@ -48,7 +48,7 @@ Este módulo sigue una separación típica:
 
 * **Dominio** (`portfolio/domain`): reglas de negocio puras.
 * **Aplicación** (`portfolio/application`): orquestación y casos de uso.
-* **Adaptadores** (`portfolio/adapter`): entradas (eventos) y salidas (persistencia + publicación de eventos).
+* **Adaptadores** (`portfolio/adapter`): entradas (eventos de trading y wallet) y salidas (persistencia + publicación de eventos).
 
 ### 2.1. Vista de componentes (alto nivel)
 
@@ -59,6 +59,7 @@ flowchart LR
   %% Estilos (colores + bordes)
   %% =====================
   classDef trading fill:#FFE8A3,stroke:#B38600,stroke-width:2px,color:#111;
+  classDef wallet fill:#D4A5A5,stroke:#8B5A5A,stroke-width:2px,color:#111;
   classDef adapter fill:#BFE9FF,stroke:#0077B6,stroke-width:2px,color:#111;
   classDef app fill:#CFF7D3,stroke:#2D6A4F,stroke-width:2px,color:#111;
   classDef domain fill:#FFD6E7,stroke:#C9184A,stroke-width:2px,color:#111;
@@ -68,24 +69,27 @@ flowchart LR
   %% Vista tipo “póster”: pocos bloques grandes
   %% =====================
   OE(["📨 OrderExecutedEvent\n(trading)"]):::trading
+  WC(["📨 AvailableCashUpdatedEvent\n(wallet)"]):::wallet
   IN(["🎧 TradingEventsListener\n(adapter/in)"]):::adapter
+  WL(["🎧 WalletEventsListener\n(adapter/in)"]):::adapter
+  WEB(["🌐 PortfolioController\n(adapter/in/web)"]):::adapter
   SVC(["🧠 PortfolioService\n(application)"]):::app
-  DOM(["📦 Dominio\nPosition + CashAccount"]):::domain
+  DOM(["📦 Dominio\nPosition + CashProjection"]):::domain
   DB(["🗄️ Persistencia\n(JPA)"]):::out
   BUS(["📣 Eventos emitidos\n(Position* + ValuationUpdated)"]):::out
 
   OE ==>|"consume"| IN
+  WC ==>|"consume"| WL
   IN ==>|"delegación"| SVC
+  WL ==>|"actualiza\nproyección"| SVC
+  WEB ==>|"consulta"| SVC
   SVC ==>|"reglas"| DOM
   SVC ==>|"guarda"| DB
   SVC ==>|"publica"| BUS
 
   %% Flechas más gruesas y con color
   linkStyle 0 stroke:#B38600,stroke-width:4px;
-  linkStyle 1 stroke:#0077B6,stroke-width:4px;
-  linkStyle 2 stroke:#2D6A4F,stroke-width:4px;
-  linkStyle 3 stroke:#495057,stroke-width:4px;
-  linkStyle 4 stroke:#495057,stroke-width:4px;
+  linkStyle 1 stroke:#8B5A5A,stroke-width:4px;
 ```
 
 > Si prefieres una vista “arquitectónica” por capas (más detallada), ver **Vista por capas** a continuación.
@@ -98,26 +102,31 @@ flowchart LR
 
 %% Estilos por capa (Tus colores originales)
   classDef trading fill:#FFE8A3,stroke:#B38600,stroke-width:2px,color:#111;
+  classDef wallet fill:#D4A5A5,stroke:#8B5A5A,stroke-width:2px,color:#111;
   classDef adapter fill:#BFE9FF,stroke:#0077B6,stroke-width:2px,color:#111;
   classDef app fill:#CFF7D3,stroke:#2D6A4F,stroke-width:2px,color:#111;
   classDef domain fill:#FFD6E7,stroke:#C9184A,stroke-width:2px,color:#111;
   classDef infra fill:#E9ECEF,stroke:#495057,stroke-width:2px,color:#111;
 
-%% --- Trading ---
-  subgraph T["Trading"]
-    OE2(["📨 OrderExecutedEvent"])
+%% --- External Events ---
+  subgraph T["External Events"]
+    OE2(["📨 OrderExecutedEvent (Trading)"])
+    WCE(["📨 AvailableCashUpdatedEvent (Wallet)"])
   end
   class T trading;
   class OE2 trading;
+  class WCE wallet;
 
 %% --- Adapter ---
   subgraph A["Adapter"]
     L(["🎧 TradingEventsListener"])
+    WL(["🎧 WalletEventsListener"])
+    API(["🌐 PortfolioController (REST)"])
     PUB(["📣 SpringDomainEventPublisher"])
     PRA(["🧩 RepositoryAdapters"])
   end
   class A adapter;
-  class L,PUB,PRA adapter;
+  class L,WL,API,PUB,PRA adapter;
 
 %% --- Application ---
   subgraph B["Application"]
@@ -131,7 +140,7 @@ flowchart LR
 %% --- Domain ---
   subgraph C["Domain"]
     POS(["📦 Position"])
-    CASH(["💰 CashAccount"])
+    CASH(["🪞 CashProjection"])
     EVT(["🧾 Portfolio events"])
   end
   class C domain;
@@ -144,13 +153,15 @@ flowchart LR
   class I infra;
   class JPA infra;
 
-%% Flujo: Usamos flechas normales --> pero les damos grosor. 
-%% Nota: '==>' a veces tiene problemas de renderizado con la punta en algunos navegadores.
+%% Flujo
   OE2 -->|event| L
+  WCE -->|event| WL
   L -->|use case| UC
+  WL -->|use case| UC
+  API -->|query| UC
   UC -->|impl| S
   S -->|rules| POS
-  S -->|rules| CASH
+  S -->|project| CASH
   S -->|emit| EVT
   S -->|ports| PORTS
   PORTS -->|persist| PRA
@@ -163,10 +174,11 @@ flowchart LR
 
 Referencias:
 
-* Entrada por evento: `adapter/in/events/TradingEventsListener.java` (**20–23**).
-* Caso de uso real: `application/services/PortfolioService.java` (**45–69**).
+* Entrada por evento de trading: `adapter/in/events/TradingEventsListener.java`.
+* Entrada por evento de wallet: `adapter/in/events/WalletEventsListener.java`.
+* Caso de uso real: `application/services/PortfolioService.java`.
 * Puertos de salida: `application/ports/out/*.java`.
-* Dominio: `domain/Position.java`, `domain/CashAccount.java`.
+* Dominio: `domain/Position.java`, `domain/CashProjection.java`.
 
 ---
 
@@ -190,25 +202,22 @@ sequenceDiagram
   T->>L: OrderExecutedEvent
   L->>A: handle(event)
   A->>P: findByOwnerAndSymbol(owner, symbol)
-  A->>C: findByOwner(owner)
   alt BUY
 	A->>P: save(open|increase)
 	A->>E: publish(PositionOpened|PositionIncreased)
-	A->>C: save(debit(grossAmount))
   else SELL
 	A->>P: deleteByOwnerAndSymbol OR save(updated)
 	A->>E: publish(PositionClosed|PositionReduced)
-	A->>C: save(credit(grossAmount))
   end
-  A->>A: snapshot = getByOwner(owner)
+  A->>A: snapshot = getByOwner(owner) // Lee CashProjection y Positions
   A->>E: publish(PortfolioValuationUpdatedEvent)
 ```
 
 La lógica completa está en `application/services/PortfolioService.java`:
 
-* Normalización y validaciones: **48–55**, **157–179**.
-* Ruteo por lado BUY/SELL: **55–59**.
-* Publicación del evento de valoración agregada: **61–68**.
+* Normalización y validaciones base.
+* Ruteo por lado BUY/SELL, enfocado puramente en la **creación/actualización de posiciones**.
+* Publicación del evento de valoración agregada, leyendo la proyección del cash.
 
 ---
 
@@ -247,19 +256,16 @@ Representa una posición **por** `(owner, symbol)`.
 
 **Consultas auxiliares**:
 
-* `investedAmount()` (**89–91**) = `quantity * averageCost`.
-* `isClosed()` (**93–95**) = `quantity == 0`.
+* `investedAmount()` = `quantity * averageCost`.
+* `isClosed()` = `quantity == 0`.
 
-### 4.2. `CashAccount`: cash disponible
+### 4.2. `CashProjection`: réplica del cash disponible basada en eventos
 
-Archivo: `domain/CashAccount.java`.
+Archivo: `domain/CashProjection.java`.
 
-* Abre una cuenta inicial en cero: `open(owner)` (**19–21**).
-* Suma cash al vender: `credit(amount)` (**27–30**).
-* Resta cash al comprar: `debit(amount)` (**32–35**).
-* Validación: `amount > 0` (**52–56**).
+A diferencia de las posiciones que sufren mutaciones de dominio aquí, el módulo `portfolio` **no cambia** activamente el cash. Simplemente mantiene un modelo de *read-only* (proyección local) que se sincroniza escuchando eventos emitidos por el módulo `wallet`.
 
-> Nota: el módulo no impone “no permitir cash negativo”. `debit()` hace `availableCash.subtract(amount)` (**34**) sin comprobar saldo. Si en el futuro se desea evitarlo, la regla debe vivir aquí (dominio), no en el servicio.
+Al reaccionar ante el evento `AvailableCashUpdatedEvent` de `wallet`, `PortfolioService` extrae la información de dominio y guarda un record de la `CashProjection` actualizando un timestamp.
 
 ### 4.3. Excepciones de dominio
 
@@ -273,11 +279,14 @@ Archivo: `domain/CashAccount.java`.
 
 Ubicación: `application/ports/in`.
 
-* `HandleOrderExecutedUseCase` (`handle(OrderExecutedEvent event)`) en `HandleOrderExecutedUseCase.java` (**5–8**).
+* `HandleOrderExecutedUseCase` (`handle(OrderExecutedEvent event)`) en `HandleOrderExecutedUseCase.java`.
   * Es el contrato que permite que un adaptador de entrada (listener de eventos) invoca la lógica.
 
-* `GetPortfolioUseCase` (`getByOwner(String owner)`) en `GetPortfolioUseCase.java` (**5–8**).
-  * Contrato de lectura (consulta) de la cartera.
+* `HandleWalletCashUpdatedUseCase` (`handle(AvailableCashUpdatedEvent event)`) en `HandleWalletCashUpdatedUseCase.java`.
+  * Contrato usado para actualizar la proyección del estado de liquidez emitido desde `wallet`.
+
+* `GetPortfolioUseCase` (`getByOwner(String owner)`) en `GetPortfolioUseCase.java`.
+  * Contrato de lectura (consulta) de la cartera agregada.
 
 ### 5.2. Servicio de aplicación: `PortfolioService`
 
@@ -285,45 +294,41 @@ Archivo: `application/services/PortfolioService.java`.
 
 Implementa ambos casos de uso:
 
-* `implements HandleOrderExecutedUseCase, GetPortfolioUseCase` (**31**).
+* `implements HandleOrderExecutedUseCase, GetPortfolioUseCase, HandleWalletCashUpdatedUseCase`.
 
 #### Método principal: `handle(OrderExecutedEvent event)`
 
 Se encarga de:
 
-1. Extraer/normalizar datos del evento (`owner`, `symbol`, `quantity`, `price`) (**47–51**, **157–169**).
-2. Recuperar o crear la cuenta de cash (**53**).
-3. Ejecutar rama BUY o SELL (**55–59**).
-4. Recalcular snapshot agregado y publicar `PortfolioValuationUpdatedEvent` (**61–68**).
+1. Extraer/normalizar datos del evento (`owner`, `symbol`, `quantity`, `price`).
+2. Mapear y ejecutar rama BUY o SELL llamando a submétodos privados que actúan exclusivamente sobre repositorios de persistencia *Position*.
+3. Recalcular snapshot agregada (accediendo a la `CashProjection`) y publicar `PortfolioValuationUpdatedEvent`.
 
 #### Rama BUY: `handleBuy(...)`
 
-En `PortfolioService.java` (**89–119**):
-
-* Si no existe posición → `Position.open(...)` y publica `PositionOpenedEvent` (**98–107**).
-* Si existe → `current.increase(...)` y publica `PositionIncreasedEvent` (**108–116**).
-* Debita cash: `cashAccount.debit(grossAmount)` (**118**).
+* Si no existe posición → `Position.open(...)` y publica `PositionOpenedEvent`.
+* Si existe → `current.increase(...)` y publica `PositionIncreasedEvent`.
 
 #### Rama SELL: `handleSell(...)`
 
-En `PortfolioService.java` (**121–155**):
+* Requiere posición existente o lanza `PortfolioDomainException`.
+* Aplica reducción/cierre con `current.reduce(...)`.
+* Si queda cerrada → elimina en repositorio y publica `PositionClosedEvent`.
+* Si queda abierta → guarda y publica `PositionReducedEvent`.
 
-* Requiere posición existente o lanza `PortfolioDomainException` (**127–129**).
-* Aplica reducción/cierre con `current.reduce(...)` (**130–132**).
-* Si queda cerrada → elimina en repositorio y publica `PositionClosedEvent` (**133–141**).
-* Si queda abierta → guarda y publica `PositionReducedEvent` (**142–152**).
-* Acredita cash: `cashAccount.credit(grossAmount)` (**154**).
+#### Método sincronización de balance: `handle(AvailableCashUpdatedEvent event)`
+
+* Recibe el evento emitido por `wallet`, valida parámetros.
+* Actualiza o crea el persistente `CashProjection` mediante el repositorio.
 
 #### Lectura agregada: `getByOwner(owner)`
 
-En `PortfolioService.java` (**71–87**):
-
-* Carga todas las posiciones (`findByOwner`) (**74**).
+* Carga todas las posiciones (`findByOwner`).
 * Suma:
-  * `totalCostBasis`: suma de `Position::investedAmount` (**75–77**).
-  * `totalRealizedPnl`: suma de `Position::realizedPnl` (**78–80**).
-* Lee `cashAvailable` de `CashAccount` (o 0 si no existe) (**82–85**).
-* Devuelve `PortfolioSnapshot` (**86**).
+  * `totalCostBasis`: suma de `Position::investedAmount`.
+  * `totalRealizedPnl`: suma de `Position::realizedPnl`.
+* Lee `cashAvailable` desde la base de datos a través de la interfaz proyectada de `CashProjection` (o devuelve 0).
+* Devuelve `PortfolioSnapshot`.
 
 ---
 
@@ -340,12 +345,12 @@ Archivo: `application/ports/out/PositionRepositoryPort.java` (**8–17**):
 * `save(position)`
 * `deleteByOwnerAndSymbol(owner, symbol)`
 
-### 6.2. Persistencia de cash: `CashAccountRepositoryPort`
+### 6.2. Persistencia de la proyección de cash: `CashProjectionRepositoryPort`
 
-Archivo: `application/ports/out/CashAccountRepositoryPort.java` (**7–12**):
+Archivo: `application/ports/out/CashProjectionRepositoryPort.java`:
 
 * `findByOwner(owner)`
-* `save(cashAccount)`
+* `save(projection)`
 
 ### 6.3. Publicación de eventos: `DomainEventPublisherPort`
 
@@ -362,457 +367,38 @@ Este puerto desacopla la capa de aplicación de la tecnología de eventos (Sprin
 ### 7.1. Adaptador de entrada: listener de eventos de trading
 
 * `adapter/in/events/TradingEventsListener.java`
-  * Método `on(OrderExecutedEvent event)` (**20–23**) con `@EventListener`.
+  * Método `on(OrderExecutedEvent event)` con `@EventListener`.
   * Traduce el evento de `trading` en una llamada al caso de uso `HandleOrderExecutedUseCase`.
 
-### 7.2. Adaptador de salida: publicación de eventos con Spring
+* `adapter/in/events/WalletEventsListener.java`
+  * Método `on(AvailableCashUpdatedEvent event)` con `@EventListener`.
+  * Se apoya sobre este evento del módulo `wallet` para mantener consistencia de lectura a través del `HandleWalletCashUpdatedUseCase`.
 
-* `adapter/out/events/SpringDomainEventPublisher.java` (**7–19**)
+### 7.2. Adaptador de entrada: Web (REST)
+
+* `adapter/in/web/PortfolioController.java`
+  * Expone el endpoint `GET /api/portfolio`.
+  * Invoca `GetPortfolioUseCase.getByOwner(...)` obteniendo un `PortfolioSnapshot`.
+  * Modela la respuesta usando los DTOs `PortfolioResponse` y `PositionResponse`.
+
+### 7.3. Adaptador de salida: publicación de eventos con Spring
+
+* `adapter/out/events/SpringDomainEventPublisher.java`
   * Implementa `DomainEventPublisherPort`.
   * Usa `ApplicationEventPublisher.publishEvent(event)` (**17–18**).
 
-### 7.3. Adaptadores de salida: persistencia (JPA)
+### 7.4. Adaptadores de salida: persistencia (JPA)
 
 #### Posiciones
 
-* `adapter/out/persistence/PositionRepositoryAdapter.java` (**12–42**)
+* `adapter/out/persistence/PositionRepositoryAdapter`
   * Implementa `PositionRepositoryPort`.
-  * Usa `SpringDataPositionRepository`.
-  * Mapea dominio ⇄ JPA con `PositionMapper`.
-
-Claves de implementación:
-
-* En `save(...)` se conserva el `id` si ya existe (para hacer update) (**33–36**).
-
-#### Cash
-
-* `adapter/out/persistence/CashAccountRepositoryAdapter.java` (**11–31**)
-  * Similar: conserva `id` si existe (**27–30**).
-
-#### Mappers
-
-* `adapter/out/persistence/PositionMapper.java`:
-  * `toDomain(...)` rehidrata el agregado con `Position.rehydrate(...)` (**11–19**).
-  * `toEntity(...)` copia campos, incluido `updatedAt` (**22–30**).
-
-* `adapter/out/persistence/CashAccountMapper.java`:
-  * Rehidratación con `CashAccount.rehydrate(...)` (**11–13**).
-
-#### Entidades JPA
-
-* `adapter/out/persistence/jpa/PositionJpaEntity.java`:
-  * Tabla `portfolio_position` y unique `(owner, symbol)` (**14–18**).
-  * Campos `quantity`, `averageCost`, `realizedPnl` como `DECIMAL(19, 8)` (**31–38**).
-
-* `adapter/out/persistence/jpa/CashAccountJpaEntity.java`:
-  * Tabla `portfolio_cash_account` (**12–13**).
-  * Columna `owner` única (**20–21**).
-
----
-
-## 8) Catálogo de eventos del módulo
-
-### 8.1. Evento consumido (entrada)
-
-* **`OrderExecutedEvent`** (definido en `trading`)
-  * Consumido en `TradingEventsListener.on(...)` (**20–23**).
-  * Procesado en `PortfolioService.handle(...)` (**45–69**).
-
-### 8.2. Eventos emitidos (salida)
-
-Todos se publican desde `PortfolioService` vía `DomainEventPublisherPort`.
-
-| Evento | Cuándo se emite | Código |
-|---|---|---|
-| `PositionOpenedEvent` | Compra y no existía posición | `PortfolioService.handleBuy` (**98–107**) |
-| `PositionIncreasedEvent` | Compra y ya existía posición | `PortfolioService.handleBuy` (**108–116**) |
-| `PositionReducedEvent` | Venta parcial | `PortfolioService.handleSell` (**142–152**) |
-| `PositionClosedEvent` | Venta que cierra posición | `PortfolioService.handleSell` (**133–141**) |
-| `PortfolioValuationUpdatedEvent` | Tras cada ejecución (BUY/SELL) se recalcula snapshot | `PortfolioService.handle` (**61–68**) |
-
-Definición de records:
-
-* `domain/events/PositionOpenedEvent.java` (**6–12**)
-* `domain/events/PositionIncreasedEvent.java` (**6–12**)
-* `domain/events/PositionReducedEvent.java` (**6–13**)
-* `domain/events/PositionClosedEvent.java` (**6–12**)
-* `domain/events/PortfolioValuationUpdatedEvent.java` (**6–12**)
-
----
-
-## 9) “Mapa mental” rápido: dónde tocar para cada cambio típico
-
-* **Cambiar regla de PnL / coste medio** → `domain/Position.java`.
-* **Cambiar reglas de cash (p.ej. no permitir negativo)** → `domain/CashAccount.java`.
-* **Cambiar el flujo tras ejecución de orden** → `application/services/PortfolioService.java`.
-* **Cambiar persistencia (JPA → otro)** → implementar los puertos en `adapter/out/...`.
-* **Cambiar integración con trading (eventos)** → `adapter/in/events/TradingEventsListener.java`.
-
----
-
-## 10) Inventario de clases (explicación de TODAS las clases del módulo)
-
-> Listado basado en el árbol del paquete `com.trading.platform.eztrade.portfolio`.
-
-### Cómo leer los snippets
-
-Los siguientes fragmentos son **copias literales** (o recortes) del código y están acompañados de:
-
-* **archivo** y **rango de líneas** para poder localizarlo rápidamente,
-* una explicación de **por qué existe** y **qué responsabilidad** tiene.
-
-### Root
-
-* `package-info.java`
-  * Doc + definición de `@ApplicationModule` (límites y dependencias).
-* `portfolio.md`
-  * Este documento.
-
-### A) `adapter` (entradas y salidas)
-
-#### A.1. `adapter/in/events`
-
-* `TradingEventsListener`
-  * Adaptador de entrada (Spring `@EventListener`) que consume `OrderExecutedEvent` y llama al caso de uso.
-
-**Snippet (el módulo “entra” por aquí)** — `adapter/in/events/TradingEventsListener.java` (**11–23**)
-
-```java
-@Component
-public class TradingEventsListener {
-
-    private final HandleOrderExecutedUseCase handleOrderExecutedUseCase;
-
-    public TradingEventsListener(HandleOrderExecutedUseCase handleOrderExecutedUseCase) {
-        this.handleOrderExecutedUseCase = handleOrderExecutedUseCase;
-    }
-
-    @EventListener
-    public void on(OrderExecutedEvent event) {
-        handleOrderExecutedUseCase.handle(event);
-    }
-}
-```
-
-**Por qué es importante**
-
-* Este listener es el **punto de acoplamiento** permitido con `trading` (vía `trading :: events`).
-* Mantiene la integración como “evento → caso de uso” (no hay lógica de negocio aquí).
-
-#### A.2. `adapter/out/events`
-
-* `SpringDomainEventPublisher`
-  * Implementación Spring de `DomainEventPublisherPort`.
-
-**Snippet: publicación real en el bus de Spring** — `adapter/out/events/SpringDomainEventPublisher.java` (**7–19**)
-
-```java
-@Component
-public class SpringDomainEventPublisher implements DomainEventPublisherPort {
-
-    private final ApplicationEventPublisher eventPublisher;
-
-    @Override
-    public void publish(Object event) {
-        eventPublisher.publishEvent(event);
-    }
-}
-```
-
-Esto permite que `PortfolioService` publique eventos sin depender de Spring directamente.
-
-#### A.3. `adapter/out/persistence` (adaptadores a infraestructura)
-
-* `PositionRepositoryAdapter`
-  * Implementación JPA del puerto `PositionRepositoryPort`.
-* `CashAccountRepositoryAdapter`
-  * Implementación JPA del puerto `CashAccountRepositoryPort`.
-* `PositionMapper`
-  * Mapeo dominio ⇄ entidad JPA para `Position`.
-* `CashAccountMapper`
-  * Mapeo dominio ⇄ entidad JPA para `CashAccount`.
-
-##### `PositionRepositoryAdapter` (cómo se guarda realmente una `Position`)
-
-Archivo: `adapter/out/persistence/PositionRepositoryAdapter.java`.
-
-**Snippet: `save` hace upsert preservando el `id`** — (**31–37**)
-
-```java
-@Override
-public Position save(Position position) {
-    Optional<PositionJpaEntity> existing = repository.findByOwnerAndSymbol(position.owner(), position.symbol());
-    PositionJpaEntity toSave = PositionMapper.toEntity(position);
-    existing.ifPresent(entity -> toSave.setId(entity.getId()));
-    return PositionMapper.toDomain(repository.save(toSave));
-}
-```
-
-**Por qué es importante**: como `Position` (dominio) no tiene `id`, el adaptador usa `(owner, symbol)` para encontrar la fila y reutilizar el `id`.
-
-#### A.4. `adapter/out/persistence/jpa` (modelo de BD)
-
-* `SpringDataPositionRepository`
-  * Repositorio Spring Data (consultas por owner/symbol).
-* `PositionJpaEntity`
-  * Entidad persistida de posición (tabla + constraints).
-* `SpringDataCashAccountRepository`
-  * Repositorio Spring Data para cash.
-* `CashAccountJpaEntity`
-  * Entidad persistida de cuenta de cash.
-
-##### `PositionJpaEntity` (schema y constraint)
-
-Archivo: `adapter/out/persistence/jpa/PositionJpaEntity.java`.
-
-**Snippet: tabla y unique constraint** — (**14–18**)
-
-```java
-@Entity
-@Table(
-        name = "portfolio_position",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_portfolio_position_owner_symbol",
-                columnNames = {"owner", "symbol"}
-        )
-)
-public class PositionJpaEntity {
-    // ...
-}
-```
-
-Este constraint es el que garantiza que haya **como máximo una posición por (owner, symbol)**.
-
-### B) `application` (casos de uso + orquestación)
-
-#### B.1. `application/ports/in` (contratos de entrada)
-
-* `GetPortfolioUseCase`
-  * Contrato de consulta de cartera.
-* `HandleOrderExecutedUseCase`
-  * Contrato para procesar ejecuciones de órdenes.
-
-**Nota**: estos puertos permiten que la capa de entrada (web, eventos, etc.) dependa **solo** de interfaces.
-
-#### B.2. `application/ports/out` (contratos hacia infraestructura)
-
-* `PositionRepositoryPort`
-  * Abstracción de persistencia/consulta de posiciones.
-* `CashAccountRepositoryPort`
-  * Abstracción de persistencia/consulta del cash.
-* `DomainEventPublisherPort`
-  * Publicación de eventos del módulo (desacopla de Spring).
-
-#### B.3. `application/services`
-
-* `PortfolioService`
-  * Orquestador del módulo: aplica BUY/SELL, persiste y publica eventos.
-
-##### `PortfolioService` (la clase central del módulo)
-
-Archivo: `application/services/PortfolioService.java`.
-
-Es la clase más relevante porque:
-
-* implementa los **casos de uso** del módulo,
-* coordina **dominio + persistencia + publicación de eventos**,
-* encapsula el “happy path” BUY/SELL.
-
-**Snippet 1: firma, puertos y método `handle`** — `PortfolioService.java` (**29–69**)
-
-```java
-@Service
-@Transactional
-public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfolioUseCase {
-
-    private final PositionRepositoryPort positionRepository;
-    private final CashAccountRepositoryPort cashAccountRepository;
-    private final DomainEventPublisherPort eventPublisher;
-
-    @Override
-    public void handle(OrderExecutedEvent event) {
-        String owner = event.owner();
-        String symbol = normalizeSymbol(event.symbol());
-        BigDecimal quantity = positive(event.quantity(), "Quantity");
-        BigDecimal price = positive(event.price(), "Price");
-        BigDecimal grossAmount = quantity.multiply(price);
-
-        CashAccount cashAccount = cashAccountRepository.findByOwner(owner)
-                .orElseGet(() -> CashAccount.open(owner));
-
-        Side side = parseSide(event.side());
-        switch (side) {
-            case BUY -> handleBuy(owner, symbol, quantity, price, grossAmount, cashAccount);
-            case SELL -> handleSell(owner, symbol, quantity, price, grossAmount, cashAccount);
-        }
-
-        PortfolioSnapshot snapshot = getByOwner(owner);
-        eventPublisher.publish(new PortfolioValuationUpdatedEvent(
-                owner,
-                snapshot.cashAvailable(),
-                snapshot.totalCostBasis(),
-                snapshot.totalRealizedPnl(),
-                LocalDateTime.now()
-        ));
-    }
-}
-```
-
-**Qué decisiones de diseño se ven aquí**
-
-* **Validaciones “de entrada”** (symbol/quantity/price/side) antes de tocar el dominio.
-* **Cuenta cash lazy**: si no existe, se abre con `CashAccount.open(owner)`.
-* Tras cada ejecución se publica siempre `PortfolioValuationUpdatedEvent` (evento agregado).
-
-**Snippet 2: BUY crea o incrementa y debita cash** — `PortfolioService.java` (**89–119**)
-
-```java
-private void handleBuy(String owner,
-                       String symbol,
-                       BigDecimal quantity,
-                       BigDecimal price,
-                       BigDecimal grossAmount,
-                       CashAccount cashAccount) {
-    Position current = positionRepository.findByOwnerAndSymbol(owner, symbol).orElse(null);
-    Position saved;
-
-    if (current == null) {
-        saved = positionRepository.save(Position.open(owner, symbol, quantity, price));
-        eventPublisher.publish(new PositionOpenedEvent(owner, symbol, saved.quantity(), saved.averageCost(), LocalDateTime.now()));
-    } else {
-        saved = positionRepository.save(current.increase(quantity, price));
-        eventPublisher.publish(new PositionIncreasedEvent(owner, symbol, saved.quantity(), saved.averageCost(), LocalDateTime.now()));
-    }
-
-    cashAccountRepository.save(cashAccount.debit(grossAmount));
-}
-```
-
-**Snippet 3: SELL reduce/cierra y acredita cash** — `PortfolioService.java` (**121–155**)
-
-```java
-private void handleSell(String owner,
-                        String symbol,
-                        BigDecimal quantity,
-                        BigDecimal price,
-                        BigDecimal grossAmount,
-                        CashAccount cashAccount) {
-    Position current = positionRepository.findByOwnerAndSymbol(owner, symbol)
-            .orElseThrow(() -> new PortfolioDomainException("Position not found for symbol: " + symbol));
-
-    Position.SellResult result = current.reduce(quantity, price);
-    Position updated = result.position();
-
-    if (updated.isClosed()) {
-        positionRepository.deleteByOwnerAndSymbol(owner, symbol);
-        eventPublisher.publish(new PositionClosedEvent(owner, symbol, result.realizedPnlDelta(), updated.realizedPnl(), LocalDateTime.now()));
-    } else {
-        positionRepository.save(updated);
-        eventPublisher.publish(new PositionReducedEvent(owner, symbol, updated.quantity(), result.realizedPnlDelta(), updated.realizedPnl(), LocalDateTime.now()));
-    }
-
-    cashAccountRepository.save(cashAccount.credit(grossAmount));
-}
-```
-
-**Detalle clave**: en SELL la lógica de PnL está en el dominio (`Position.reduce`) y el servicio solo decide si borrar o actualizar.
-
-### C) `domain` (modelo de negocio)
-
-* `Position`
-  * Agregado: quantity/averageCost/realizedPnl + reglas de open/increase/reduce.
-* `CashAccount`
-  * Entidad: cash disponible + reglas credit/debit.
-* `PortfolioSnapshot`
-  * Vista agregada retornada por el caso de uso de lectura.
-* `PortfolioDomainException`
-  * Excepción de dominio.
-
-#### `Position` (regla crítica: cálculo de PnL realizado)
-
-Archivo: `domain/Position.java`.
-
-**Snippet: `reduce(...)` calcula el PnL incremental y ajusta estado** — (**62–87**)
-
-```java
-public SellResult reduce(BigDecimal quantityToSell, BigDecimal executionPrice) {
-    requirePositive(quantityToSell, "Quantity to sell");
-    requirePositive(executionPrice, "Execution price");
-
-    if (quantityToSell.compareTo(quantity) > 0) {
-        throw new PortfolioDomainException("Cannot sell more units than current position");
-    }
-
-    BigDecimal realizedDelta = executionPrice.subtract(averageCost).multiply(quantityToSell);
-    BigDecimal newRealizedPnl = realizedPnl.add(realizedDelta);
-    BigDecimal remainingQuantity = quantity.subtract(quantityToSell);
-    BigDecimal newAverageCost = remainingQuantity.compareTo(BigDecimal.ZERO) == 0
-            ? BigDecimal.ZERO
-            : averageCost;
-
-    Position updated = new Position(owner, symbol, remainingQuantity, newAverageCost, newRealizedPnl, LocalDateTime.now());
-    return new SellResult(updated, realizedDelta);
-}
-```
-
-**Interpretación**
-
-* `realizedDelta` es el PnL de **esa venta**.
-* `realizedPnl` acumula el PnL realizado histórico de la posición.
-* No existe PnL no realizado (unrealized) porque el módulo no consulta precios de mercado.
-
-#### `CashAccount` (operaciones credit/debit)
-
-Archivo: `domain/CashAccount.java`.
-
-**Snippet: `credit` / `debit`** — (**27–35**)
-
-```java
-public CashAccount credit(BigDecimal amount) {
-    validateAmount(amount);
-    return new CashAccount(owner, availableCash.add(amount));
-}
-
-public CashAccount debit(BigDecimal amount) {
-    validateAmount(amount);
-    return new CashAccount(owner, availableCash.subtract(amount));
-}
-```
-
-Esto refuerza la idea de “dominio inmutable”: cada operación devuelve un nuevo objeto.
-
-#### C.1. `domain/events` (eventos de dominio del módulo)
-
-* `PositionOpenedEvent`
-* `PositionIncreasedEvent`
-* `PositionReducedEvent`
-* `PositionClosedEvent`
-* `PortfolioValuationUpdatedEvent`
-
-##### Eventos como `record` (mensajes simples)
-
-Ejemplo — `domain/events/PositionReducedEvent.java` (**6–13**)
-
-```java
-public record PositionReducedEvent(
-        String owner,
-        String symbol,
-        BigDecimal quantity,
-        BigDecimal realizedPnlDelta,
-        BigDecimal totalRealizedPnl,
-        LocalDateTime occurredAt
-) {
-}
-```
-
-**Por qué es útil**: el evento expone tanto el cambio puntual (`realizedPnlDelta`) como el acumulado (`totalRealizedPnl`), facilitando proyecciones/lecturas en otros módulos.
-
----
-
-## 11) Notas de diseño y mejoras futuras (opcional)
-
-* Hoy `PortfolioValuationUpdatedEvent` es una agregación sin precios de mercado (solo cash + coste + PnL realizado). Para “valor de mercado” sería necesario integrar precios (idealmente vía un puerto hacia `market`).
-* La regla de “cash no negativo” no existe actualmente (ver `CashAccount.debit`), por lo que el módulo permite saldos negativos. Si interesa, conviene introducir:
-  * `CashAccount.debit(...)` con validación, o
-  * un concepto de “margen” si se permite apalancamiento.
-
+* `PositionMapper` / `jpa.PositionJpaEntity`
+  * Entidades para usar con Spring Data.
+
+#### Cash (Proyección)
+
+* `adapter/out/persistence/CashProjectionRepositoryAdapter`
+  * Implementa `CashProjectionRepositoryPort`.
+* `CashProjectionMapper` / `jpa.CashProjectionJpaEntity`
+  * Guarda el saldo local actual en base a los eventos del origen que es `wallet`.

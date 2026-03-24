@@ -3,6 +3,7 @@ package com.trading.platform.eztrade.security.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -27,21 +28,24 @@ public class JwtService {
      * <p>
      * Debe mantenerse segura y no exponerse públicamente.
      */
-    private static final String SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970";
+    @Value("${security.jwt.secret}")
+    private String secretKey;
 
     /**
      * Tiempo de validez del token de acceso en milisegundos.
      * <p>
      * En este caso, 24 horas.
      */
-    private static final long TOKEN_EXPIRATION = 1000 * 60 * 60 * 24;
+    @Value("${security.jwt.token-expiration-ms:86400000}")
+    private long tokenExpirationMs;
 
     /**
      * Ventana de renovación del token en milisegundos tras su expiración.
      * <p>
      * En este caso, 7 días adicionales.
      */
-    private static final long REFRESH_WINDOW = 1000 * 60 * 60 * 24 * 7;
+    @Value("${security.jwt.refresh-window-ms:604800000}")
+    private long refreshWindowMs;
 
     /**
      * Extrae el nombre de usuario (subject) contenido en el token JWT.
@@ -92,7 +96,7 @@ public class JwtService {
                 .claims(extraClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + TOKEN_EXPIRATION))
+                .expiration(new Date(System.currentTimeMillis() + tokenExpirationMs))
                 .signWith(getSignInKey())
                 .compact();
     }
@@ -163,7 +167,7 @@ public class JwtService {
      * @return clave criptográfica usada para firmar y verificar tokens
      */
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -179,7 +183,7 @@ public class JwtService {
             Date expiration = claims.getExpiration();
             long currentTime = System.currentTimeMillis();
             return expiration.before(new Date(currentTime)) &&
-                    expiration.getTime() + REFRESH_WINDOW > currentTime;
+                    expiration.getTime() + refreshWindowMs > currentTime;
         } catch (Exception e) {
             return false;
         }

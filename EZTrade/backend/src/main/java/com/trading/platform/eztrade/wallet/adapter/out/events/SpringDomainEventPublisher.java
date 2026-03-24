@@ -4,13 +4,13 @@ import com.trading.platform.eztrade.wallet.application.ports.out.DomainEventPubl
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
-@Component
 /**
  * Adaptador de salida que implementa {@link DomainEventPublisherPort} usando el bus de eventos de Spring.
  * <p>
  * Convierte la intención de "publicar un evento de dominio" en una llamada a
  * {@link ApplicationEventPublisher#publishEvent(Object)}.
  */
+@Component("walletDomainEventPublisher")
 public class SpringDomainEventPublisher implements DomainEventPublisherPort {
 
     private final ApplicationEventPublisher eventPublisher;

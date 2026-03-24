@@ -1,0 +1,90 @@
+### Paso 0: Registro (Sign Up)
+# Antes de poder iniciar sesión, necesitamos crear un usuario en el sistema.
+POST http://localhost:8088/api/user/register
+Content-Type: application/json
+
+{
+  "firstname": "Demo",
+  "lastname": "User",
+  "username": "demoUser",
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Paso 1: Autenticación (Login)
+# Ahora que el usuario existe, nos autenticamos para obtener un Token JWT.
+# Se puede iniciar sesión con email o username.
+POST http://localhost:8088/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "password123"
+}
+
+### Paso 1 (Alternativo): Autenticación con username
+POST http://localhost:8088/auth/login
+Content-Type: application/json
+
+{
+  "username": "demoUser",
+  "password": "password123"
+}
+
+> {%
+    // Guardamos el token para las siguientes peticiones
+    client.global.set("auth_token", response.body.token);
+%}
+
+### Paso 2.1: Depositar Fondos en el Wallet
+# Nos aseguramos de tener dinero fiduciario disponible.
+POST http://localhost:8088/api/v1/wallet/deposit
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "amount": 1000.00,
+  "referenceId": "demo-deposit-001",
+  "description": "Ingreso inicial para demo"
+}
+
+### Paso 2.2: Consultar Balance
+# Verificamos que tenemos los 1000 USD de balance disponible.
+GET http://localhost:8088/api/v1/wallet/balance
+Authorization: Bearer {{auth_token}}
+
+### Paso 3: Consultar el Mercado (Market)
+# Buscamos el precio actual de la acción de Apple (AAPL) antes de comprar.
+GET http://localhost:8088/api/v1/market/get-price?symbol=AAPL
+Authorization: Bearer {{auth_token}}
+
+### Paso 4: Ejecutar una Orden de Compra (Trading)
+# Compramos 2 acciones de AAPL a 150 (orden limitada para demo).
+POST http://localhost:8088/api/v1/trading/orders
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "symbol": "AAPL",
+  "side": "BUY",
+  "quantity": 2,
+  "price": 150
+}
+
+> {%
+    // Guardamos el id para ejecutar la orden en el siguiente paso
+    client.global.set("order_id", response.body.id);
+%}
+
+### Paso 5: Ejecutar la orden creada
+POST http://localhost:8088/api/v1/trading/orders/{{order_id}}/execute
+Authorization: Bearer {{auth_token}}
+
+### Paso 6: Verificar resultado desde Notifications
+# El backend no expone un endpoint REST de lectura de notifications en esta demo.
+# La confirmación se observa por canales del módulo notifications (logs/WS/inbox persistido).
+
+### Paso 6.1 (Opcional): Consultar cartera por API
+GET http://localhost:8088/api/portfolio
+Authorization: Bearer {{auth_token}}
+

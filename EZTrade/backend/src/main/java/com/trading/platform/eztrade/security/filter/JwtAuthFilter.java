@@ -108,18 +108,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
             boolean isTokenValid = jwtService.isTokenValid(jwt, userDetails);
             boolean isTokenExpired = jwtService.isTokenExpired(jwt);
-            boolean canBeRenewed = jwtService.canTokenBeRenewed(jwt);
 
-            if (!isTokenValid || (isTokenExpired && !canBeRenewed)) {
+            if (!isTokenValid || isTokenExpired) {
                 SecurityContextHolder.clearContext();
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            if (isTokenExpired) {
-                String newToken = jwtService.renewToken(jwt, userDetails);
-                response.setHeader("Authorization", "Bearer " + newToken);
-            }
 
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userDetails,

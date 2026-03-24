@@ -9,7 +9,7 @@ import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderPlace
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
-@Component
+
 /**
  * Adaptador de entrada basado en eventos Spring.
  * <p>
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
  * casos de uso del módulo wallet. Mantener el listener separado del servicio permite desacoplar el mecanismo de
  * transporte (Spring events) de la lógica de aplicación.
  */
+@Component("TradingEventsListener")
 public class TradingEventsListener {
 
     private final HandleOrderPlacedUseCase handleOrderPlacedUseCase;
