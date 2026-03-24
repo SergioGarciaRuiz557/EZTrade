@@ -1,7 +1,5 @@
 package com.trading.platform.eztrade.trading.domain.events;
 
-import com.trading.platform.eztrade.trading.domain.OrderId;
-
 import java.time.LocalDateTime;
 
 /**
@@ -13,7 +11,7 @@ import java.time.LocalDateTime;
  * @param occurredAt fecha y hora de emision del evento
  */
 public record OrderCancelledEvent(
-        OrderId orderId,
+        Long orderId,
         String owner,
         String symbol,
         LocalDateTime occurredAt

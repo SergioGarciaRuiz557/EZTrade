@@ -1,8 +1,5 @@
 package com.trading.platform.eztrade.trading.domain.events;
 
-import com.trading.platform.eztrade.trading.domain.OrderId;
-import com.trading.platform.eztrade.trading.domain.OrderSide;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -21,10 +18,10 @@ import java.time.LocalDateTime;
  * @param occurredAt fecha y hora de emision del evento
  */
 public record OrderPlacedEvent(
-        OrderId orderId,
+        Long orderId,
         String owner,
         String symbol,
-        OrderSide side,
+        String side,
         BigDecimal quantity,
         BigDecimal price,
         LocalDateTime occurredAt

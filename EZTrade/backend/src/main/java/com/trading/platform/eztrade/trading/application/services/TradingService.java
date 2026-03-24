@@ -71,10 +71,10 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
         TradeOrder saved = tradeOrderRepositoryPort.save(order);
 
         domainEventPublisherPort.publish(new OrderPlacedEvent(
-                saved.id(),
+                saved.id().value(),
                 saved.owner(),
                 saved.symbol(),
-                saved.side(),
+                saved.side().name(),
                 saved.quantity().value(),
                 saved.price().value(),
                 LocalDateTime.now()
@@ -126,7 +126,7 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
         TradeOrder cancelled = tradeOrderRepositoryPort.save(current.cancel(requestedBy));
 
         domainEventPublisherPort.publish(new OrderCancelledEvent(
-                cancelled.id(),
+                cancelled.id().value(),
                 cancelled.owner(),
                 cancelled.symbol(),
                 LocalDateTime.now()
