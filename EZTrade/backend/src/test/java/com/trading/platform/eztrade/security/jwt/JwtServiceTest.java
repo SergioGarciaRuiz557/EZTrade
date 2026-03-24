@@ -2,9 +2,11 @@ package com.trading.platform.eztrade.security.jwt;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -14,6 +16,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JwtServiceTest {
 
     private final JwtService jwtService = new JwtService();
+
+    @BeforeEach
+    void setUp() {
+        ReflectionTestUtils.setField(jwtService, "secretKey", "ZmFrZS1kZXYtand0LXNlY3JldC1yZXBsYWNlLWluLXByb2Qtb25seS0xMjM0NTY3ODkw");
+        ReflectionTestUtils.setField(jwtService, "tokenExpirationMs", 86_400_000L);
+        ReflectionTestUtils.setField(jwtService, "refreshWindowMs", 604_800_000L);
+    }
 
     private UserDetails sampleUser() {
         return new User("john.doe@test.com", "pwd123",

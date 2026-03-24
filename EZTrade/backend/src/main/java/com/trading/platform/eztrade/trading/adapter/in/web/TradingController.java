@@ -75,7 +75,9 @@ public class TradingController {
      * @return orden ejecutada
      */
     @PostMapping("/{orderId}/execute")
-    public ResponseEntity<TradeOrderResponse> execute(@PathVariable Long orderId) {
+    public ResponseEntity<TradeOrderResponse> execute(@PathVariable Long orderId,
+                                                      Authentication authentication) {
+        ensureOwnerOrForbidden(orderId, authentication);
         TradeOrder order = executeOrderUseCase.execute(new OrderId(orderId));
         return ResponseEntity.ok(TradeOrderResponse.from(order));
     }
@@ -101,8 +103,10 @@ public class TradingController {
      * @return orden encontrada
      */
     @GetMapping("/{orderId}")
-    public ResponseEntity<TradeOrderResponse> getById(@PathVariable Long orderId) {
-        return ResponseEntity.ok(TradeOrderResponse.from(getOrdersUseCase.getById(new OrderId(orderId))));
+    public ResponseEntity<TradeOrderResponse> getById(@PathVariable Long orderId,
+                                                      Authentication authentication) {
+        TradeOrder order = ensureOwnerOrForbidden(orderId, authentication);
+        return ResponseEntity.ok(TradeOrderResponse.from(order));
     }
 
     /**
@@ -118,6 +122,14 @@ public class TradingController {
                 .map(TradeOrderResponse::from)
                 .toList();
         return ResponseEntity.ok(data);
+    }
+
+    private TradeOrder ensureOwnerOrForbidden(Long orderId, Authentication authentication) {
+        TradeOrder order = getOrdersUseCase.getById(new OrderId(orderId));
+        if (!order.owner().equalsIgnoreCase(authentication.getName())) {
+            throw new org.springframework.security.access.AccessDeniedException("You cannot access another user's order");
+        }
+        return order;
     }
 }
 
