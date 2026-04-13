@@ -1,10 +1,12 @@
 package com.trading.platform.eztrade.market.domain;
 
+import java.util.Locale;
+
 /**
  * Value object que representa el símbolo (ticker) de un instrumento financiero.
  * <p>
  * Se valida que el ticker no sea vacío y que cumpla un formato sencillo:
- * letras mayúsculas con una longitud máxima de 5 caracteres.
+ * letras/números con soporte de '.', '-' y '_' con una longitud máxima de 20 caracteres.
  */
 public record Symbol(String value) {
 
@@ -18,7 +20,9 @@ public record Symbol(String value) {
             throw new InvalidSymbolException("Ticker cannot be empty");
         }
 
-        if (!value.matches("^[A-Z]{1,5}$")) {
+        value = value.trim().toUpperCase(Locale.ROOT);
+
+        if (!value.matches("^[A-Z0-9._-]{1,20}$")) {
             throw new InvalidSymbolException("Invalid ticker: " + value);
         }
     }

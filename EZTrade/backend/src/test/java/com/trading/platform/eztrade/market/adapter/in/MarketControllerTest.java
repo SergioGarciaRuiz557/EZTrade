@@ -5,10 +5,12 @@ import com.trading.platform.eztrade.market.application.ports.in.GetPriceUserCase
 import com.trading.platform.eztrade.market.application.ports.in.SearchInstrumentUserCase;
 import com.trading.platform.eztrade.market.domain.Instrument;
 import com.trading.platform.eztrade.market.domain.InstrumentOverview;
+import com.trading.platform.eztrade.market.domain.ExternalApiException;
 import com.trading.platform.eztrade.market.domain.MarketPrice;
 import com.trading.platform.eztrade.market.domain.Symbol;
 import com.trading.platform.eztrade.security.configuration.BeansConfig;
 import com.trading.platform.eztrade.security.service.AuthService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -35,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(MarketController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@Import(MarketControllerTest.TestConfig.class)
+@Import({MarketControllerTest.TestConfig.class, MarketExceptionHandler.class})
 class MarketControllerTest {
 
     @Autowired
@@ -49,6 +51,11 @@ class MarketControllerTest {
 
     @Autowired
     private GetOverviewUserCase getOverviewUserCase;
+
+    @AfterEach
+    void resetMocks() {
+        Mockito.reset(getPriceUserCase, searchInstrumentUserCase, getOverviewUserCase);
+    }
 
 
 
@@ -109,6 +116,20 @@ class MarketControllerTest {
                 .andExpect(jsonPath("$.industry", is("Information Technology Services")))
                 .andExpect(jsonPath("$.marketCap", is(1000000000)))
                 .andExpect(jsonPath("$.peRatio", is(15.5)));
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/market/get-price devuelve 429 cuando el proveedor externo responde rate limit")
+    void get_price_returns_429_when_rate_limit_is_reached() throws Exception {
+        given(getPriceUserCase.getPrice(new Symbol("IBM")))
+                .willThrow(new ExternalApiException("Alpha Vantage rate limit reached: test"));
+
+        mockMvc.perform(get("/api/v1/market/get-price").param("symbol", "IBM"))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "60"))
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.error", is("Alpha Vantage rate limit reached: test")))
+                .andExpect(jsonPath("$.recommendation", is("Rate limit alcanzado. Reintenta en 60 segundos y reduce la frecuencia de consultas.")));
     }
 
     @TestConfiguration
