@@ -1,4 +1,4 @@
-package com.trading.platform.eztrade.market.adapter.in.web;
+package com.trading.platform.eztrade.market.adapter.in;
 
 import com.trading.platform.eztrade.market.application.ports.in.GetOverviewUserCase;
 import com.trading.platform.eztrade.market.application.ports.in.GetPriceUserCase;
