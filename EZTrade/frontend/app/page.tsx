@@ -21,8 +21,14 @@ import {
   Wallet,
   PieChart,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  X,
+  ShoppingCart,
+  Building2,
+  Globe,
+  DollarSign
 } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 // Simbolos populares para mostrar en la pagina principal
 const POPULAR_SYMBOLS = ["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA", "TSLA"]
