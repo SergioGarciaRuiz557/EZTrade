@@ -29,6 +29,27 @@ const INDEX_SYMBOLS = [
   { symbol: "DIA", name: "DOW JONES" },
 ]
 
+// Datos de ejemplo para usuarios no logueados
+const MOCK_STOCKS = [
+  { symbol: "AAPL", name: "Apple Inc.", price: 178.52, sector: "Technology" },
+  { symbol: "GOOGL", name: "Alphabet Inc.", price: 141.80, sector: "Technology" },
+  { symbol: "MSFT", name: "Microsoft Corp.", price: 378.91, sector: "Technology" },
+  { symbol: "AMZN", name: "Amazon.com Inc.", price: 178.25, sector: "Consumer Cyclical" },
+  { symbol: "NVDA", name: "NVIDIA Corp.", price: 875.28, sector: "Technology" },
+  { symbol: "TSLA", name: "Tesla Inc.", price: 177.48, sector: "Consumer Cyclical" },
+]
+
+const MOCK_INDICES = [
+  { symbol: "SPY", name: "S&P 500", price: 5234.18 },
+  { symbol: "QQQ", name: "NASDAQ", price: 18439.17 },
+  { symbol: "DIA", name: "DOW JONES", price: 39087.38 },
+]
+
+const MOCK_SECTORS = [
+  { name: "Technology", count: 4 },
+  { name: "Consumer Cyclical", count: 2 },
+]
+
 interface StockData {
   symbol: string
   name: string
@@ -37,11 +58,11 @@ interface StockData {
 }
 
 // Componente de grafico de barras para sectores
-function SectorBarChart({ data }: { data: { name: string; count: number }[] }) {
+function SectorBarChart({ data, blurred }: { data: { name: string; count: number }[]; blurred?: boolean }) {
   const maxValue = Math.max(...data.map(d => d.count), 1)
   
   return (
-    <div className="space-y-3">
+    <div className={`space-y-3 ${blurred ? "blur-sm select-none pointer-events-none" : ""}`}>
       {data.map((item, index) => (
         <div key={index} className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground w-28 truncate">{item.name}</span>
@@ -61,7 +82,7 @@ function SectorBarChart({ data }: { data: { name: string; count: number }[] }) {
 }
 
 // Componente de grafico de lineas simple
-function SimpleLineChart() {
+function SimpleLineChart({ blurred }: { blurred?: boolean }) {
   const points = [40, 65, 45, 70, 55, 80, 60, 90, 75, 95, 85, 100]
   const width = 300
   const height = 100
@@ -80,7 +101,7 @@ function SimpleLineChart() {
   const areaD = `${pathD} L ${getX(points.length - 1)} ${height - padding} L ${getX(0)} ${height - padding} Z`
   
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-32">
+    <svg viewBox={`0 0 ${width} ${height}`} className={`w-full h-32 ${blurred ? "blur-sm" : ""}`}>
       <defs>
         <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
@@ -104,7 +125,7 @@ function LoginRequiredModal({ onClose }: { onClose: () => void }) {
           </div>
           <CardTitle>Acceso requerido</CardTitle>
           <CardDescription>
-            Para interactuar con los datos del mercado y gestionar tu portfolio, necesitas iniciar sesion.
+            Para ver los datos reales del mercado y gestionar tu portfolio, necesitas iniciar sesion.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -123,16 +144,36 @@ function LoginRequiredModal({ onClose }: { onClose: () => void }) {
   )
 }
 
+// Overlay para datos borrosos
+function BlurOverlay({ onClick }: { onClick: () => void }) {
+  return (
+    <div 
+      className="absolute inset-0 flex items-center justify-center bg-background/30 backdrop-blur-[2px] cursor-pointer z-10 rounded-lg"
+      onClick={onClick}
+    >
+      <div className="flex flex-col items-center gap-2 text-center p-4">
+        <Lock className="w-6 h-6 text-primary" />
+        <span className="text-sm font-medium">Inicia sesion para ver datos reales</span>
+      </div>
+    </div>
+  )
+}
+
 export default function HomePage() {
   const { token } = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [stocks, setStocks] = useState<StockData[]>([])
   const [indices, setIndices] = useState<{ symbol: string; name: string; price: number }[]>([])
   const [sectors, setSectors] = useState<{ name: string; count: number }[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dataLoaded, setDataLoaded] = useState(false)
+
+  const isLoggedIn = !!token
 
   const loadMarketData = async () => {
+    if (!token) return
+    
     setLoading(true)
     setError(null)
     
@@ -188,6 +229,7 @@ export default function HomePage() {
         }
       })
       setSectors(Array.from(sectorMap.entries()).map(([name, count]) => ({ name, count })))
+      setDataLoaded(true)
 
     } catch (err) {
       setError("No se pudieron cargar los datos del mercado. Asegurate de que el backend este corriendo.")
@@ -197,14 +239,21 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    loadMarketData()
-  }, [])
+    if (token && !dataLoaded) {
+      loadMarketData()
+    }
+  }, [token, dataLoaded])
 
   const handleInteraction = () => {
     if (!token) {
       setShowLoginModal(true)
     }
   }
+
+  // Datos a mostrar (reales si logueado, mock si no)
+  const displayStocks = isLoggedIn && dataLoaded ? stocks : MOCK_STOCKS
+  const displayIndices = isLoggedIn && dataLoaded ? indices : MOCK_INDICES
+  const displaySectors = isLoggedIn && dataLoaded ? sectors : MOCK_SECTORS
 
   return (
     <div className="min-h-screen bg-background">
@@ -247,15 +296,20 @@ export default function HomePage() {
             Explora el mercado, analiza tendencias y gestiona tu portfolio con EZTrade. 
             La plataforma de trading que hace facil invertir.
           </p>
+          {!isLoggedIn && (
+            <p className="text-sm text-muted-foreground mt-4">
+              Los datos mostrados son de ejemplo. Inicia sesion para ver datos reales del mercado.
+            </p>
+          )}
         </div>
 
-        {/* Market Indices */}
-        {loading ? (
+        {/* Loading state solo si esta logueado y cargando */}
+        {isLoggedIn && loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
             <span className="ml-2 text-muted-foreground">Cargando datos del mercado...</span>
           </div>
-        ) : error ? (
+        ) : isLoggedIn && error ? (
           <Card className="mb-8">
             <CardContent className="py-8 text-center">
               <p className="text-muted-foreground mb-4">{error}</p>
@@ -268,35 +322,39 @@ export default function HomePage() {
         ) : (
           <>
             {/* Indices */}
-            {indices.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {indices.map((index) => (
-                  <Card key={index.symbol} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={handleInteraction}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-muted-foreground">{index.name}</p>
-                          <p className="text-2xl font-bold">${index.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                        </div>
-                        <div className="flex items-center gap-1 text-primary">
-                          <TrendingUp className="w-5 h-5" />
-                        </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              {displayIndices.map((index) => (
+                <Card 
+                  key={index.symbol} 
+                  className={`relative cursor-pointer hover:border-primary/50 transition-colors overflow-hidden ${!isLoggedIn ? "select-none" : ""}`}
+                  onClick={handleInteraction}
+                >
+                  {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                  <CardContent className={`p-4 ${!isLoggedIn ? "blur-sm" : ""}`}>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-muted-foreground">{index.name}</p>
+                        <p className="text-2xl font-bold">${index.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      <div className="flex items-center gap-1 text-primary">
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </>
         )}
       </section>
 
       {/* Market Overview */}
-      {!loading && !error && (
+      {!(isLoggedIn && loading) && !(isLoggedIn && error) && (
         <section className="container mx-auto px-4 pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Stock List */}
-            <Card className="lg:col-span-2">
+            <Card className="lg:col-span-2 relative overflow-hidden">
+              {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -304,74 +362,78 @@ export default function HomePage() {
                       <LineChart className="w-5 h-5 text-primary" />
                       Acciones populares
                     </CardTitle>
-                    <CardDescription>Datos en tiempo real del backend</CardDescription>
+                    <CardDescription>
+                      {isLoggedIn ? "Datos en tiempo real del backend" : "Datos de ejemplo - Inicia sesion para ver datos reales"}
+                    </CardDescription>
                   </div>
-                  <Button variant="outline" size="sm" onClick={loadMarketData}>
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Actualizar
-                  </Button>
+                  {isLoggedIn && (
+                    <Button variant="outline" size="sm" onClick={loadMarketData}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Actualizar
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
-              <CardContent>
-                {stocks.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">No se encontraron datos de acciones</p>
-                ) : (
-                  <div className="space-y-4">
-                    {stocks.map((stock) => (
-                      <div 
-                        key={stock.symbol} 
-                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors"
-                        onClick={handleInteraction}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-sm font-bold text-primary">{stock.symbol.slice(0, 2)}</span>
-                          </div>
-                          <div>
-                            <p className="font-medium">{stock.symbol}</p>
-                            <p className="text-sm text-muted-foreground">{stock.name}</p>
-                          </div>
+              <CardContent className={!isLoggedIn ? "blur-sm select-none" : ""}>
+                <div className="space-y-4">
+                  {displayStocks.map((stock) => (
+                    <div 
+                      key={stock.symbol} 
+                      className={`flex items-center justify-between p-3 rounded-lg bg-secondary/50 transition-colors ${isLoggedIn ? "hover:bg-secondary cursor-pointer" : ""}`}
+                      onClick={isLoggedIn ? undefined : handleInteraction}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-bold text-primary">{stock.symbol.slice(0, 2)}</span>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">${stock.price.toFixed(2)}</p>
-                          {stock.sector && (
-                            <p className="text-xs text-muted-foreground">{stock.sector}</p>
-                          )}
+                        <div>
+                          <p className="font-medium">{stock.symbol}</p>
+                          <p className="text-sm text-muted-foreground">{stock.name}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <div className="text-right">
+                        <p className="font-medium">${stock.price.toFixed(2)}</p>
+                        {stock.sector && (
+                          <p className="text-xs text-muted-foreground">{stock.sector}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
             {/* Sector Distribution */}
             <div className="space-y-6">
-              {sectors.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <PieChart className="w-5 h-5 text-primary" />
-                      Distribucion por sector
-                    </CardTitle>
-                    <CardDescription>Acciones mostradas</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <SectorBarChart data={sectors} />
-                  </CardContent>
-                </Card>
-              )}
+              <Card className="relative overflow-hidden">
+                {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-primary" />
+                    Distribucion por sector
+                  </CardTitle>
+                  <CardDescription>
+                    {isLoggedIn ? "Acciones mostradas" : "Datos de ejemplo"}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SectorBarChart data={displaySectors} blurred={!isLoggedIn} />
+                </CardContent>
+              </Card>
 
-              <Card>
+              <Card className="relative overflow-hidden">
+                {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-primary" />
                     Tendencia general
                   </CardTitle>
-                  <CardDescription>Grafico ilustrativo</CardDescription>
+                  <CardDescription>
+                    {isLoggedIn ? "Grafico ilustrativo" : "Datos de ejemplo"}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <SimpleLineChart />
+                  <SimpleLineChart blurred={!isLoggedIn} />
                 </CardContent>
               </Card>
             </div>
