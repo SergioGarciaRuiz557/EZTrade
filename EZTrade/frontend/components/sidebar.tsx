@@ -39,13 +39,13 @@ export function Sidebar() {
 
   return (
     <aside className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r bg-card">
-      {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b px-6">
+      {/* Logo - Clickeable para volver a inicio */}
+      <Link href="/" className="flex h-16 items-center gap-2 border-b px-6 hover:bg-muted transition-colors">
         <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
           <TrendingUp className="h-5 w-5 text-primary-foreground" />
         </div>
         <span className="text-xl font-bold">EZTrade</span>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-4">

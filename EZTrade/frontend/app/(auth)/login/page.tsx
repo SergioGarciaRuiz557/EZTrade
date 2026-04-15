@@ -25,7 +25,7 @@ export default function LoginPage() {
     try {
       await login(identifier, password)
       toast({ title: "Bienvenido", description: "Has iniciado sesion correctamente" })
-      router.push("/dashboard")
+      router.push("/")
     } catch {
       toast({ title: "Error", description: "Credenciales incorrectas", variant: "destructive" })
     } finally {
