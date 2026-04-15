@@ -11,6 +11,7 @@ import {
   Search,
   LogOut,
   User,
+  Home,
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 const navigation = [
+  { name: "Inicio", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Trading", href: "/trading", icon: LineChart },
   { name: "Wallet", href: "/wallet", icon: Wallet },

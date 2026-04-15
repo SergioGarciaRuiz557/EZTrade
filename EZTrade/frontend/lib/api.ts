@@ -122,27 +122,45 @@ export const walletApi = {
   },
 }
 
-// Market API
+// Market API (endpoints publicos, no requieren autenticacion)
 export const marketApi = {
   getPrice: async (symbol: string) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
+      headers: { "Content-Type": "application/json" },
     })
     return handleResponse<MarketPrice>(response)
   },
 
   search: async (input: string) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/market/search?input=${encodeURIComponent(input)}`, {
-      headers: getAuthHeaders(),
+      headers: { "Content-Type": "application/json" },
     })
     return handleResponse<Instrument[]>(response)
   },
 
   getOverview: async (symbol: string) => {
     const response = await fetch(`${API_BASE_URL}/api/v1/market/get-overview?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
+      headers: { "Content-Type": "application/json" },
     })
     return handleResponse<InstrumentOverview>(response)
+  },
+
+  // Obtener precios de multiples simbolos
+  getPrices: async (symbols: string[]) => {
+    const prices = await Promise.all(
+      symbols.map(async (symbol) => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(symbol)}`, {
+            headers: { "Content-Type": "application/json" },
+          })
+          if (!response.ok) return null
+          return response.json() as Promise<MarketPrice>
+        } catch {
+          return null
+        }
+      })
+    )
+    return prices.filter((p): p is MarketPrice => p !== null)
   },
 }
 

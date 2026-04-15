@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { marketApi, type MarketPrice, type InstrumentOverview } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
@@ -13,50 +14,45 @@ import {
   ArrowRight,
   Lock,
   Wallet,
-  PieChart
+  PieChart,
+  Loader2,
+  RefreshCw
 } from "lucide-react"
 
-// Datos de ejemplo para los gráficos
-const marketData = [
-  { symbol: "AAPL", name: "Apple Inc.", price: 178.52, change: 2.34, changePercent: 1.33 },
-  { symbol: "GOOGL", name: "Alphabet Inc.", price: 141.80, change: -1.23, changePercent: -0.86 },
-  { symbol: "MSFT", name: "Microsoft Corp.", price: 378.91, change: 5.67, changePercent: 1.52 },
-  { symbol: "AMZN", name: "Amazon.com Inc.", price: 178.25, change: 3.12, changePercent: 1.78 },
-  { symbol: "NVDA", name: "NVIDIA Corp.", price: 875.28, change: -12.45, changePercent: -1.40 },
-  { symbol: "TSLA", name: "Tesla Inc.", price: 248.50, change: 8.90, changePercent: 3.71 },
+// Simbolos populares para mostrar en la pagina principal
+const POPULAR_SYMBOLS = ["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA", "TSLA"]
+
+// Simbolos para indices (ETFs que replican indices)
+const INDEX_SYMBOLS = [
+  { symbol: "SPY", name: "S&P 500" },
+  { symbol: "QQQ", name: "NASDAQ" },
+  { symbol: "DIA", name: "DOW JONES" },
 ]
 
-const sectorPerformance = [
-  { name: "Tecnologia", change: 2.4 },
-  { name: "Salud", change: 1.2 },
-  { name: "Finanzas", change: -0.8 },
-  { name: "Energia", change: 3.1 },
-  { name: "Consumo", change: 0.5 },
-]
+interface StockData {
+  symbol: string
+  name: string
+  price: number
+  sector?: string
+}
 
-const marketIndices = [
-  { name: "S&P 500", value: "4,783.45", change: 1.23 },
-  { name: "NASDAQ", value: "15,055.65", change: 1.87 },
-  { name: "DOW JONES", value: "37,656.52", change: 0.56 },
-]
-
-// Componente de gráfico de barras simple con SVG
-function SimpleBarChart({ data }: { data: { name: string; change: number }[] }) {
-  const maxValue = Math.max(...data.map(d => Math.abs(d.change)))
+// Componente de grafico de barras para sectores
+function SectorBarChart({ data }: { data: { name: string; count: number }[] }) {
+  const maxValue = Math.max(...data.map(d => d.count), 1)
   
   return (
     <div className="space-y-3">
       {data.map((item, index) => (
         <div key={index} className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground w-24 truncate">{item.name}</span>
+          <span className="text-sm text-muted-foreground w-28 truncate">{item.name}</span>
           <div className="flex-1 h-6 bg-secondary rounded-full overflow-hidden relative">
             <div 
-              className={`h-full rounded-full transition-all ${item.change >= 0 ? 'bg-success' : 'bg-destructive'}`}
-              style={{ width: `${(Math.abs(item.change) / maxValue) * 100}%` }}
+              className="h-full rounded-full transition-all bg-primary"
+              style={{ width: `${(item.count / maxValue) * 100}%` }}
             />
           </div>
-          <span className={`text-sm font-medium w-16 text-right ${item.change >= 0 ? 'text-success' : 'text-destructive'}`}>
-            {item.change >= 0 ? '+' : ''}{item.change}%
+          <span className="text-sm font-medium w-8 text-right text-muted-foreground">
+            {item.count}
           </span>
         </div>
       ))}
@@ -64,7 +60,7 @@ function SimpleBarChart({ data }: { data: { name: string; change: number }[] }) 
   )
 }
 
-// Componente de gráfico de líneas simple con SVG
+// Componente de grafico de lineas simple
 function SimpleLineChart() {
   const points = [40, 65, 45, 70, 55, 80, 60, 90, 75, 95, 85, 100]
   const width = 300
@@ -93,16 +89,6 @@ function SimpleLineChart() {
       </defs>
       <path d={areaD} fill="url(#gradient)" />
       <path d={pathD} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
-      {points.map((point, index) => (
-        <circle 
-          key={index}
-          cx={getX(index)} 
-          cy={getY(point)} 
-          r="3" 
-          fill="hsl(var(--primary))"
-          className="opacity-0 hover:opacity-100 transition-opacity"
-        />
-      ))}
     </svg>
   )
 }
@@ -140,6 +126,79 @@ function LoginRequiredModal({ onClose }: { onClose: () => void }) {
 export default function HomePage() {
   const { token } = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [stocks, setStocks] = useState<StockData[]>([])
+  const [indices, setIndices] = useState<{ symbol: string; name: string; price: number }[]>([])
+  const [sectors, setSectors] = useState<{ name: string; count: number }[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadMarketData = async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Cargar precios de acciones populares
+      const stockPromises = POPULAR_SYMBOLS.map(async (symbol) => {
+        try {
+          const [priceData, overviewData] = await Promise.all([
+            marketApi.getPrice(symbol),
+            marketApi.getOverview(symbol).catch(() => null)
+          ])
+          return {
+            symbol,
+            name: overviewData?.name || symbol,
+            price: priceData.price,
+            sector: overviewData?.sector
+          }
+        } catch {
+          return null
+        }
+      })
+
+      // Cargar precios de indices
+      const indexPromises = INDEX_SYMBOLS.map(async (index) => {
+        try {
+          const priceData = await marketApi.getPrice(index.symbol)
+          return {
+            symbol: index.symbol,
+            name: index.name,
+            price: priceData.price
+          }
+        } catch {
+          return null
+        }
+      })
+
+      const [stockResults, indexResults] = await Promise.all([
+        Promise.all(stockPromises),
+        Promise.all(indexPromises)
+      ])
+
+      const validStocks = stockResults.filter((s): s is StockData => s !== null)
+      const validIndices = indexResults.filter((i): i is { symbol: string; name: string; price: number } => i !== null)
+
+      setStocks(validStocks)
+      setIndices(validIndices)
+
+      // Calcular distribucion por sector
+      const sectorMap = new Map<string, number>()
+      validStocks.forEach(stock => {
+        if (stock.sector) {
+          sectorMap.set(stock.sector, (sectorMap.get(stock.sector) || 0) + 1)
+        }
+      })
+      setSectors(Array.from(sectorMap.entries()).map(([name, count]) => ({ name, count })))
+
+    } catch (err) {
+      setError("No se pudieron cargar los datos del mercado. Asegurate de que el backend este corriendo.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadMarketData()
+  }, [])
 
   const handleInteraction = () => {
     if (!token) {
@@ -191,104 +250,134 @@ export default function HomePage() {
         </div>
 
         {/* Market Indices */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          {marketIndices.map((index) => (
-            <Card key={index.name} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={handleInteraction}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{index.name}</p>
-                    <p className="text-2xl font-bold">{index.value}</p>
-                  </div>
-                  <div className={`flex items-center gap-1 ${index.change >= 0 ? 'text-success' : 'text-destructive'}`}>
-                    {index.change >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
-                    <span className="font-medium">{index.change >= 0 ? '+' : ''}{index.change}%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Cargando datos del mercado...</span>
+          </div>
+        ) : error ? (
+          <Card className="mb-8">
+            <CardContent className="py-8 text-center">
+              <p className="text-muted-foreground mb-4">{error}</p>
+              <Button variant="outline" onClick={loadMarketData}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Reintentar
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            {/* Indices */}
+            {indices.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                {indices.map((index) => (
+                  <Card key={index.symbol} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={handleInteraction}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">{index.name}</p>
+                          <p className="text-2xl font-bold">${index.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                        </div>
+                        <div className="flex items-center gap-1 text-primary">
+                          <TrendingUp className="w-5 h-5" />
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       {/* Market Overview */}
-      <section className="container mx-auto px-4 pb-12">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Stock List */}
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <LineChart className="w-5 h-5 text-primary" />
-                    Acciones populares
-                  </CardTitle>
-                  <CardDescription>Principales movimientos del mercado</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={handleInteraction}>
-                  Ver todas
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {marketData.map((stock) => (
-                  <div 
-                    key={stock.symbol} 
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors"
-                    onClick={handleInteraction}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">{stock.symbol.slice(0, 2)}</span>
-                      </div>
-                      <div>
-                        <p className="font-medium">{stock.symbol}</p>
-                        <p className="text-sm text-muted-foreground">{stock.name}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">${stock.price.toFixed(2)}</p>
-                      <p className={`text-sm ${stock.change >= 0 ? 'text-success' : 'text-destructive'}`}>
-                        {stock.change >= 0 ? '+' : ''}{stock.change.toFixed(2)} ({stock.changePercent >= 0 ? '+' : ''}{stock.changePercent.toFixed(2)}%)
-                      </p>
-                    </div>
+      {!loading && !error && (
+        <section className="container mx-auto px-4 pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Stock List */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <LineChart className="w-5 h-5 text-primary" />
+                      Acciones populares
+                    </CardTitle>
+                    <CardDescription>Datos en tiempo real del backend</CardDescription>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Sector Performance */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <PieChart className="w-5 h-5 text-primary" />
-                  Rendimiento por sector
-                </CardTitle>
-                <CardDescription>Ultimas 24 horas</CardDescription>
+                  <Button variant="outline" size="sm" onClick={loadMarketData}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Actualizar
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <SimpleBarChart data={sectorPerformance} />
+                {stocks.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">No se encontraron datos de acciones</p>
+                ) : (
+                  <div className="space-y-4">
+                    {stocks.map((stock) => (
+                      <div 
+                        key={stock.symbol} 
+                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors"
+                        onClick={handleInteraction}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <span className="text-sm font-bold text-primary">{stock.symbol.slice(0, 2)}</span>
+                          </div>
+                          <div>
+                            <p className="font-medium">{stock.symbol}</p>
+                            <p className="text-sm text-muted-foreground">{stock.name}</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">${stock.price.toFixed(2)}</p>
+                          {stock.sector && (
+                            <p className="text-xs text-muted-foreground">{stock.sector}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  Tendencia S&P 500
-                </CardTitle>
-                <CardDescription>Ultimos 12 meses</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <SimpleLineChart />
-              </CardContent>
-            </Card>
+            {/* Sector Distribution */}
+            <div className="space-y-6">
+              {sectors.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="w-5 h-5 text-primary" />
+                      Distribucion por sector
+                    </CardTitle>
+                    <CardDescription>Acciones mostradas</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SectorBarChart data={sectors} />
+                  </CardContent>
+                </Card>
+              )}
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-primary" />
+                    Tendencia general
+                  </CardTitle>
+                  <CardDescription>Grafico ilustrativo</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SimpleLineChart />
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className="border-t border-border bg-secondary/30">
