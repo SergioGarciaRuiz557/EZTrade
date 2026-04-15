@@ -2,7 +2,9 @@ package com.trading.platform.eztrade.market.adapter.in;
 
 import com.trading.platform.eztrade.market.application.ports.in.GetOverviewUserCase;
 import com.trading.platform.eztrade.market.application.ports.in.GetPriceUserCase;
+import com.trading.platform.eztrade.market.application.ports.in.GetDailyCandlesUserCase;
 import com.trading.platform.eztrade.market.application.ports.in.SearchInstrumentUserCase;
+import com.trading.platform.eztrade.market.domain.Candle;
 import com.trading.platform.eztrade.market.domain.Instrument;
 import com.trading.platform.eztrade.market.domain.InstrumentOverview;
 import com.trading.platform.eztrade.market.domain.ExternalApiException;
@@ -23,6 +25,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.time.Instant;
 import java.util.List;
 
@@ -52,9 +55,12 @@ class MarketControllerTest {
     @Autowired
     private GetOverviewUserCase getOverviewUserCase;
 
+    @Autowired
+    private GetDailyCandlesUserCase getDailyCandlesUserCase;
+
     @AfterEach
     void resetMocks() {
-        Mockito.reset(getPriceUserCase, searchInstrumentUserCase, getOverviewUserCase);
+        Mockito.reset(getPriceUserCase, searchInstrumentUserCase, getOverviewUserCase, getDailyCandlesUserCase);
     }
 
 
@@ -119,6 +125,28 @@ class MarketControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/market/get-daily-candles devuelve la serie de velas del símbolo")
+    void get_daily_candles_returns_series() throws Exception {
+        Symbol symbol = new Symbol("IBM");
+        List<Candle> candles = List.of(
+                new Candle(LocalDateTime.parse("2026-03-04T00:00:00"), 100.0, 110.0, 95.0, 108.0, 1000L),
+                new Candle(LocalDateTime.parse("2026-03-03T00:00:00"), 98.0, 105.0, 97.5, 102.0, 900L)
+        );
+        given(getDailyCandlesUserCase.getDailyCandles(symbol)).willReturn(candles);
+
+        mockMvc.perform(get("/api/v1/market/get-daily-candles").param("symbol", symbol.value()))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].time", is("2026-03-04T00:00:00")))
+                .andExpect(jsonPath("$[0].open", is(100.0)))
+                .andExpect(jsonPath("$[0].high", is(110.0)))
+                .andExpect(jsonPath("$[0].low", is(95.0)))
+                .andExpect(jsonPath("$[0].close", is(108.0)))
+                .andExpect(jsonPath("$[0].volume", is(1000)));
+    }
+
+    @Test
     @DisplayName("GET /api/v1/market/get-price devuelve 429 cuando el proveedor externo responde rate limit")
     void get_price_returns_429_when_rate_limit_is_reached() throws Exception {
         given(getPriceUserCase.getPrice(new Symbol("IBM")))
@@ -147,6 +175,11 @@ class MarketControllerTest {
         @Bean
         GetOverviewUserCase getOverviewUserCase() {
             return mock(GetOverviewUserCase.class);
+        }
+
+        @Bean
+        GetDailyCandlesUserCase getDailyCandlesUserCase() {
+            return mock(GetDailyCandlesUserCase.class);
         }
 
         @Bean

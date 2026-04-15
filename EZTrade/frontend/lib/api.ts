@@ -144,6 +144,13 @@ export const marketApi = {
     })
     return handleResponse<InstrumentOverview>(response)
   },
+
+  getDailyCandles: async (symbol: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/market/get-daily-candles?symbol=${encodeURIComponent(symbol)}`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse<Candle[]>(response)
+  },
 }
 
 // Types
@@ -209,4 +216,13 @@ export interface InstrumentOverview {
   industry: string
   marketCap: number
   peRatio: number
+}
+
+export interface Candle {
+  time: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
 }

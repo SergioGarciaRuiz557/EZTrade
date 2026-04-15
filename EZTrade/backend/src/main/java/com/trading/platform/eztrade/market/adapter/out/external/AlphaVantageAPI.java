@@ -1,6 +1,6 @@
 package com.trading.platform.eztrade.market.adapter.out.external;
 
-import com.trading.platform.eztrade.market.application.ports.in.GetDailyCandlesUserCase;
+import com.trading.platform.eztrade.market.application.ports.out.GetDailyCandlesProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.GetOverviewProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.GetPriceMarketProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.SearchInstrumentProviderPort;
@@ -31,7 +31,7 @@ import java.util.List;
  * en llamadas HTTP contra la API de Alpha Vantage.
  */
 @Component
-public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstrumentProviderPort, GetDailyCandlesUserCase, GetOverviewProviderPort {
+public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstrumentProviderPort, GetDailyCandlesProviderPort, GetOverviewProviderPort {
 
     /**
      * Clave de la API de Alpha Vantage. Debe configurarse en {@code application.properties}

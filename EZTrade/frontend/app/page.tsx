@@ -2,13 +2,18 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { marketApi, type MarketPrice, type InstrumentOverview } from "@/lib/api"
+import { marketApi, tradingApi, type Candle } from "@/lib/api"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "@/components/ui/toaster"
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { 
   TrendingUp, 
-  TrendingDown, 
   BarChart3, 
   LineChart, 
   ArrowRight,
@@ -50,6 +55,21 @@ const MOCK_SECTORS = [
   { name: "Consumer Cyclical", count: 2 },
 ]
 
+const MOCK_CANDLES: Candle[] = [
+  { time: "2026-04-04T00:00:00", open: 170.1, high: 172.8, low: 169.4, close: 171.9, volume: 9520000 },
+  { time: "2026-04-05T00:00:00", open: 171.9, high: 173.2, low: 170.5, close: 172.6, volume: 10840000 },
+  { time: "2026-04-06T00:00:00", open: 172.6, high: 175.4, low: 172.1, close: 174.8, volume: 12530000 },
+  { time: "2026-04-07T00:00:00", open: 174.8, high: 176.2, low: 173.6, close: 174.2, volume: 9980000 },
+  { time: "2026-04-08T00:00:00", open: 174.2, high: 177.1, low: 173.8, close: 176.5, volume: 14020000 },
+  { time: "2026-04-09T00:00:00", open: 176.5, high: 178.4, low: 175.7, close: 177.9, volume: 13350000 },
+  { time: "2026-04-10T00:00:00", open: 177.9, high: 179.1, low: 176.2, close: 178.2, volume: 12190000 },
+  { time: "2026-04-11T00:00:00", open: 178.2, high: 180.3, low: 177.8, close: 179.7, volume: 11680000 },
+  { time: "2026-04-12T00:00:00", open: 179.7, high: 181.6, low: 178.9, close: 180.9, volume: 14230000 },
+  { time: "2026-04-13T00:00:00", open: 180.9, high: 182.4, low: 180.3, close: 181.8, volume: 13100000 },
+  { time: "2026-04-14T00:00:00", open: 181.8, high: 183.1, low: 180.6, close: 182.5, volume: 12040000 },
+  { time: "2026-04-15T00:00:00", open: 182.5, high: 184.2, low: 181.7, close: 183.8, volume: 14920000 },
+]
+
 interface StockData {
   symbol: string
   name: string
@@ -57,8 +77,34 @@ interface StockData {
   sector?: string
 }
 
+interface SelectedAsset {
+  symbol: string
+  name: string
+  price: number
+  sector?: string
+  type: "accion" | "indice"
+}
+
+interface CandleChartPoint {
+  time: string
+  label: string
+  open: number
+  high: number
+  low: number
+  close: number
+  volume: number
+}
+
 // Componente de grafico de barras para sectores
 function SectorBarChart({ data, blurred }: { data: { name: string; count: number }[]; blurred?: boolean }) {
+  if (data.length === 0) {
+    return (
+      <div className="text-sm text-muted-foreground">
+        No hay datos de sectores disponibles por ahora.
+      </div>
+    )
+  }
+
   const maxValue = Math.max(...data.map(d => d.count), 1)
   
   return (
@@ -81,36 +127,81 @@ function SectorBarChart({ data, blurred }: { data: { name: string; count: number
   )
 }
 
-// Componente de grafico de lineas simple
-function SimpleLineChart({ blurred }: { blurred?: boolean }) {
-  const points = [40, 65, 45, 70, 55, 80, 60, 90, 75, 95, 85, 100]
-  const width = 300
-  const height = 100
-  const padding = 10
-  
-  const maxVal = Math.max(...points)
-  const minVal = Math.min(...points)
-  
-  const getX = (index: number) => padding + (index / (points.length - 1)) * (width - 2 * padding)
-  const getY = (value: number) => height - padding - ((value - minVal) / (maxVal - minVal)) * (height - 2 * padding)
-  
-  const pathD = points.map((point, index) => 
-    `${index === 0 ? 'M' : 'L'} ${getX(index)} ${getY(point)}`
-  ).join(' ')
-  
-  const areaD = `${pathD} L ${getX(points.length - 1)} ${height - padding} L ${getX(0)} ${height - padding} Z`
-  
+function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean }) {
+  const chartData: CandleChartPoint[] = data
+    .slice(-30)
+    .map((candle) => {
+      const date = new Date(candle.time)
+      const isValidDate = !Number.isNaN(date.getTime())
+      const label = isValidDate
+        ? date.toLocaleDateString("es-ES", { day: "2-digit", month: "2-digit" })
+        : candle.time.slice(0, 10)
+      return {
+        ...candle,
+        label,
+      }
+    })
+
+  if (chartData.length === 0) {
+    return <p className="text-sm text-muted-foreground">No hay velas diarias disponibles para este simbolo.</p>
+  }
+
+  const latest = chartData[chartData.length - 1]
+  const first = chartData[0]
+  const change = latest.close - first.open
+  const changePct = first.open > 0 ? (change / first.open) * 100 : 0
+
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className={`w-full h-32 ${blurred ? "blur-sm" : ""}`}>
-      <defs>
-        <linearGradient id="gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaD} fill="url(#gradient)" />
-      <path d={pathD} fill="none" stroke="hsl(var(--primary))" strokeWidth="2" />
-    </svg>
+    <div className={blurred ? "blur-sm select-none pointer-events-none" : ""}>
+      <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
+        <div className="rounded-md border p-3">
+          <p className="text-muted-foreground">Cierre actual</p>
+          <p className="font-semibold">${latest.close.toFixed(2)}</p>
+        </div>
+        <div className="rounded-md border p-3">
+          <p className="text-muted-foreground">Variacion periodo</p>
+          <p className={`font-semibold ${change >= 0 ? "text-success" : "text-destructive"}`}>
+            {change >= 0 ? "+" : ""}{change.toFixed(2)} ({changePct.toFixed(2)}%)
+          </p>
+        </div>
+      </div>
+
+      <div className="h-44 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="home-candle-close" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey="label" tick={{ fontSize: 11 }} minTickGap={24} />
+            <YAxis domain={["dataMin - 1", "dataMax + 1"]} width={44} tick={{ fontSize: 11 }} />
+            <Tooltip
+              contentStyle={{
+                border: "1px solid hsl(var(--border))",
+                borderRadius: "0.5rem",
+                background: "hsl(var(--background))",
+              }}
+              formatter={(value: number, name: string) => {
+                if (["open", "high", "low", "close"].includes(name)) {
+                  return [`$${Number(value).toFixed(2)}`, name.toUpperCase()]
+                }
+                return [Number(value).toLocaleString("es-ES"), "Volumen"]
+              }}
+            />
+            <Area
+              type="monotone"
+              dataKey="close"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              fill="url(#home-candle-close)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   )
 }
 
@@ -161,6 +252,7 @@ function BlurOverlay({ onClick }: { onClick: () => void }) {
 
 export default function HomePage() {
   const { token } = useAuth()
+  const router = useRouter()
   const [showLoginModal, setShowLoginModal] = useState(false)
   const [stocks, setStocks] = useState<StockData[]>([])
   const [indices, setIndices] = useState<{ symbol: string; name: string; price: number }[]>([])
@@ -168,6 +260,14 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [dataLoaded, setDataLoaded] = useState(false)
+  const [selectedAsset, setSelectedAsset] = useState<SelectedAsset | null>(null)
+  const [buyQuantity, setBuyQuantity] = useState("1")
+  const [buyPrice, setBuyPrice] = useState("")
+  const [isBuying, setIsBuying] = useState(false)
+  const [selectedChartSymbol, setSelectedChartSymbol] = useState(POPULAR_SYMBOLS[0])
+  const [candlesBySymbol, setCandlesBySymbol] = useState<Record<string, Candle[]>>({})
+  const [candlesLoading, setCandlesLoading] = useState(false)
+  const [candlesError, setCandlesError] = useState<string | null>(null)
 
   const isLoggedIn = !!token
 
@@ -185,12 +285,13 @@ export default function HomePage() {
             marketApi.getPrice(symbol),
             marketApi.getOverview(symbol).catch(() => null)
           ])
-          return {
+          const stock: StockData = {
             symbol,
             name: overviewData?.name || symbol,
             price: priceData.price,
-            sector: overviewData?.sector
+            ...(overviewData?.sector ? { sector: overviewData.sector } : {})
           }
+          return stock
         } catch {
           return null
         }
@@ -228,7 +329,14 @@ export default function HomePage() {
           sectorMap.set(stock.sector, (sectorMap.get(stock.sector) || 0) + 1)
         }
       })
-      setSectors(Array.from(sectorMap.entries()).map(([name, count]) => ({ name, count })))
+      const computedSectors = Array.from(sectorMap.entries()).map(([name, count]) => ({ name, count }))
+      setSectors(
+        computedSectors.length > 0
+          ? computedSectors
+          : validStocks.length > 0
+            ? [{ name: "Sin clasificar", count: validStocks.length }]
+            : []
+      )
       setDataLoaded(true)
 
     } catch (err) {
@@ -244,9 +352,80 @@ export default function HomePage() {
     }
   }, [token, dataLoaded])
 
+  useEffect(() => {
+    if (!isLoggedIn) return
+    if (candlesBySymbol[selectedChartSymbol]) return
+
+    const loadCandles = async () => {
+      setCandlesLoading(true)
+      setCandlesError(null)
+      try {
+        const candles = await marketApi.getDailyCandles(selectedChartSymbol)
+        setCandlesBySymbol((prev) => ({
+          ...prev,
+          [selectedChartSymbol]: candles,
+        }))
+      } catch {
+        setCandlesError("No se pudieron cargar las velas diarias en este momento.")
+      } finally {
+        setCandlesLoading(false)
+      }
+    }
+
+    loadCandles()
+  }, [isLoggedIn, selectedChartSymbol, candlesBySymbol])
+
   const handleInteraction = () => {
     if (!token) {
       setShowLoginModal(true)
+    }
+  }
+
+  const openAssetDialog = (asset: SelectedAsset) => {
+    setSelectedAsset(asset)
+    setBuyQuantity("1")
+    setBuyPrice(asset.price.toFixed(2))
+  }
+
+  const handleBuyFromHome = async () => {
+    if (!selectedAsset) return
+
+    const parsedQuantity = parseFloat(buyQuantity)
+    const parsedPrice = parseFloat(buyPrice)
+
+    if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
+      toast({ title: "Cantidad invalida", description: "Introduce una cantidad mayor que 0", variant: "destructive" })
+      return
+    }
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      toast({ title: "Precio invalido", description: "Introduce un precio mayor que 0", variant: "destructive" })
+      return
+    }
+
+    setIsBuying(true)
+    try {
+      await tradingApi.placeOrder({
+        symbol: selectedAsset.symbol,
+        side: "BUY",
+        quantity: parsedQuantity,
+        price: parsedPrice,
+      })
+
+      toast({
+        title: "Orden de compra creada",
+        description: `${selectedAsset.symbol} se ha enviado correctamente`,
+      })
+      setSelectedAsset(null)
+      router.push("/dashboard")
+    } catch {
+      toast({
+        title: "No se pudo crear la orden",
+        description: "Revisa tus datos e intentalo de nuevo",
+        variant: "destructive",
+      })
+    } finally {
+      setIsBuying(false)
     }
   }
 
@@ -254,6 +433,7 @@ export default function HomePage() {
   const displayStocks = isLoggedIn && dataLoaded ? stocks : MOCK_STOCKS
   const displayIndices = isLoggedIn && dataLoaded ? indices : MOCK_INDICES
   const displaySectors = isLoggedIn && dataLoaded ? sectors : MOCK_SECTORS
+  const displayCandles = isLoggedIn ? candlesBySymbol[selectedChartSymbol] || [] : MOCK_CANDLES
 
   return (
     <div className="min-h-screen bg-background">
@@ -327,7 +507,18 @@ export default function HomePage() {
                 <Card 
                   key={index.symbol} 
                   className={`relative cursor-pointer hover:border-primary/50 transition-colors overflow-hidden ${!isLoggedIn ? "select-none" : ""}`}
-                  onClick={handleInteraction}
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      handleInteraction()
+                      return
+                    }
+                    openAssetDialog({
+                      symbol: index.symbol,
+                      name: index.name,
+                      price: index.price,
+                      type: "indice",
+                    })
+                  }}
                 >
                   {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
                   <CardContent className={`p-4 ${!isLoggedIn ? "blur-sm" : ""}`}>
@@ -380,7 +571,19 @@ export default function HomePage() {
                     <div 
                       key={stock.symbol} 
                       className={`flex items-center justify-between p-3 rounded-lg bg-secondary/50 transition-colors ${isLoggedIn ? "hover:bg-secondary cursor-pointer" : ""}`}
-                      onClick={isLoggedIn ? undefined : handleInteraction}
+                      onClick={() => {
+                        if (!isLoggedIn) {
+                          handleInteraction()
+                          return
+                        }
+                        openAssetDialog({
+                          symbol: stock.symbol,
+                          name: stock.name,
+                          price: stock.price,
+                          sector: stock.sector,
+                          type: "accion",
+                        })
+                      }}
                     >
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -424,16 +627,49 @@ export default function HomePage() {
               <Card className="relative overflow-hidden">
                 {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                    Tendencia general
-                  </CardTitle>
-                  <CardDescription>
-                    {isLoggedIn ? "Grafico ilustrativo" : "Datos de ejemplo"}
-                  </CardDescription>
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                        Velas diarias
+                      </CardTitle>
+                      <CardDescription>
+                        {isLoggedIn
+                          ? `Datos OHLC de ${selectedChartSymbol}`
+                          : "Vista de ejemplo - inicia sesion para datos reales"}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {POPULAR_SYMBOLS.slice(0, 4).map((symbol) => (
+                      <Button
+                        key={symbol}
+                        size="sm"
+                        variant={selectedChartSymbol === symbol ? "default" : "outline"}
+                        onClick={() => {
+                          if (!isLoggedIn) {
+                            handleInteraction()
+                            return
+                          }
+                          setSelectedChartSymbol(symbol)
+                        }}
+                      >
+                        {symbol}
+                      </Button>
+                    ))}
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <SimpleLineChart blurred={!isLoggedIn} />
+                  {isLoggedIn && candlesLoading && !displayCandles.length ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                      <span className="ml-2 text-sm text-muted-foreground">Cargando velas...</span>
+                    </div>
+                  ) : isLoggedIn && candlesError && !displayCandles.length ? (
+                    <p className="text-sm text-muted-foreground">{candlesError}</p>
+                  ) : (
+                    <DailyCandleChart data={displayCandles} blurred={!isLoggedIn} />
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -503,6 +739,80 @@ export default function HomePage() {
 
       {/* Login Required Modal */}
       {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
+
+      {/* Asset Buy Modal */}
+      <Dialog
+        open={!!selectedAsset}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedAsset(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedAsset?.symbol} - {selectedAsset?.name}</DialogTitle>
+            <DialogDescription>
+              {selectedAsset?.type === "indice" ? "Indice de mercado" : "Accion"}
+              {selectedAsset?.sector ? ` | Sector: ${selectedAsset.sector}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="rounded-lg bg-muted p-4">
+              <p className="text-sm text-muted-foreground">Precio de referencia</p>
+              <p className="text-2xl font-bold">
+                ${selectedAsset?.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="home-buy-quantity">Cantidad</Label>
+                <Input
+                  id="home-buy-quantity"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={buyQuantity}
+                  onChange={(e) => setBuyQuantity(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="home-buy-price">Precio limite</Label>
+                <Input
+                  id="home-buy-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={buyPrice}
+                  onChange={(e) => setBuyPrice(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-lg border p-3 text-sm text-muted-foreground">
+              Total estimado: ${((parseFloat(buyQuantity) || 0) * (parseFloat(buyPrice) || 0)).toFixed(2)}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedAsset(null)} disabled={isBuying}>
+              Cancelar
+            </Button>
+            <Button className="bg-success hover:bg-success/90" onClick={handleBuyFromHome} disabled={isBuying || !selectedAsset}>
+              {isBuying ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Comprando...
+                </>
+              ) : (
+                "Comprar y ver dashboard"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

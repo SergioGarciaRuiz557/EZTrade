@@ -21,7 +21,7 @@ public class MarketCacheConfig {
     @Bean
     public CacheManager cacheManager(@Value("${market.cache.ttl-seconds:30}") long ttlSeconds) {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCacheNames(List.of("marketPrice", "instrumentOverview"));
+        cacheManager.setCacheNames(List.of("marketPrice", "instrumentOverview", "dailyCandles"));
         cacheManager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(ttlSeconds, TimeUnit.SECONDS)
                 .maximumSize(1_000));

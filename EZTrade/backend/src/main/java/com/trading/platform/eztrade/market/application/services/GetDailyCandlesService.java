@@ -4,6 +4,8 @@ import com.trading.platform.eztrade.market.application.ports.in.GetDailyCandlesU
 import com.trading.platform.eztrade.market.application.ports.out.GetDailyCandlesProviderPort;
 import com.trading.platform.eztrade.market.domain.Candle;
 import com.trading.platform.eztrade.market.domain.Symbol;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
@@ -14,6 +16,7 @@ import java.util.List;
  * de un símbolo, delegando el acceso a la fuente de datos en el puerto de
  * salida {@link GetDailyCandlesProviderPort}.
  */
+@Service
 public class GetDailyCandlesService implements GetDailyCandlesUserCase {
     private final GetDailyCandlesProviderPort getDailyCandlesProviderPort;
 
@@ -22,6 +25,7 @@ public class GetDailyCandlesService implements GetDailyCandlesUserCase {
     }
 
     @Override
+    @Cacheable(cacheNames = "dailyCandles", key = "#symbol.value()", unless = "#result == null")
     public List<Candle> getDailyCandles(Symbol symbol) {
         return getDailyCandlesProviderPort.getDailyCandles(symbol);
     }
