@@ -239,7 +239,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
         if (reserveEntry == null || reserveEntry.amount().compareTo(amount) < 0) {
             WalletAccount account = lockOrOpenAccount(owner);
             publishInsufficientFunds(orderRef, owner, amount, account, "Reserved funds are not enough to settle buy order");
-            return;
+            throw new WalletDomainException("Insufficient wallet funds to execute buy order " + orderRef);
         }
 
         WalletAccount workingAccount = lockOrOpenAccount(owner);
