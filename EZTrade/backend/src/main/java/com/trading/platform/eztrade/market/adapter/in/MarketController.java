@@ -2,7 +2,9 @@ package com.trading.platform.eztrade.market.adapter.in;
 
 import com.trading.platform.eztrade.market.application.ports.in.GetOverviewUserCase;
 import com.trading.platform.eztrade.market.application.ports.in.GetPriceUserCase;
+import com.trading.platform.eztrade.market.application.ports.in.GetDailyCandlesUserCase;
 import com.trading.platform.eztrade.market.application.ports.in.SearchInstrumentUserCase;
+import com.trading.platform.eztrade.market.domain.Candle;
 import com.trading.platform.eztrade.market.domain.Instrument;
 import com.trading.platform.eztrade.market.domain.InstrumentOverview;
 import com.trading.platform.eztrade.market.domain.MarketPrice;
@@ -32,11 +34,16 @@ public class MarketController {
     private final GetPriceUserCase getPriceUserCase;
     private final SearchInstrumentUserCase searchInstrumentUserCase;
     private final GetOverviewUserCase getOverviewUserCase;
+    private final GetDailyCandlesUserCase getDailyCandlesUserCase;
 
-    public MarketController(GetPriceUserCase getPriceUserCase, SearchInstrumentUserCase searchInstrumentUserCase, GetOverviewUserCase getOverviewUserCase) {
+    public MarketController(GetPriceUserCase getPriceUserCase,
+                            SearchInstrumentUserCase searchInstrumentUserCase,
+                            GetOverviewUserCase getOverviewUserCase,
+                            GetDailyCandlesUserCase getDailyCandlesUserCase) {
         this.getPriceUserCase = getPriceUserCase;
         this.searchInstrumentUserCase = searchInstrumentUserCase;
         this.getOverviewUserCase = getOverviewUserCase;
+        this.getDailyCandlesUserCase = getDailyCandlesUserCase;
     }
 
     /**
@@ -83,6 +90,11 @@ public class MarketController {
     @GetMapping("/get-overview")
     public ResponseEntity<InstrumentOverview> getOverview(@RequestParam Symbol symbol) {
         return ResponseEntity.ok(getOverviewUserCase.getOverview(symbol));
+    }
+
+    @GetMapping("/get-daily-candles")
+    public ResponseEntity<List<Candle>> getDailyCandles(@RequestParam Symbol symbol) {
+        return ResponseEntity.ok(getDailyCandlesUserCase.getDailyCandles(symbol));
     }
 
 

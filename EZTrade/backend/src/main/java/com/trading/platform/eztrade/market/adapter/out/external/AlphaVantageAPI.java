@@ -1,6 +1,6 @@
 package com.trading.platform.eztrade.market.adapter.out.external;
 
-import com.trading.platform.eztrade.market.application.ports.in.GetDailyCandlesUserCase;
+import com.trading.platform.eztrade.market.application.ports.out.GetDailyCandlesProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.GetOverviewProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.GetPriceMarketProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.SearchInstrumentProviderPort;
@@ -31,7 +31,7 @@ import java.util.List;
  * en llamadas HTTP contra la API de Alpha Vantage.
  */
 @Component
-public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstrumentProviderPort, GetDailyCandlesUserCase, GetOverviewProviderPort {
+public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstrumentProviderPort, GetDailyCandlesProviderPort, GetOverviewProviderPort {
 
     /**
      * Clave de la API de Alpha Vantage. Debe configurarse en {@code application.properties}
@@ -58,7 +58,8 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
      * Tiempo de espera mínimo entre peticiones a la API (en milisegundos).
      * Esto ayuda a respetar los límites de uso (rate limits) de la versión gratuita de Alpha Vantage.
      */
-    private static final long THROTTLE_MS = 500L;
+    @Value("${alphaVantage.api.min-interval-ms:1100}")
+    private long minIntervalMs;
 
     /**
      * Realiza una pequeña pausa en el hilo actual para espaciar las peticiones HTTP.
@@ -67,9 +68,27 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
      */
     private void throttle() {
         try {
-            Thread.sleep(THROTTLE_MS);
+            Thread.sleep(minIntervalMs);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
+        }
+    }
+
+    private void ensureApiResponseIsUsable(JsonNode node, String function) {
+        if (node == null) {
+            throw new ExternalApiException("Empty response from Alpha Vantage for function " + function);
+        }
+
+        if (node.path("Information").isTextual()) {
+            throw new ExternalApiException("Alpha Vantage rate limit reached: " + node.path("Information").asText());
+        }
+
+        if (node.path("Note").isTextual()) {
+            throw new ExternalApiException("Alpha Vantage note for " + function + ": " + node.path("Note").asText());
+        }
+
+        if (node.path("Error Message").isTextual()) {
+            throw new ExternalApiException("Alpha Vantage error for " + function + ": " + node.path("Error Message").asText());
         }
     }
 
@@ -118,12 +137,15 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
                     .retrieve()
                     .body(JsonNode.class);
 
+            ensureApiResponseIsUsable(responseJson, "GLOBAL_QUOTE");
+
             // Comprobamos que el JSON tiene la estructura mínima necesaria.
-            if (responseJson == null
-                    || responseJson.get(GLOBAL_QUOTE_FIELD) == null
+            if (responseJson.get(GLOBAL_QUOTE_FIELD) == null
                     || responseJson.get(GLOBAL_QUOTE_FIELD).get("05. price") == null) {
                 throw new ExternalApiException("Invalid response from Alpha Vantage API: missing or malformed price data");
             }
+        } catch (ExternalApiException e) {
+            throw e;
         } catch (Exception e) {
             // Cualquier error (timeout, red, parseo...) se envuelve en nuestra excepción de dominio.
             throw new ExternalApiException("Error communicating with Alpha Vantage API. Please check the value for alphaVantage.api.key in application.properties", e);
@@ -177,6 +199,9 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
         JsonNode root;
         try {
             root = restClient.get().uri(url).retrieve().body(JsonNode.class);
+            ensureApiResponseIsUsable(root, "SYMBOL_SEARCH");
+        } catch (ExternalApiException e) {
+            throw e;
         } catch (Exception e) {
             throw new ExternalApiException("Error communicating with Alpha Vantage API for instrument search", e);
         }
@@ -246,6 +271,9 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
         JsonNode root;
         try {
             root = restClient.get().uri(url).retrieve().body(JsonNode.class);
+            ensureApiResponseIsUsable(root, "TIME_SERIES_DAILY");
+        } catch (ExternalApiException e) {
+            throw e;
         } catch (Exception e) {
             throw new ExternalApiException("Error communicating with Alpha Vantage API for daily candles", e);
         }
@@ -325,13 +353,16 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
         try {
             // Realizamos la petición y obtenemos el JSON de respuesta
             node = restClient.get().uri(url).retrieve().body(JsonNode.class);
+            ensureApiResponseIsUsable(node, "OVERVIEW");
+        } catch (ExternalApiException e) {
+            throw e;
         } catch (Exception e) {
             throw new ExternalApiException("Error communicating with Alpha Vantage API for instrument overview", e);
         }
 
         // Validación mínima de la respuesta: si es nula o no tiene el campo Symbol,
         // consideramos que la respuesta no es válida.
-        if (node == null || node.get("Symbol") == null) {
+        if (node.get("Symbol") == null) {
             throw new ExternalApiException("Invalid response from Alpha Vantage API: missing overview data");
         }
 
