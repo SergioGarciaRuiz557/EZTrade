@@ -24,8 +24,10 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -49,7 +51,6 @@ class TradingServiceTest {
         TradeOrder saved = toSave.withId(new OrderId(10L));
 
         given(repository.save(any(TradeOrder.class))).willReturn(saved);
-
         PlaceOrderUseCase.PlaceOrderCommand command = new PlaceOrderUseCase.PlaceOrderCommand(
                 "user@demo.com", "IBM", OrderSide.BUY, new BigDecimal("2"), new BigDecimal("100")
         );
@@ -98,6 +99,34 @@ class TradingServiceTest {
 
         assertThat(result.status()).isEqualTo(OrderStatus.EXECUTED);
         verify(eventPublisher).publish(any(OrderExecutedEvent.class));
+    }
+
+    @Test
+    @DisplayName("execute traduce el fallo de wallet por fondos insuficientes a error de dominio trading")
+    void execute_translates_wallet_insufficient_funds_error() {
+        TradeOrder existing = TradeOrder.rehydrate(
+                new OrderId(12L),
+                "user@demo.com",
+                "IBM",
+                OrderSide.BUY,
+                new Quantity(new BigDecimal("2")),
+                new Money(new BigDecimal("100")),
+                OrderStatus.PENDING,
+                LocalDateTime.now(),
+                null
+        );
+
+        TradeOrder executed = existing.execute();
+
+        given(repository.findById(new OrderId(12L))).willReturn(Optional.of(existing));
+        given(repository.save(any(TradeOrder.class))).willReturn(executed);
+        doThrow(new RuntimeException("Insufficient wallet funds to execute buy order 12"))
+                .when(eventPublisher)
+                .publish(any());
+
+        assertThatThrownBy(() -> tradingService.execute(new OrderId(12L)))
+                .isInstanceOf(com.trading.platform.eztrade.trading.domain.TradingDomainException.class)
+                .hasMessageContaining("Insufficient wallet funds");
     }
 }
 

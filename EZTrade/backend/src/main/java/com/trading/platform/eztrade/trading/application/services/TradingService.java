@@ -97,15 +97,22 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
 
         TradeOrder executed = tradeOrderRepositoryPort.save(current.execute());
 
-        domainEventPublisherPort.publish(new OrderExecutedEvent(
-                executed.id().value(),
-                executed.owner(),
-                executed.symbol(),
-                executed.side().name(),
-                executed.quantity().value(),
-                executed.price().value(),
-                LocalDateTime.now()
-        ));
+        try {
+            domainEventPublisherPort.publish(new OrderExecutedEvent(
+                    executed.id().value(),
+                    executed.owner(),
+                    executed.symbol(),
+                    executed.side().name(),
+                    executed.quantity().value(),
+                    executed.price().value(),
+                    LocalDateTime.now()
+            ));
+        } catch (RuntimeException ex) {
+            if (isWalletInsufficientFunds(ex)) {
+                throw new TradingDomainException(ex.getMessage());
+            }
+            throw ex;
+        }
 
         return executed;
     }
@@ -159,6 +166,18 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
     @Transactional(readOnly = true)
     public List<TradeOrder> getByOwner(String owner) {
         return tradeOrderRepositoryPort.findByOwner(owner);
+    }
+
+    private static boolean isWalletInsufficientFunds(RuntimeException ex) {
+        Throwable cursor = ex;
+        while (cursor != null) {
+            String message = cursor.getMessage();
+            if (message != null && message.contains("Insufficient wallet funds")) {
+                return true;
+            }
+            cursor = cursor.getCause();
+        }
+        return false;
     }
 }
 
