@@ -7,6 +7,13 @@ interface ApiError {
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+        window.dispatchEvent(new Event("auth:unauthorized"))
+      }
+    }
     const error: ApiError = {
       message: response.statusText,
       status: response.status,
