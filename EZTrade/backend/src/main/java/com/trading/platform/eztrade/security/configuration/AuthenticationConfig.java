@@ -115,7 +115,9 @@ public class AuthenticationConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/user/register",
-                                "/auth/login"
+                                "/auth/login",
+                                "/ws",
+                                "/ws/**"
                         ).permitAll()
                         // Endpoints protegidos que requieren usuario autenticado
                         .requestMatchers(
