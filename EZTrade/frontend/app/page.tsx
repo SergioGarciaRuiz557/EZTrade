@@ -21,14 +21,8 @@ import {
   Wallet,
   PieChart,
   Loader2,
-  RefreshCw,
-  X,
-  ShoppingCart,
-  Building2,
-  Globe,
-  DollarSign
+  RefreshCw
 } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 // Simbolos populares para mostrar en la pagina principal
 const POPULAR_SYMBOLS = ["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA", "TSLA"]
@@ -39,6 +33,25 @@ const INDEX_SYMBOLS = [
   { symbol: "QQQ", name: "NASDAQ" },
   { symbol: "DIA", name: "DOW JONES" },
 ]
+
+// Pausa corta entre llamadas para evitar rafagas al backend/API externa.
+const MARKET_REQUEST_DELAY_MS = 700
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
+
+function createMarketRequestQueue(delayMs: number) {
+  let queue = Promise.resolve()
+
+  return async function queueRequest<T>(request: () => Promise<T>): Promise<T> {
+    const run = queue.then(() => request())
+
+    queue = run
+      .catch(() => undefined)
+      .then(() => sleep(delayMs))
+
+    return run
+  }
+}
 
 // Datos de ejemplo para usuarios no logueados
 const MOCK_STOCKS = [
@@ -284,13 +297,13 @@ export default function HomePage() {
     setError(null)
     
     try {
+      const queueMarketRequest = createMarketRequestQueue(MARKET_REQUEST_DELAY_MS)
+
       // Cargar precios de acciones populares
       const stockPromises = POPULAR_SYMBOLS.map(async (symbol) => {
         try {
-          const [priceData, overviewData] = await Promise.all([
-            marketApi.getPrice(symbol),
-            marketApi.getOverview(symbol).catch(() => null)
-          ])
+          const priceData = await queueMarketRequest(() => marketApi.getPrice(symbol))
+          const overviewData = await queueMarketRequest(() => marketApi.getOverview(symbol)).catch(() => null)
           const stock: StockData = {
             symbol,
             name: overviewData?.name || symbol,
@@ -306,7 +319,7 @@ export default function HomePage() {
       // Cargar precios de indices
       const indexPromises = INDEX_SYMBOLS.map(async (index) => {
         try {
-          const priceData = await marketApi.getPrice(index.symbol)
+          const priceData = await queueMarketRequest(() => marketApi.getPrice(index.symbol))
           return {
             symbol: index.symbol,
             name: index.name,
