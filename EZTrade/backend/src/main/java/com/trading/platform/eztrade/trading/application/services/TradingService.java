@@ -96,9 +96,9 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
                 .orElseThrow(() -> new TradingDomainException("Order not found: " + orderId.value()));
 
         TradeOrder executed = tradeOrderRepositoryPort.save(current.execute());
-
+        OrderExecutedEvent o;
         try {
-            domainEventPublisherPort.publish(new OrderExecutedEvent(
+            o = new OrderExecutedEvent(
                     executed.id().value(),
                     executed.owner(),
                     executed.symbol(),
@@ -106,13 +106,14 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
                     executed.quantity().value(),
                     executed.price().value(),
                     LocalDateTime.now()
-            ));
+            );
         } catch (RuntimeException ex) {
             if (isWalletInsufficientFunds(ex)) {
                 throw new TradingDomainException(ex.getMessage());
             }
             throw ex;
         }
+        domainEventPublisherPort.publish(o);
 
         return executed;
     }
