@@ -2,6 +2,7 @@ package com.trading.platform.eztrade.wallet.application.services;
 
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.out.DomainEventPublisherPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.WalletTransactionRepositoryPort;
@@ -145,9 +146,9 @@ class WalletServiceTest {
     }
 
     @Test
-    @DisplayName("OrderExecuted SELL liquida abono en disponible")
+    @DisplayName("OrderExecutionRequest SELL liquida abono en disponible")
     void executed_sell_settles_credit() {
-        OrderExecutedEvent event = new OrderExecutedEvent(
+        OrderExecutionRequestEvent event = new OrderExecutionRequestEvent(
                 20L,
                 "user@demo.com",
                 "IBM",
@@ -174,6 +175,6 @@ class WalletServiceTest {
         verify(eventPublisher, atLeastOnce()).publish(eventCaptor.capture());
         assertThat(eventCaptor.getAllValues()).anyMatch(FundsSettledEvent.class::isInstance);
         assertThat(eventCaptor.getAllValues()).anyMatch(AvailableCashUpdatedEvent.class::isInstance);
+        assertThat(eventCaptor.getAllValues()).anyMatch(OrderExecutedEvent.class::isInstance);
     }
 }
-

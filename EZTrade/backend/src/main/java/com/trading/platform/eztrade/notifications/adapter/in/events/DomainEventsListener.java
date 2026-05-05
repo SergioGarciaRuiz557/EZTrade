@@ -5,6 +5,7 @@ import com.trading.platform.eztrade.portfolio.domain.events.PortfolioValuationUp
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
+import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
@@ -51,6 +52,16 @@ public class DomainEventsListener {
      */
     @EventListener
     public void on(OrderCancelledEvent event) {
+        notifyOnDomainEventsUseCase.handle(event);
+    }
+
+    /**
+     * Reacciona cuando wallet reporta fondos insuficientes.
+     *
+     * @param event evento de fondos insuficientes
+     */
+    @EventListener
+    public void on(InsufficientFundsEvent event) {
         notifyOnDomainEventsUseCase.handle(event);
     }
 

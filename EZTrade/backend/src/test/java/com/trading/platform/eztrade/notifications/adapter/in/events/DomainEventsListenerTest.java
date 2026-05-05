@@ -5,6 +5,7 @@ import com.trading.platform.eztrade.portfolio.domain.events.PortfolioValuationUp
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
+import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -70,6 +71,24 @@ class DomainEventsListenerTest {
     @DisplayName("delegates OrderCancelledEvent")
     void delegates_order_cancelled_event() {
         OrderCancelledEvent event = new OrderCancelledEvent(102L, "user@demo.com", "IBM", LocalDateTime.now());
+
+        listener.on(event);
+
+        verify(notifyOnDomainEventsUseCase).handle(event);
+    }
+
+    @Test
+    @DisplayName("delegates InsufficientFundsEvent")
+    void delegates_insufficient_funds_event() {
+        InsufficientFundsEvent event = new InsufficientFundsEvent(
+                "103",
+                "user@demo.com",
+                new BigDecimal("100"),
+                new BigDecimal("20"),
+                new BigDecimal("10"),
+                "Not enough available balance",
+                LocalDateTime.now()
+        );
 
         listener.on(event);
 

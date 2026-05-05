@@ -2,6 +2,7 @@ package com.trading.platform.eztrade.wallet.application.services;
 
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.in.AdjustWalletFundsUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.GetWalletBalanceUseCase;
@@ -37,7 +38,7 @@ import java.util.Locale;
  *     <ul>
  *       <li>{@link #handle(OrderPlacedEvent)}: reservar fondos para BUY.</li>
  *       <li>{@link #handle(OrderCancelledEvent)}: liberar fondos reservados.</li>
- *       <li>{@link #handle(OrderExecutedEvent)}: liquidar BUY/SELL.</li>
+ *       <li>{@link #handle(OrderExecutionRequestEvent)}: liquidar BUY/SELL.</li>
  *     </ul>
  *   </li>
  *   <li><strong>Ajustes manuales</strong> (depósito/retiro/comisión) vía {@link AdjustWalletFundsUseCase}.</li>
@@ -183,13 +184,23 @@ public class WalletService implements HandleOrderPlacedUseCase,
     }
 
     @Override
-    public void handle(OrderExecutedEvent event) {
+    public void handle(OrderExecutionRequestEvent event) {
         // Normalizamos el side a enum y delegamos en el flujo correspondiente.
         Side side = parseSide(event.side());
         switch (side) {
             case BUY -> settleBuy(event);
             case SELL -> settleSell(event);
         }
+
+        eventPublisher.publish(new OrderExecutedEvent(
+                event.orderId(),
+                event.owner(),
+                event.symbol(),
+                event.side(),
+                event.quantity(),
+                event.price(),
+                now(event.occurredAt())
+        ));
 
         String owner = validateOwner(event.owner());
         String orderRef = String.valueOf(event.orderId());
@@ -221,7 +232,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
         return new BalanceView(account.availableBalance(), account.reservedBalance());
     }
 
-    private void settleBuy(OrderExecutedEvent event) {
+    private void settleBuy(OrderExecutionRequestEvent event) {
         String owner = validateOwner(event.owner());
         String orderRef = String.valueOf(event.orderId());
         BigDecimal amount = orderAmount(event.quantity(), event.price());
@@ -300,7 +311,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
         ));
     }
 
-    private void settleSell(OrderExecutedEvent event) {
+    private void settleSell(OrderExecutionRequestEvent event) {
         String owner = validateOwner(event.owner());
         String orderRef = String.valueOf(event.orderId());
         BigDecimal amount = orderAmount(event.quantity(), event.price());

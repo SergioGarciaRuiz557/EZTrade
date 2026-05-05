@@ -13,7 +13,8 @@ public enum NotificationType {
     ORDER_EXECUTED,
     /** Notificacion emitida cuando una orden se cancela. */
     ORDER_CANCELLED,
+    /** Notificacion emitida cuando el wallet no puede cubrir una operacion. */
+    INSUFFICIENT_FUNDS,
     /** Notificacion emitida cuando portfolio recalcula su valoracion agregada. */
     PORTFOLIO_VALUATION_UPDATED
 }
-
