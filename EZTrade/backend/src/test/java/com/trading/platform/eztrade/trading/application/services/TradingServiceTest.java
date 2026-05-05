@@ -9,7 +9,7 @@ import com.trading.platform.eztrade.trading.domain.OrderSide;
 import com.trading.platform.eztrade.trading.domain.OrderStatus;
 import com.trading.platform.eztrade.trading.domain.Quantity;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
-import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -66,7 +66,7 @@ class TradingServiceTest {
     }
 
     @Test
-    @DisplayName("execute cambia estado a ejecutada y publica evento")
+    @DisplayName("execute cambia estado a ejecutada y publica evento de solicitud de ejecucion")
     void execute_updates_status_and_publishes_event() {
         TradeOrder existing = TradeOrder.rehydrate(
                 new OrderId(11L),
@@ -98,7 +98,7 @@ class TradingServiceTest {
         TradeOrder result = tradingService.execute(new OrderId(11L));
 
         assertThat(result.status()).isEqualTo(OrderStatus.EXECUTED);
-        verify(eventPublisher).publish(any(OrderExecutedEvent.class));
+        verify(eventPublisher).publish(any(OrderExecutionRequestEvent.class));
     }
 
     @Test
@@ -129,4 +129,3 @@ class TradingServiceTest {
                 .hasMessageContaining("Insufficient wallet funds");
     }
 }
-

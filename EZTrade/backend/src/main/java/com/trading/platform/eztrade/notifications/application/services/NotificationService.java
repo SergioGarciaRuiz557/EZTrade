@@ -11,6 +11,7 @@ import com.trading.platform.eztrade.portfolio.domain.events.PortfolioValuationUp
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
+import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
 import org.springframework.stereotype.Service;
 
 /**
@@ -84,6 +85,27 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
                 NotificationType.ORDER_CANCELLED,
                 "Orden cancelada",
                 "La orden #" + event.orderId() + " para " + event.symbol() + " fue cancelada.",
+                event.occurredAt()
+        );
+        dispatch(message);
+    }
+
+    /**
+     * Construye la notificacion de fondos insuficientes y la despacha por todos los canales.
+     *
+     * @param event evento de fondos insuficientes
+     */
+    @Override
+    public void handle(InsufficientFundsEvent event) {
+        NotificationMessage message = new NotificationMessage(
+                event.owner(),
+                NotificationType.INSUFFICIENT_FUNDS,
+                "Fondos insuficientes",
+                "No se pudo completar la orden #" + event.orderId()
+                        + ". Motivo: " + event.reason()
+                        + ". Disponible=" + event.availableBalance().toPlainString()
+                        + ", reservado=" + event.reservedBalance().toPlainString()
+                        + ", solicitado=" + event.requestedAmount().toPlainString() + ".",
                 event.occurredAt()
         );
         dispatch(message);

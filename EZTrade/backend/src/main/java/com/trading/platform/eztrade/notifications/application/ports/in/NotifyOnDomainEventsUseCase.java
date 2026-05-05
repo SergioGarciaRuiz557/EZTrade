@@ -4,6 +4,7 @@ import com.trading.platform.eztrade.portfolio.domain.events.PortfolioValuationUp
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
+import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
 
 /**
  * Puerto de entrada de notifications para procesar eventos de dominio.
@@ -36,10 +37,16 @@ public interface NotifyOnDomainEventsUseCase {
     void handle(OrderCancelledEvent event);
 
     /**
+     * Procesa un evento de fondos insuficientes del wallet.
+     *
+     * @param event evento del wallet con detalle de fondos insuficientes
+     */
+    void handle(InsufficientFundsEvent event);
+
+    /**
      * Procesa una actualizacion de valoracion de cartera.
      *
      * @param event evento de portfolio con metricas agregadas
      */
     void handle(PortfolioValuationUpdatedEvent event);
 }
-

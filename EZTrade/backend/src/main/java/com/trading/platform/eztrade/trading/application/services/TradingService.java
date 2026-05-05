@@ -12,7 +12,7 @@ import com.trading.platform.eztrade.trading.domain.Quantity;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
 import com.trading.platform.eztrade.trading.domain.TradingDomainException;
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
-import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,7 +84,7 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
     }
 
     /**
-     * Ejecuta una orden existente y publica {@link OrderExecutedEvent}.
+     * Ejecuta una orden existente y publica {@link OrderExecutionRequestEvent}.
      *
      * @param orderId identificador de la orden
      * @return orden ejecutada
@@ -96,23 +96,23 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
                 .orElseThrow(() -> new TradingDomainException("Order not found: " + orderId.value()));
 
         TradeOrder executed = tradeOrderRepositoryPort.save(current.execute());
-
+        OrderExecutionRequestEvent event = new OrderExecutionRequestEvent(
+                executed.id().value(),
+                executed.owner(),
+                executed.symbol(),
+                executed.side().name(),
+                executed.quantity().value(),
+                executed.price().value(),
+                LocalDateTime.now());
         try {
-            domainEventPublisherPort.publish(new OrderExecutedEvent(
-                    executed.id().value(),
-                    executed.owner(),
-                    executed.symbol(),
-                    executed.side().name(),
-                    executed.quantity().value(),
-                    executed.price().value(),
-                    LocalDateTime.now()
-            ));
+            domainEventPublisherPort.publish(event);
         } catch (RuntimeException ex) {
             if (isWalletInsufficientFunds(ex)) {
                 throw new TradingDomainException(ex.getMessage());
             }
             throw ex;
         }
+
 
         return executed;
     }
@@ -180,4 +180,3 @@ public class TradingService implements PlaceOrderUseCase, ExecuteOrderUseCase, C
         return false;
     }
 }
-

@@ -1,7 +1,7 @@
 package com.trading.platform.eztrade.wallet.adapter.in.events;
 
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
-import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderCancelledUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderExecutedUseCase;
@@ -66,9 +66,9 @@ class TradingEventsListenerTest {
     }
 
     @Test
-    @DisplayName("delegates OrderExecutedEvent")
-    void delegates_order_executed_event() {
-        OrderExecutedEvent event = new OrderExecutedEvent(
+    @DisplayName("delegates OrderExecutionRequestEvent")
+    void delegates_order_execution_request_event() {
+        OrderExecutionRequestEvent event = new OrderExecutionRequestEvent(
                 102L,
                 "user@demo.com",
                 "IBM",
@@ -83,4 +83,3 @@ class TradingEventsListenerTest {
         verify(handleOrderExecutedUseCase).handle(event);
     }
 }
-

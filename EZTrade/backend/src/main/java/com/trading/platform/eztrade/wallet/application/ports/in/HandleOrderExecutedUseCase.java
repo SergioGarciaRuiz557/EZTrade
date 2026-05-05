@@ -1,9 +1,9 @@
 package com.trading.platform.eztrade.wallet.application.ports.in;
 
-import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 
 /**
- * Puerto de entrada (caso de uso) para reaccionar cuando una orden se ejecuta.
+ * Puerto de entrada (caso de uso) para reaccionar cuando se solicita ejecutar una orden.
  * <p>
  * En el wallet se utiliza para liquidar:
  * <ul>
@@ -14,10 +14,9 @@ import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 public interface HandleOrderExecutedUseCase {
 
     /**
-     * Maneja el evento de ejecución de orden.
+     * Maneja el evento de solicitud de ejecucion de orden.
      *
-     * @param event evento publicado por el módulo de trading.
+     * @param event evento publicado por el modulo de trading.
      */
-    void handle(OrderExecutedEvent event);
+    void handle(OrderExecutionRequestEvent event);
 }
-

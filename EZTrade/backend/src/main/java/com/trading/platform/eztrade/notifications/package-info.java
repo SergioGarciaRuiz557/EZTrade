@@ -19,7 +19,7 @@
  * </ul>
  */
 @ApplicationModule(
-        allowedDependencies = {"trading :: events", "portfolio :: events"}
+        allowedDependencies = {"trading :: events", "portfolio :: events", "wallet :: events"}
 )
 package com.trading.platform.eztrade.notifications;
 

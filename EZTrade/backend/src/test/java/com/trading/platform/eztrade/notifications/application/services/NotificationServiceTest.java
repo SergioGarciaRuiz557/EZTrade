@@ -8,6 +8,7 @@ import com.trading.platform.eztrade.notifications.domain.NotificationMessage;
 import com.trading.platform.eztrade.notifications.domain.NotificationType;
 import com.trading.platform.eztrade.portfolio.domain.events.PortfolioValuationUpdatedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
+import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,6 +73,35 @@ class NotificationServiceTest {
     }
 
     @Test
+    @DisplayName("InsufficientFundsEvent dispara fan-out a todos los canales")
+    void insufficient_funds_fans_out_all_channels() {
+        InsufficientFundsEvent event = new InsufficientFundsEvent(
+                "88",
+                "user@demo.com",
+                new BigDecimal("200"),
+                new BigDecimal("20"),
+                new BigDecimal("10"),
+                "Not enough available balance",
+                LocalDateTime.now()
+        );
+
+        notificationService.handle(event);
+
+        verify(emailNotificationPort, times(1)).send(any(NotificationMessage.class));
+        verify(pushNotificationPort, times(1)).send(any(NotificationMessage.class));
+        verify(webSocketNotificationPort, times(1)).send(any(NotificationMessage.class));
+
+        ArgumentCaptor<NotificationMessage> inboxCaptor = ArgumentCaptor.forClass(NotificationMessage.class);
+        verify(inboxNotificationPort, times(1)).save(inboxCaptor.capture());
+
+        NotificationMessage saved = inboxCaptor.getValue();
+        assertThat(saved.recipient()).isEqualTo("user@demo.com");
+        assertThat(saved.type()).isEqualTo(NotificationType.INSUFFICIENT_FUNDS);
+        assertThat(saved.title()).isEqualTo("Fondos insuficientes");
+        assertThat(saved.body()).contains("#88").contains("Disponible=20").contains("solicitado=200");
+    }
+
+    @Test
     @DisplayName("PortfolioValuationUpdatedEvent tambien genera notificacion")
     void portfolio_event_generates_notification() {
         PortfolioValuationUpdatedEvent event = new PortfolioValuationUpdatedEvent(
@@ -97,4 +127,3 @@ class NotificationServiceTest {
     }
 
 }
-
