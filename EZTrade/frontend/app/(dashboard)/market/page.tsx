@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { marketApi, Instrument, InstrumentOverview, MarketPrice } from "@/lib/api"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { formatCurrency, cn } from "@/lib/utils"
-import { Search, Loader2, TrendingUp, Building2, Globe, DollarSign, BarChart3 } from "lucide-react"
+import { Search, Loader2, TrendingUp, Building2, Globe, DollarSign, BarChart3, Store } from "lucide-react"
 import Link from "next/link"
 
 function InstrumentDetails({ symbol, onClose }: { symbol: string; onClose: () => void }) {
@@ -15,23 +15,33 @@ function InstrumentDetails({ symbol, onClose }: { symbol: string; onClose: () =>
   const [price, setPrice] = useState<MarketPrice | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useState(() => {
+  useEffect(() => {
+    let cancelled = false
+
     const fetchData = async () => {
       try {
         const [overviewData, priceData] = await Promise.all([
           marketApi.getOverview(symbol),
           marketApi.getPrice(symbol),
         ])
-        setOverview(overviewData)
-        setPrice(priceData)
+        if (!cancelled) {
+          setOverview(overviewData)
+          setPrice(priceData)
+        }
       } catch {
         // Handle error silently
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
+
+    setLoading(true)
     fetchData()
-  })
+
+    return () => {
+      cancelled = true
+    }
+  }, [symbol])
 
   if (loading) {
     return (
@@ -102,11 +112,17 @@ function InstrumentDetails({ symbol, onClose }: { symbol: string; onClose: () =>
       </div>
 
       {/* Action */}
-      <div className="flex gap-4">
-        <Button asChild className="flex-1 bg-success hover:bg-success/90">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Button asChild className="bg-success hover:bg-success/90">
           <Link href={`/trading?symbol=${symbol}&side=BUY`}>Comprar</Link>
         </Button>
-        <Button asChild variant="outline" className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
+        <Button asChild variant="outline">
+          <Link href={`/trading?symbol=${symbol}&tab=marketplace`}>
+            <Store className="mr-2 h-4 w-4" />
+            Ofertas
+          </Link>
+        </Button>
+        <Button asChild variant="outline" className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground">
           <Link href={`/trading?symbol=${symbol}&side=SELL`}>Vender</Link>
         </Button>
       </div>

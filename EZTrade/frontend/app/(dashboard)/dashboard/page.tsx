@@ -89,9 +89,9 @@ export default function DashboardPage() {
           }
         />
         <StatCard
-          title="Ordenes Pendientes"
+          title="Ordenes Abiertas"
           value={pendingOrders.length.toString()}
-          description="En espera de ejecucion"
+          description="Ordenes y ofertas activas"
           icon={Clock}
           trend="neutral"
         />

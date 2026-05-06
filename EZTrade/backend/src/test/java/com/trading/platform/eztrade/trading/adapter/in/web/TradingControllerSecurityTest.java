@@ -10,6 +10,7 @@ import com.trading.platform.eztrade.trading.domain.OrderSide;
 import com.trading.platform.eztrade.trading.domain.OrderStatus;
 import com.trading.platform.eztrade.trading.domain.Quantity;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
+import com.trading.platform.eztrade.trading.domain.TradingDomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,7 +66,7 @@ class TradingControllerSecurityTest {
 
         assertThatThrownBy(() -> controller.getById(99L, authentication))
                 .isInstanceOf(AccessDeniedException.class)
-                .hasMessageContaining("another user's order");
+                .hasMessageContaining("orden de otro usuario");
 
         verify(getOrdersUseCase).getById(new OrderId(99L));
         verifyNoInteractions(executeOrderUseCase);
@@ -92,9 +93,36 @@ class TradingControllerSecurityTest {
 
         assertThatThrownBy(() -> controller.execute(100L, authentication))
                 .isInstanceOf(AccessDeniedException.class)
-                .hasMessageContaining("another user's order");
+                .hasMessageContaining("orden de otro usuario");
 
         verify(getOrdersUseCase).getById(new OrderId(100L));
+        verifyNoInteractions(executeOrderUseCase);
+    }
+
+    @Test
+    @DisplayName("execute rechaza ofertas SELL directas para evitar ventas sin comprador")
+    void execute_rejects_direct_sell_offer_execution() {
+        TradingController controller = new TradingController(placeOrderUseCase, executeOrderUseCase, cancelOrderUseCase, getOrdersUseCase);
+        TradeOrder sellOffer = TradeOrder.rehydrate(
+                new OrderId(101L),
+                "seller@demo.com",
+                "AAPL",
+                OrderSide.SELL,
+                new Quantity(new BigDecimal("2")),
+                new Money(new BigDecimal("130")),
+                OrderStatus.PENDING,
+                LocalDateTime.now(),
+                null
+        );
+
+        given(authentication.getName()).willReturn("seller@demo.com");
+        given(getOrdersUseCase.getById(new OrderId(101L))).willReturn(sellOffer);
+
+        assertThatThrownBy(() -> controller.execute(101L, authentication))
+                .isInstanceOf(TradingDomainException.class)
+                .hasMessageContaining("ofertas de venta deben comprarse");
+
+        verify(getOrdersUseCase).getById(new OrderId(101L));
         verifyNoInteractions(executeOrderUseCase);
     }
 }

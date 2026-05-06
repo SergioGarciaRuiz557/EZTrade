@@ -17,7 +17,7 @@ public record OrderId(Long value) {
      */
     public OrderId {
         if (value == null || value <= 0) {
-            throw new TradingDomainException("Order id must be positive");
+            throw new TradingDomainException("El id de la orden debe ser positivo");
         }
     }
 }

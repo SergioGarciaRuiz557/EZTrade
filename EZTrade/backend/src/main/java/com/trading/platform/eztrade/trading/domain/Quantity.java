@@ -18,7 +18,7 @@ public record Quantity(BigDecimal value) {
      */
     public Quantity {
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TradingDomainException("Quantity must be greater than zero");
+            throw new TradingDomainException("La cantidad debe ser mayor que cero");
         }
     }
 }
