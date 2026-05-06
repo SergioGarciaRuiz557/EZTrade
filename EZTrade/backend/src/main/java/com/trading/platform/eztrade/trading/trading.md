@@ -205,13 +205,13 @@ Cuando se viola una regla de negocio, el dominio lanza `TradingDomainException`.
 
 Ejemplos:
 
-- `Owner is required`
-- `Symbol is required`
-- `Quantity must be greater than zero`
-- `Money value must be greater than zero`
-- `Only pending orders can be executed`
-- `Only pending orders can be cancelled`
-- `Only the owner can cancel the order`
+- `El propietario es obligatorio`
+- `El simbolo es obligatorio`
+- `La cantidad debe ser mayor que cero`
+- `El valor monetario debe ser mayor que cero`
+- `Solo se pueden ejecutar ordenes pendientes`
+- `Solo se pueden cancelar ordenes pendientes`
+- `Solo el propietario puede cancelar la orden`
 
 ---
 
@@ -399,7 +399,7 @@ Formato de respuesta:
 
 ```json
 {
-  "error": "Only pending orders can be executed"
+  "error": "Solo se pueden ejecutar ordenes pendientes"
 }
 ```
 
@@ -556,7 +556,7 @@ La orden queda registrada como `PENDING` y ya puede ser consultada, ejecutada o 
 2. `TradingController` crea un `OrderId` a partir del path variable.
 3. Invoca `TradingService.execute(orderId)`.
 4. `TradingService` busca la orden en el repositorio.
-5. Si no existe, lanza `TradingDomainException` con el mensaje `Order not found: ...`.
+5. Si no existe, lanza `TradingDomainException` con el mensaje `Orden no encontrada: ...`.
 6. Si existe, llama a `current.execute()`.
 7. El agregado verifica que su estado sea `PENDING`.
 8. Si la regla se cumple, crea una nueva instancia con:

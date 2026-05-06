@@ -10,9 +10,14 @@
  *   <li>El dominio es puro: sin dependencias de Spring ni detalles de infraestructura.</li>
  *   <li>La aplicacion orquesta reglas de negocio a traves de puertos de entrada/salida.</li>
  *   <li>La comunicacion con otros modulos se realiza mediante eventos de dominio.</li>
+ *   <li>Para validar precios del marketplace, trading solo depende de la API
+ *       publica {@code market :: api}; no consulta directamente adaptadores ni
+ *       servicios internos de market.</li>
  * </ul>
  */
-@ApplicationModule
+@ApplicationModule(
+        allowedDependencies = {"market :: api"}
+)
 package com.trading.platform.eztrade.trading;
 
 import org.springframework.modulith.ApplicationModule;
