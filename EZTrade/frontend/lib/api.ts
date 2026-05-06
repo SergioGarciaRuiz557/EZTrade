@@ -14,11 +14,32 @@ async function handleResponse<T>(response: Response): Promise<T> {
         window.dispatchEvent(new Event("auth:unauthorized"))
       }
     }
+    let message = response.statusText
+    try {
+      const payload = await response.clone().json()
+      if (payload && typeof payload === "object") {
+        if ("error" in payload && typeof payload.error === "string") {
+          message = payload.error
+        } else if ("message" in payload && typeof payload.message === "string") {
+          message = payload.message
+        }
+      }
+    } catch {
+      try {
+        const text = await response.text()
+        if (text) message = text
+      } catch {
+        // Keep the HTTP status text if the body cannot be read.
+      }
+    }
     const error: ApiError = {
-      message: response.statusText,
+      message,
       status: response.status,
     }
     throw error
+  }
+  if (response.status === 204) {
+    return undefined as T
   }
   return response.json()
 }
@@ -97,6 +118,50 @@ export const tradingApi = {
       headers: getAuthHeaders(),
     })
     return handleResponse<TradeOrder>(response)
+  },
+
+  buyFromMarket: async (order: BuyFromMarketRequest) => {
+    const priceResponse = await fetch(`${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(order.symbol)}`, {
+      headers: getAuthHeaders(),
+    })
+    const marketPrice = await handleResponse<MarketPrice>(priceResponse)
+
+    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        symbol: order.symbol,
+        side: "BUY",
+        quantity: order.quantity,
+        price: marketPrice.price,
+      }),
+    })
+    return handleResponse<TradeOrder>(response)
+  },
+
+  placeSellOffer: async (offer: PlaceSellOfferRequest) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(offer),
+    })
+    return handleResponse<TradeOrder>(response)
+  },
+
+  getSellOffers: async (symbol?: string) => {
+    const query = symbol ? `?symbol=${encodeURIComponent(symbol)}` : ""
+    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers${query}`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse<TradeOrder[]>(response)
+  },
+
+  buySellOffer: async (offerId: number) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers/${offerId}/buy`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    })
+    return handleResponse<MarketplaceTrade>(response)
   },
 }
 
@@ -179,6 +244,22 @@ export interface PlaceOrderRequest {
   side: "BUY" | "SELL"
   quantity: number
   price: number
+}
+
+export interface BuyFromMarketRequest {
+  symbol: string
+  quantity: number
+}
+
+export interface PlaceSellOfferRequest {
+  symbol: string
+  quantity: number
+  price: number
+}
+
+export interface MarketplaceTrade {
+  buyerOrder: TradeOrder
+  sellerOrder: TradeOrder
 }
 
 export interface Portfolio {

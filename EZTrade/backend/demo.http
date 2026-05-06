@@ -88,3 +88,32 @@ Authorization: Bearer {{auth_token}}
 GET http://localhost:8088/api/portfolio
 Authorization: Bearer {{auth_token}}
 
+### Paso 7: Comprar directamente al mercado con precio actual de AlphaVantage
+POST http://localhost:8088/api/v1/trading/market/buy
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "symbol": "AAPL",
+  "quantity": 1
+}
+
+### Paso 8: Publicar una oferta de venta para otros usuarios
+# El precio no puede superar el precio actual obtenido desde AlphaVantage.
+POST http://localhost:8088/api/v1/trading/offers
+Authorization: Bearer {{auth_token}}
+Content-Type: application/json
+
+{
+  "symbol": "AAPL",
+  "quantity": 1,
+  "price": 140
+}
+
+### Paso 9: Listar ofertas de venta disponibles de otros usuarios
+GET http://localhost:8088/api/v1/trading/offers?symbol=AAPL
+Authorization: Bearer {{auth_token}}
+
+### Paso 10: Comprar una oferta de venta de otro usuario
+POST http://localhost:8088/api/v1/trading/offers/1/buy
+Authorization: Bearer {{auth_token}}

@@ -36,11 +36,11 @@ public class TradeOrder {
         this.id = id;
         this.owner = validateOwner(owner);
         this.symbol = validateSymbol(symbol);
-        this.side = Objects.requireNonNull(side, "Order side is required");
-        this.quantity = Objects.requireNonNull(quantity, "Quantity is required");
-        this.price = Objects.requireNonNull(price, "Price is required");
-        this.status = Objects.requireNonNull(status, "Order status is required");
-        this.createdAt = Objects.requireNonNull(createdAt, "CreatedAt is required");
+        this.side = Objects.requireNonNull(side, "El tipo de orden es obligatorio");
+        this.quantity = Objects.requireNonNull(quantity, "La cantidad es obligatoria");
+        this.price = Objects.requireNonNull(price, "El precio es obligatorio");
+        this.status = Objects.requireNonNull(status, "El estado de la orden es obligatorio");
+        this.createdAt = Objects.requireNonNull(createdAt, "La fecha de creacion es obligatoria");
         this.executedAt = executedAt;
     }
 
@@ -122,7 +122,7 @@ public class TradeOrder {
      */
     public TradeOrder execute() {
         if (status != OrderStatus.PENDING) {
-            throw new TradingDomainException("Only pending orders can be executed");
+            throw new TradingDomainException("Solo se pueden ejecutar ordenes pendientes");
         }
         return new TradeOrder(
                 id,
@@ -146,10 +146,10 @@ public class TradeOrder {
      */
     public TradeOrder cancel(String requestedBy) {
         if (!owner.equals(requestedBy)) {
-            throw new TradingDomainException("Only the owner can cancel the order");
+            throw new TradingDomainException("Solo el propietario puede cancelar la orden");
         }
         if (status != OrderStatus.PENDING) {
-            throw new TradingDomainException("Only pending orders can be cancelled");
+            throw new TradingDomainException("Solo se pueden cancelar ordenes pendientes");
         }
         return new TradeOrder(
                 id,
@@ -202,14 +202,14 @@ public class TradeOrder {
 
     private static String validateOwner(String owner) {
         if (owner == null || owner.isBlank()) {
-            throw new TradingDomainException("Owner is required");
+            throw new TradingDomainException("El propietario es obligatorio");
         }
         return owner;
     }
 
     private static String validateSymbol(String symbol) {
         if (symbol == null || symbol.isBlank()) {
-            throw new TradingDomainException("Symbol is required");
+            throw new TradingDomainException("El simbolo es obligatorio");
         }
         return symbol.toUpperCase();
     }

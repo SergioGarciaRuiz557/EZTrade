@@ -7,7 +7,9 @@ import com.trading.platform.eztrade.trading.application.ports.in.ExecuteOrderUse
 import com.trading.platform.eztrade.trading.application.ports.in.GetOrdersUseCase;
 import com.trading.platform.eztrade.trading.application.ports.in.PlaceOrderUseCase;
 import com.trading.platform.eztrade.trading.domain.OrderId;
+import com.trading.platform.eztrade.trading.domain.OrderSide;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
+import com.trading.platform.eztrade.trading.domain.TradingDomainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -77,7 +79,14 @@ public class TradingController {
     @PostMapping("/{orderId}/execute")
     public ResponseEntity<TradeOrderResponse> execute(@PathVariable Long orderId,
                                                       Authentication authentication) {
-        ensureOwnerOrForbidden(orderId, authentication);
+        TradeOrder existing = ensureOwnerOrForbidden(orderId, authentication);
+        // Una SELL pendiente es una oferta publicada en el marketplace. Si el
+        // vendedor pudiera ejecutarla directamente, wallet abonaria efectivo sin
+        // que existiera un comprador. Por eso solo se permite ejecutarla desde
+        // /offers/{offerId}/buy, donde tambien se crea la BUY del comprador.
+        if (existing.side() == OrderSide.SELL) {
+            throw new TradingDomainException("Las ofertas de venta deben comprarse mediante /api/v1/trading/offers/{offerId}/buy");
+        }
         TradeOrder order = executeOrderUseCase.execute(new OrderId(orderId));
         return ResponseEntity.ok(TradeOrderResponse.from(order));
     }
@@ -127,7 +136,7 @@ public class TradingController {
     private TradeOrder ensureOwnerOrForbidden(Long orderId, Authentication authentication) {
         TradeOrder order = getOrdersUseCase.getById(new OrderId(orderId));
         if (!order.owner().equalsIgnoreCase(authentication.getName())) {
-            throw new org.springframework.security.access.AccessDeniedException("You cannot access another user's order");
+            throw new org.springframework.security.access.AccessDeniedException("No puedes acceder a la orden de otro usuario");
         }
         return order;
     }

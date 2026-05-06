@@ -18,7 +18,7 @@ public record Money(BigDecimal value) {
      */
     public Money {
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new TradingDomainException("Money value must be greater than zero");
+            throw new TradingDomainException("El valor monetario debe ser mayor que cero");
         }
     }
 

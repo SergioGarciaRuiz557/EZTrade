@@ -41,7 +41,7 @@ class TradeOrderTest {
 
         assertThatThrownBy(() -> order.cancel("other@demo.com"))
                 .isInstanceOf(TradingDomainException.class)
-                .hasMessageContaining("Only the owner");
+                .hasMessageContaining("Solo el propietario");
     }
 }
 
