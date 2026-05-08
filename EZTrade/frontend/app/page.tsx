@@ -224,55 +224,35 @@ function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean
   )
 }
 
-// Modal de login requerido
-function LoginRequiredModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Lock className="w-6 h-6 text-primary" />
-          </div>
-          <CardTitle>Acceso requerido</CardTitle>
-          <CardDescription>
-            Para ver los datos reales del mercado y gestionar tu portfolio, necesitas iniciar sesion.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Link href="/login" className="block">
-            <Button className="w-full">Iniciar sesion</Button>
-          </Link>
-          <Link href="/register" className="block">
-            <Button variant="outline" className="w-full">Crear cuenta</Button>
-          </Link>
-          <Button variant="ghost" className="w-full" onClick={onClose}>
-            Seguir explorando
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  )
+function clearCachedAuthSession() {
+  localStorage.removeItem("token")
+  localStorage.removeItem("user")
+  window.dispatchEvent(new Event("auth:unauthorized"))
 }
 
 // Overlay para datos borrosos
-function BlurOverlay({ onClick }: { onClick: () => void }) {
+function BlurOverlay() {
   return (
-    <div 
+    <Link
+      href="/login"
+      aria-label="Iniciar sesion para ver datos reales"
       className="absolute inset-0 flex items-center justify-center bg-background/30 backdrop-blur-[2px] cursor-pointer z-10 rounded-lg"
-      onClick={onClick}
+      onClick={(event) => {
+        event.stopPropagation()
+        clearCachedAuthSession()
+      }}
     >
       <div className="flex flex-col items-center gap-2 text-center p-4">
         <Lock className="w-6 h-6 text-primary" />
         <span className="text-sm font-medium">Inicia sesion para ver datos reales</span>
       </div>
-    </div>
+    </Link>
   )
 }
 
 export default function HomePage() {
   const { token } = useAuth()
   const router = useRouter()
-  const [showLoginModal, setShowLoginModal] = useState(false)
   const [stocks, setStocks] = useState<StockData[]>([])
   const [indices, setIndices] = useState<{ symbol: string; name: string; price: number }[]>([])
   const [sectors, setSectors] = useState<{ name: string; count: number }[]>([])
@@ -396,7 +376,8 @@ export default function HomePage() {
 
   const handleInteraction = () => {
     if (!token) {
-      setShowLoginModal(true)
+      clearCachedAuthSession()
+      router.push("/login")
     }
   }
 
@@ -465,20 +446,20 @@ export default function HomePage() {
           </div>
           <nav className="flex items-center gap-4">
             {token ? (
-              <Link href="/dashboard">
-                <Button>
+              <Button asChild>
+                <Link href="/dashboard">
                   Ir al Dashboard
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             ) : (
               <>
-                <Link href="/login">
-                  <Button variant="ghost">Iniciar sesion</Button>
-                </Link>
-                <Link href="/register">
-                  <Button>Registrarse</Button>
-                </Link>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Iniciar sesion</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/register">Registrarse</Link>
+                </Button>
               </>
             )}
           </nav>
@@ -539,7 +520,7 @@ export default function HomePage() {
                     })
                   }}
                 >
-                  {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                  {!isLoggedIn && <BlurOverlay />}
                   <CardContent className={`p-4 ${!isLoggedIn ? "blur-sm" : ""}`}>
                     <div className="flex items-center justify-between">
                       <div>
@@ -564,7 +545,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Stock List */}
             <Card className="lg:col-span-2 relative overflow-hidden">
-              {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+              {!isLoggedIn && <BlurOverlay />}
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -628,7 +609,7 @@ export default function HomePage() {
             {/* Sector Distribution */}
             <div className="space-y-6">
               <Card className="relative overflow-hidden">
-                {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                {!isLoggedIn && <BlurOverlay />}
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PieChart className="w-5 h-5 text-primary" />
@@ -644,7 +625,7 @@ export default function HomePage() {
               </Card>
 
               <Card className="relative overflow-hidden">
-                {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                {!isLoggedIn && <BlurOverlay />}
                 <CardHeader>
                   <div className="flex items-center justify-between gap-2">
                     <div>
@@ -738,12 +719,12 @@ export default function HomePage() {
           
           {!token && (
             <div className="text-center mt-12">
-              <Link href="/register">
-                <Button size="lg" className="px-8">
+              <Button size="lg" className="px-8" asChild>
+                <Link href="/register">
                   Empieza a invertir gratis
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           )}
         </div>
@@ -755,9 +736,6 @@ export default function HomePage() {
           <p>&copy; 2024 EZTrade. Todos los derechos reservados.</p>
         </div>
       </footer>
-
-      {/* Login Required Modal */}
-      {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
 
       {/* Asset Buy Modal */}
       <Dialog

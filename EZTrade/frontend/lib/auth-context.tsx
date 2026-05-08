@@ -99,8 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return
       }
 
+      const isStoredTokenCurrent = () => localStorage.getItem("token") === storedToken
+
       try {
         const userInfo = await authApi.getUser(payload.sub)
+        if (!isStoredTokenCurrent()) return
+
         localStorage.setItem("user", JSON.stringify(userInfo))
         if (isActive) {
           setToken(storedToken)
@@ -111,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           typeof error === "object" && error !== null && "status" in error
             ? (error as { status?: number }).status
             : undefined
+
+        if (!isStoredTokenCurrent()) return
 
         if (status === 401 || status === 403) {
           clearAuthStorage()
