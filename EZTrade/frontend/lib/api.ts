@@ -1,23 +1,29 @@
+// URL base del backend. Permite cambiar de entorno sin tocar el codigo fuente.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8088"
 
+// Forma comun de los errores que se lanzan desde la capa API.
 interface ApiError {
   message: string
   status: number
 }
 
+// Opciones compartidas por las peticiones autenticadas.
 interface ApiRequestOptions {
   signal?: AbortSignal
   token?: string | null
 }
 
+// Permite comparar el token usado por una peticion con el token guardado al recibir un 401.
 interface HandleResponseOptions {
   requestToken?: string | null
 }
 
+// Lee el token solo en navegador para evitar acceder a localStorage durante renderizado servidor.
 function getStoredToken(): string | null {
   return typeof window !== "undefined" ? localStorage.getItem("token") : null
 }
 
+// Centraliza el tratamiento de respuestas HTTP, incluyendo errores, sesiones caducadas y respuestas vacias.
 async function handleResponse<T>(response: Response, options: HandleResponseOptions = {}): Promise<T> {
   if (!response.ok) {
     if (response.status === 401) {
@@ -32,6 +38,7 @@ async function handleResponse<T>(response: Response, options: HandleResponseOpti
     }
     let message = response.statusText
     try {
+      // Se intenta extraer primero el mensaje estructurado que envia el backend.
       const payload = await response.clone().json()
       if (payload && typeof payload === "object") {
         if ("error" in payload && typeof payload.error === "string") {
@@ -60,6 +67,7 @@ async function handleResponse<T>(response: Response, options: HandleResponseOpti
   return response.json()
 }
 
+// Construye cabeceras JSON y anade Authorization cuando hay token disponible.
 function getAuthHeaders(token = getStoredToken()): HeadersInit {
   return {
     "Content-Type": "application/json",
@@ -67,6 +75,7 @@ function getAuthHeaders(token = getStoredToken()): HeadersInit {
   }
 }
 
+// Wrapper unico de fetch para reutilizar autenticacion, cancelacion y parseo de errores.
 async function fetchWithAuth<T>(
   url: string,
   init: RequestInit = {},
@@ -84,7 +93,7 @@ async function fetchWithAuth<T>(
   return handleResponse<T>(response, { requestToken })
 }
 
-// Auth API
+// Endpoints de autenticacion y alta de usuarios.
 export const authApi = {
   login: async (identifier: string, password: string) => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -119,7 +128,7 @@ export const authApi = {
   },
 }
 
-// Trading API
+// Endpoints de trading: ordenes directas, ejecucion, cancelacion y marketplace.
 export const tradingApi = {
   getOrders: async () => {
     return fetchWithAuth<TradeOrder[]>(`${API_BASE_URL}/api/v1/trading/orders`)
@@ -145,6 +154,7 @@ export const tradingApi = {
   },
 
   buyFromMarket: async (order: BuyFromMarketRequest) => {
+    // Para compra rapida se consulta primero el precio actual y se crea una orden con ese precio.
     const marketPrice = await fetchWithAuth<MarketPrice>(
       `${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(order.symbol)}`
     )
@@ -179,14 +189,14 @@ export const tradingApi = {
   },
 }
 
-// Portfolio API
+// Endpoints del portfolio del usuario autenticado.
 export const portfolioApi = {
   getPortfolio: async () => {
     return fetchWithAuth<Portfolio>(`${API_BASE_URL}/api/portfolio`)
   },
 }
 
-// Wallet API
+// Endpoints de wallet: balance, movimientos de efectivo y transferencias.
 export const walletApi = {
   getBalance: async () => {
     return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/balance`)
@@ -218,7 +228,7 @@ export const walletApi = {
   },
 }
 
-// Market API (requieren autenticacion)
+// Endpoints de mercado. Todos pasan por fetchWithAuth porque requieren sesion activa.
 export const marketApi = {
   getPrice: async (symbol: string, options?: ApiRequestOptions) => {
     return fetchWithAuth<MarketPrice>(
@@ -253,7 +263,7 @@ export const marketApi = {
   },
 }
 
-// Types
+// Tipos compartidos entre pantallas y capa API. Reflejan las respuestas esperadas del backend.
 export interface TradeOrder {
   id: number
   owner: string

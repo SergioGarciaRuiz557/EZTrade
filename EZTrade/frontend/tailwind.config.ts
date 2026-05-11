@@ -1,7 +1,10 @@
 import type { Config } from "tailwindcss"
 
+// Configuracion de Tailwind: define donde buscar clases y como mapear el tema visual.
 const config: Config = {
+  // El modo oscuro se activa con la clase .dark colocada en el html del layout raiz.
   darkMode: ["class"],
+  // Rutas fuente que Tailwind escanea para generar solo las utilidades usadas.
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,6 +12,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // Colores conectados a variables CSS para permitir tema claro/oscuro.
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -54,6 +58,7 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
+        // Familias inyectadas desde next/font en app/layout.tsx.
         sans: ["var(--font-inter)"],
         mono: ["var(--font-jetbrains-mono)"],
       },

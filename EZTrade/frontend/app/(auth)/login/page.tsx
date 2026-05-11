@@ -12,12 +12,14 @@ import { toast } from "@/components/ui/toaster"
 import { TrendingUp, Loader2 } from "lucide-react"
 
 export default function LoginPage() {
+  // Estado controlado del formulario de acceso y del spinner de envio.
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const router = useRouter()
 
+  // Envia credenciales al AuthProvider, guarda sesion si son validas y vuelve al inicio.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)

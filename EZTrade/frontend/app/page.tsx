@@ -39,6 +39,7 @@ const MARKET_REQUEST_DELAY_MS = 700
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+// Crea una cola secuencial para espaciar peticiones y reducir errores por limite de la API externa.
 function createMarketRequestQueue(delayMs: number) {
   let queue = Promise.resolve()
 
@@ -96,6 +97,7 @@ interface StockData {
   sector?: string
 }
 
+// Activo elegido desde la portada para abrir el modal de compra.
 interface SelectedAsset {
   symbol: string
   name: string
@@ -104,6 +106,7 @@ interface SelectedAsset {
   type: "accion" | "indice"
 }
 
+// Punto adaptado para Recharts: conserva datos OHLC y anade una etiqueta legible en el eje X.
 interface CandleChartPoint {
   time: string
   label: string
@@ -124,6 +127,7 @@ function SectorBarChart({ data, blurred }: { data: { name: string; count: number
     )
   }
 
+  // La barra mas grande ocupa el 100% y el resto se calcula proporcionalmente.
   const maxValue = Math.max(...data.map(d => d.count), 1)
   
   return (
@@ -146,7 +150,9 @@ function SectorBarChart({ data, blurred }: { data: { name: string; count: number
   )
 }
 
+// Grafico compacto de cierres diarios con resumen de cierre y variacion del periodo.
 function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean }) {
+  // Se limita a las ultimas 30 velas para mantener la grafica legible en tarjetas pequenas.
   const chartData: CandleChartPoint[] = data
     .slice(-30)
     .map((candle) => {
@@ -165,6 +171,7 @@ function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean
     return <p className="text-sm text-muted-foreground">No hay velas diarias disponibles para este simbolo.</p>
   }
 
+  // Calcula variacion desde la apertura inicial hasta el ultimo cierre visible.
   const latest = chartData[chartData.length - 1]
   const first = chartData[0]
   const change = latest.close - first.open
@@ -224,6 +231,7 @@ function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean
   )
 }
 
+// Elimina una sesion local posiblemente caducada antes de enviar al usuario al login.
 function clearCachedAuthSession() {
   localStorage.removeItem("token")
   localStorage.removeItem("user")
@@ -268,8 +276,10 @@ export default function HomePage() {
   const [candlesLoading, setCandlesLoading] = useState(false)
   const [candlesError, setCandlesError] = useState<string | null>(null)
 
+  // La portada cambia entre datos reales y datos demo segun exista token.
   const isLoggedIn = !!token
 
+  // Carga acciones, indices y sectores reales cuando el usuario esta autenticado.
   const loadMarketData = async (signal?: AbortSignal) => {
     if (!token) return
     
@@ -314,6 +324,7 @@ export default function HomePage() {
         }
       })
 
+      // Las peticiones internas van en paralelo, pero cada llamada real pasa por la cola espaciada.
       const [stockResults, indexResults] = await Promise.all([
         Promise.all(stockPromises),
         Promise.all(indexPromises)
@@ -355,6 +366,7 @@ export default function HomePage() {
   }
 
   useEffect(() => {
+    // La carga inicial solo se dispara una vez por sesion y se cancela al desmontar.
     if (token && !dataLoaded) {
       const controller = new AbortController()
       loadMarketData(controller.signal)
@@ -366,6 +378,7 @@ export default function HomePage() {
   }, [token, dataLoaded])
 
   useEffect(() => {
+    // Las velas se cachean por simbolo para no repetir llamadas al cambiar entre botones.
     if (!isLoggedIn) return
     if (candlesBySymbol[selectedChartSymbol]) return
 
@@ -399,6 +412,7 @@ export default function HomePage() {
     }
   }, [isLoggedIn, selectedChartSymbol, candlesBySymbol])
 
+  // Cualquier interaccion bloqueada en modo invitado redirige al login.
   const handleInteraction = () => {
     if (!token) {
       clearCachedAuthSession()
@@ -406,12 +420,14 @@ export default function HomePage() {
     }
   }
 
+  // Prepara el modal con el activo elegido y precarga el precio limite.
   const openAssetDialog = (asset: SelectedAsset) => {
     setSelectedAsset(asset)
     setBuyQuantity("1")
     setBuyPrice(asset.price.toFixed(2))
   }
 
+  // Valida y envia una orden de compra desde la portada sin pasar por la pantalla Trading.
   const handleBuyFromHome = async () => {
     if (!selectedAsset) return
 

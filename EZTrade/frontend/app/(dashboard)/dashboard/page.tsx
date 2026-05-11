@@ -20,6 +20,7 @@ function StatCard({
   icon: React.ElementType
   trend?: "up" | "down" | "neutral"
 }) {
+  // Tarjeta reutilizable para metricas principales del dashboard.
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -35,6 +36,7 @@ function StatCard({
 }
 
 export default function DashboardPage() {
+  // SWR mantiene cache local y refresco automatico de las tres fuentes del resumen.
   const { data: portfolio, isLoading: portfolioLoading } = useSWR<Portfolio>("portfolio", () =>
     portfolioApi.getPortfolio()
   )
@@ -51,6 +53,7 @@ export default function DashboardPage() {
     )
   }
 
+  // Calcula metricas derivadas combinando wallet, portfolio y ordenes.
   const totalBalance = (wallet?.availableBalance || 0) + (wallet?.reservedBalance || 0)
   const portfolioValue = (portfolio?.totalCostBasis || 0) + totalBalance
   const pendingOrders = orders?.filter((o) => o.status === "PENDING") || []

@@ -12,16 +12,19 @@ type NotificationPayload = {
   occurredAt?: string
 }
 
+// Valores por defecto para conectar al endpoint STOMP del backend.
 const DEFAULT_WS_PATH = "/ws"
 const USER_QUEUE_DESTINATION = "/user/queue/notifications"
 const RECONNECT_DELAY_MS = 5000
 
+// Convierte la URL HTTP del backend en su equivalente WebSocket cuando hace falta.
 function normalizeWsUrl(url: string): string {
   if (url.startsWith("https://")) return `wss://${url.slice("https://".length)}`
   if (url.startsWith("http://")) return `ws://${url.slice("http://".length)}`
   return url
 }
 
+// Resuelve la URL final del WebSocket desde NEXT_PUBLIC_WS_URL o desde la URL de la API.
 function getWsUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_WS_URL
   if (explicit) return normalizeWsUrl(explicit)
@@ -31,6 +34,7 @@ function getWsUrl(): string {
   return `${wsBaseUrl}${DEFAULT_WS_PATH}`
 }
 
+// Traduce el tipo de notificacion del backend al tono visual del toast.
 function chooseVariant(type?: string) {
   const normalized = type?.toLowerCase() || ""
   if (normalized.includes("error") || normalized.includes("failed") || normalized.includes("cancel")) {
@@ -42,6 +46,7 @@ function chooseVariant(type?: string) {
   return "default" as const
 }
 
+// Acepta mensajes JSON y tambien cuerpos planos para que el toast no falle ante formatos simples.
 function parseMessage(message: IMessage): NotificationPayload {
   try {
     return JSON.parse(message.body) as NotificationPayload
@@ -50,11 +55,13 @@ function parseMessage(message: IMessage): NotificationPayload {
   }
 }
 
+// Mantiene una conexion WebSocket por usuario autenticado y muestra cada mensaje como toast.
 export function NotificationsWebSocket() {
   const { token } = useAuth()
   const clientRef = useRef<Client | null>(null)
 
   useEffect(() => {
+    // Si no hay token se cierra cualquier conexion anterior para no recibir eventos de otra sesion.
     if (!token) {
       if (clientRef.current) {
         clientRef.current.deactivate()
@@ -72,6 +79,7 @@ export function NotificationsWebSocket() {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
+        // El backend publica notificaciones privadas en la cola de usuario autenticado.
         client.subscribe(USER_QUEUE_DESTINATION, (message) => {
           const payload = parseMessage(message)
           toast({
