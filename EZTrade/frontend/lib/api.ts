@@ -191,8 +191,8 @@ export const tradingApi = {
 
 // Endpoints del portfolio del usuario autenticado.
 export const portfolioApi = {
-  getPortfolio: async () => {
-    return fetchWithAuth<Portfolio>(`${API_BASE_URL}/api/portfolio`)
+  getPortfolio: async (options?: ApiRequestOptions) => {
+    return fetchWithAuth<Portfolio>(`${API_BASE_URL}/api/portfolio`, {}, options)
   },
 }
 

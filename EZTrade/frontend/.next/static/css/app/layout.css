@@ -521,12 +521,15 @@ video {
     --destructive-foreground: 0 0% 98%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 98%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 0 0% 9%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 45 100% 51%;
     --radius: 0.5rem;
   }
 
+  /* Variables equivalentes para el modo oscuro, aplicado desde la clase .dark en el layout raiz. */
   .dark {
     --background: 0 0% 4%;
     --foreground: 0 0% 98%;
@@ -546,13 +549,17 @@ video {
     --destructive-foreground: 0 0% 98%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 98%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 0 0% 9%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 45 100% 51%;
   }
+  /* Todos los elementos heredan el color de borde definido en el tema. */
   * {
   border-color: hsl(var(--border));
 }
+  /* Estilos globales de fondo y texto de la aplicacion. */
   body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
@@ -606,6 +613,9 @@ video {
 }
 .pointer-events-auto {
   pointer-events: auto;
+}
+.visible {
+  visibility: visible;
 }
 .fixed {
   position: fixed;
@@ -707,6 +717,9 @@ video {
 .mr-2 {
   margin-right: 0.5rem;
 }
+.mt-0\.5 {
+  margin-top: 0.125rem;
+}
 .mt-1 {
   margin-top: 0.25rem;
 }
@@ -767,6 +780,9 @@ video {
 .h-4 {
   height: 1rem;
 }
+.h-40 {
+  height: 10rem;
+}
 .h-44 {
   height: 11rem;
 }
@@ -781,6 +797,9 @@ video {
 }
 .h-64 {
   height: 16rem;
+}
+.h-7 {
+  height: 1.75rem;
 }
 .h-8 {
   height: 2rem;
@@ -844,6 +863,9 @@ video {
 }
 .w-64 {
   width: 16rem;
+}
+.w-7 {
+  width: 1.75rem;
 }
 .w-8 {
   width: 2rem;
@@ -1071,6 +1093,12 @@ video {
 .border-success {
   border-color: hsl(var(--success));
 }
+.border-warning {
+  border-color: hsl(var(--warning));
+}
+.border-warning\/40 {
+  border-color: hsl(var(--warning) / 0.4);
+}
 .bg-background {
   background-color: hsl(var(--background));
 }
@@ -1130,6 +1158,12 @@ video {
 }
 .bg-transparent {
   background-color: transparent;
+}
+.bg-warning {
+  background-color: hsl(var(--warning));
+}
+.bg-warning\/10 {
+  background-color: hsl(var(--warning) / 0.1);
 }
 .fill-current {
   fill: currentColor;
@@ -1324,6 +1358,12 @@ video {
 .text-success-foreground {
   color: hsl(var(--success-foreground));
 }
+.text-warning {
+  color: hsl(var(--warning));
+}
+.text-warning-foreground {
+  color: hsl(var(--warning-foreground));
+}
 .underline-offset-4 {
   text-underline-offset: 4px;
 }
@@ -1422,6 +1462,8 @@ video {
   animation-duration: 200ms;
 }
 
+/* Variables del tema claro usadas por Tailwind mediante hsl(var(--...)). */
+
 .file\:border-0::file-selector-button {
   border-width: 0px;
 }
@@ -1515,6 +1557,10 @@ video {
   opacity: 1;
 }
 
+.hover\:opacity-80:hover {
+  opacity: 0.8;
+}
+
 .focus\:bg-accent:focus {
   background-color: hsl(var(--accent));
 }
@@ -1590,6 +1636,10 @@ video {
   color: rgb(252 165 165 / var(--tw-text-opacity, 1));
 }
 
+.group.warning .group-\[\.warning\]\:text-yellow-950\/70 {
+  color: rgb(66 32 6 / 0.7);
+}
+
 .group.destructive .group-\[\.destructive\]\:hover\:border-destructive\/30:hover {
   border-color: hsl(var(--destructive) / 0.3);
 }
@@ -1607,6 +1657,11 @@ video {
   color: rgb(254 242 242 / var(--tw-text-opacity, 1));
 }
 
+.group.warning .group-\[\.warning\]\:hover\:text-yellow-950:hover {
+  --tw-text-opacity: 1;
+  color: rgb(66 32 6 / var(--tw-text-opacity, 1));
+}
+
 .group.destructive .group-\[\.destructive\]\:focus\:ring-destructive:focus {
   --tw-ring-color: hsl(var(--destructive));
 }
@@ -1616,8 +1671,17 @@ video {
   --tw-ring-color: rgb(248 113 113 / var(--tw-ring-opacity, 1));
 }
 
+.group.warning .group-\[\.warning\]\:focus\:ring-yellow-700:focus {
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(161 98 7 / var(--tw-ring-opacity, 1));
+}
+
 .group.destructive .group-\[\.destructive\]\:focus\:ring-offset-red-600:focus {
   --tw-ring-offset-color: #dc2626;
+}
+
+.group.warning .group-\[\.warning\]\:focus\:ring-offset-yellow-400:focus {
+  --tw-ring-offset-color: #facc15;
 }
 
 .peer:disabled ~ .peer-disabled\:cursor-not-allowed {

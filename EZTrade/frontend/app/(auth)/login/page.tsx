@@ -40,12 +40,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80">
               <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="text-2xl font-bold">EZTrade</span>
-            </div>
+            </Link>
           </div>
           <CardTitle className="text-2xl">Iniciar sesion</CardTitle>
           <CardDescription>Introduce tus credenciales para acceder a tu cuenta</CardDescription>
