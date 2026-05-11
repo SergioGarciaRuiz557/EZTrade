@@ -6,6 +6,7 @@ import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.WalletTransaction;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -31,6 +32,13 @@ public class WalletTransactionRepositoryAdapter implements WalletTransactionRepo
     public Optional<WalletTransaction> findByOwnerAndReferenceIdAndMovementType(String owner, String referenceId, MovementType movementType) {
         return repository.findByOwnerAndReferenceIdAndMovementType(owner, referenceId, movementType)
                 .map(WalletTransactionMapper::toDomain);
+    }
+
+    @Override
+    public List<WalletTransaction> findByOwnerOrderByOccurredAtDesc(String owner) {
+        return repository.findByOwnerOrderByOccurredAtDescIdDesc(owner).stream()
+                .map(WalletTransactionMapper::toDomain)
+                .toList();
     }
 
     @Override

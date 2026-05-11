@@ -21,7 +21,7 @@
  * </ul>
  */
 @ApplicationModule(
-        allowedDependencies = {"trading :: events"}
+        allowedDependencies = {"trading :: events", "user :: api"}
 )
 package com.trading.platform.eztrade.wallet;
 

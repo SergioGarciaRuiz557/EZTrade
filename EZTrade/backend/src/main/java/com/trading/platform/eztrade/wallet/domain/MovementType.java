@@ -12,6 +12,8 @@ package com.trading.platform.eztrade.wallet.domain;
  * <ul>
  *   <li>{@link #DEPOSIT}: incrementa saldo disponible.</li>
  *   <li>{@link #WITHDRAWAL}: decrementa saldo disponible.</li>
+ *   <li>{@link #TRANSFER_OUT}: decrementa saldo disponible por una transferencia enviada.</li>
+ *   <li>{@link #TRANSFER_IN}: incrementa saldo disponible por una transferencia recibida.</li>
  *   <li>{@link #RESERVE}: mueve fondos de disponible a reservado (previo a ejecutar una orden BUY).</li>
  *   <li>{@link #RELEASE}: mueve fondos de reservado a disponible (cancelación o ejecución por menor importe).</li>
  *   <li>{@link #SETTLEMENT_DEBIT}: consume saldo reservado (liquidación de BUY).</li>
@@ -22,6 +24,8 @@ package com.trading.platform.eztrade.wallet.domain;
 public enum MovementType {
     DEPOSIT,
     WITHDRAWAL,
+    TRANSFER_OUT,
+    TRANSFER_IN,
     RESERVE,
     RELEASE,
     SETTLEMENT_DEBIT,

@@ -22,7 +22,9 @@ public record PortfolioResponse(
                 snapshot.cashAvailable(),
                 snapshot.totalCostBasis(),
                 snapshot.totalRealizedPnl(),
-                snapshot.positions().stream().map(PositionResponse::from).toList()
+                snapshot.positions().stream()
+                        .map(position -> PositionResponse.from(position, snapshot.marketValuationFor(position.symbol())))
+                        .toList()
         );
     }
 }

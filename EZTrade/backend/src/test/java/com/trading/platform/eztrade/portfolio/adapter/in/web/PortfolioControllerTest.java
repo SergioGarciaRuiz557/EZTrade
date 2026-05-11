@@ -3,6 +3,7 @@ package com.trading.platform.eztrade.portfolio.adapter.in.web;
 import com.trading.platform.eztrade.portfolio.application.ports.in.GetPortfolioUseCase;
 import com.trading.platform.eztrade.portfolio.domain.PortfolioSnapshot;
 import com.trading.platform.eztrade.portfolio.domain.Position;
+import com.trading.platform.eztrade.portfolio.domain.PositionMarketValuation;
 import com.trading.platform.eztrade.security.configuration.BeansConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -53,7 +55,8 @@ class PortfolioControllerTest {
                 new BigDecimal("700"),
                 new BigDecimal("300"),
                 new BigDecimal("0"),
-                List.of(position)
+                List.of(position),
+                Map.of("AAPL", PositionMarketValuation.from(position, new BigDecimal("175")))
         );
 
         given(getPortfolioUseCase.getByOwner("demo@example.com")).willReturn(snapshot);
@@ -66,7 +69,11 @@ class PortfolioControllerTest {
                 .andExpect(jsonPath("$.totalRealizedPnl").value(0))
                 .andExpect(jsonPath("$.positions[0].symbol").value("AAPL"))
                 .andExpect(jsonPath("$.positions[0].quantity").value(2))
-                .andExpect(jsonPath("$.positions[0].averageCost").value(150));
+                .andExpect(jsonPath("$.positions[0].averageCost").value(150))
+                .andExpect(jsonPath("$.positions[0].currentPrice").value(175))
+                .andExpect(jsonPath("$.positions[0].marketValue").value(350))
+                .andExpect(jsonPath("$.positions[0].unrealizedPnl").value(50))
+                .andExpect(jsonPath("$.positions[0].realizedPnl").value(50));
     }
 
     @Test

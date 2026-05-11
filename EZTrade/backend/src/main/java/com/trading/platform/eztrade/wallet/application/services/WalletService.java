@@ -6,9 +6,11 @@ import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestE
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.application.ports.in.AdjustWalletFundsUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.GetWalletBalanceUseCase;
+import com.trading.platform.eztrade.wallet.application.ports.in.GetWalletTransactionsUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderCancelledUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderExecutedUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.in.HandleOrderPlacedUseCase;
+import com.trading.platform.eztrade.wallet.application.ports.in.TransferWalletFundsUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.out.DomainEventPublisherPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.WalletTransactionRepositoryPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.WalletAccountRepositoryPort;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -60,7 +63,9 @@ public class WalletService implements HandleOrderPlacedUseCase,
         HandleOrderCancelledUseCase,
         HandleOrderExecutedUseCase,
         AdjustWalletFundsUseCase,
-        GetWalletBalanceUseCase {
+        GetWalletBalanceUseCase,
+        TransferWalletFundsUseCase,
+        GetWalletTransactionsUseCase {
 
     private static final String ORDER_SETTLEMENT_DEBIT = "DEBIT";
     private static final String ORDER_SETTLEMENT_CREDIT = "CREDIT";
@@ -220,6 +225,67 @@ public class WalletService implements HandleOrderPlacedUseCase,
     }
 
     @Override
+    public void transfer(TransferCommand command) {
+        String owner = validateOwner(command.owner());
+        String recipientOwner = validateOwner(command.recipientOwner());
+        if (owner.equalsIgnoreCase(recipientOwner)) {
+            throw new WalletDomainException("Recipient must be different from owner");
+        }
+
+        BigDecimal amount = positive(command.amount(), "Amount");
+        String referenceId = validateReference(command.referenceId());
+
+        boolean senderAlreadyProcessed = ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(
+                owner,
+                referenceId,
+                MovementType.TRANSFER_OUT
+        );
+        boolean recipientAlreadyProcessed = ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(
+                recipientOwner,
+                referenceId,
+                MovementType.TRANSFER_IN
+        );
+        if (senderAlreadyProcessed || recipientAlreadyProcessed) {
+            return;
+        }
+
+        TransferAccounts accounts = lockTransferAccounts(owner, recipientOwner);
+        WalletAccount senderUpdated = walletAccountRepository.save(accounts.sender().withdraw(amount));
+        WalletAccount recipientUpdated = walletAccountRepository.save(accounts.recipient().deposit(amount));
+
+        ledgerEntryRepository.save(WalletTransaction.newEntry(
+                owner,
+                MovementType.TRANSFER_OUT,
+                amount,
+                amount.negate(),
+                BigDecimal.ZERO,
+                senderUpdated.availableBalance(),
+                senderUpdated.reservedBalance(),
+                ReferenceType.MANUAL,
+                referenceId,
+                transferDescription(command.description(), "Transfer to " + recipientOwner),
+                LocalDateTime.now()
+        ));
+
+        ledgerEntryRepository.save(WalletTransaction.newEntry(
+                recipientOwner,
+                MovementType.TRANSFER_IN,
+                amount,
+                amount,
+                BigDecimal.ZERO,
+                recipientUpdated.availableBalance(),
+                recipientUpdated.reservedBalance(),
+                ReferenceType.MANUAL,
+                referenceId,
+                transferDescription(command.description(), "Transfer from " + owner),
+                LocalDateTime.now()
+        ));
+
+        publishAvailableCashUpdated(owner, senderUpdated.availableBalance(), "WALLET_TRANSFER_OUT", referenceId, LocalDateTime.now());
+        publishAvailableCashUpdated(recipientOwner, recipientUpdated.availableBalance(), "WALLET_TRANSFER_IN", referenceId, LocalDateTime.now());
+    }
+
+    @Override
     public void chargeFee(AdjustCommand command) {
         processManualCommand(command, MovementType.FEE, "Fee charged", account -> account.chargeFee(command.amount()));
     }
@@ -230,6 +296,27 @@ public class WalletService implements HandleOrderPlacedUseCase,
         WalletAccount account = walletAccountRepository.findByOwner(validatedOwner)
                 .orElseGet(() -> WalletAccount.open(validatedOwner));
         return new BalanceView(account.availableBalance(), account.reservedBalance());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TransactionView> getTransactions(String owner) {
+        String validatedOwner = validateOwner(owner);
+        return ledgerEntryRepository.findByOwnerOrderByOccurredAtDesc(validatedOwner).stream()
+                .map(transaction -> new TransactionView(
+                        transaction.id(),
+                        transaction.movementType(),
+                        transaction.amount(),
+                        transaction.availableDelta(),
+                        transaction.reservedDelta(),
+                        transaction.availableBalanceAfter(),
+                        transaction.reservedBalanceAfter(),
+                        transaction.referenceType(),
+                        transaction.referenceId(),
+                        transaction.description(),
+                        transaction.occurredAt()
+                ))
+                .toList();
     }
 
     private void settleBuy(OrderExecutionRequestEvent event) {
@@ -385,11 +472,33 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 command.description() == null || command.description().isBlank() ? fallbackDescription : command.description(),
                 LocalDateTime.now()
         ));
+
+        publishAvailableCashUpdated(owner, persisted.availableBalance(), movementType.name(), referenceId, LocalDateTime.now());
     }
 
     private WalletAccount lockOrOpenAccount(String owner) {
         // Si no existe aún en la base de datos, abrimos una cuenta nueva.
         return walletAccountRepository.findByOwnerForUpdate(owner).orElseGet(() -> WalletAccount.open(owner));
+    }
+
+    private TransferAccounts lockTransferAccounts(String owner, String recipientOwner) {
+        String first = owner.compareTo(recipientOwner) <= 0 ? owner : recipientOwner;
+        String second = owner.compareTo(recipientOwner) <= 0 ? recipientOwner : owner;
+
+        WalletAccount firstAccount = lockOrOpenAccount(first);
+        WalletAccount secondAccount = lockOrOpenAccount(second);
+
+        if (owner.equals(first)) {
+            return new TransferAccounts(firstAccount, secondAccount);
+        }
+        return new TransferAccounts(secondAccount, firstAccount);
+    }
+
+    private static String transferDescription(String description, String fallback) {
+        if (description == null || description.isBlank()) {
+            return fallback;
+        }
+        return fallback + " - " + description;
     }
 
     private void publishInsufficientFunds(String orderRef,
@@ -467,6 +576,9 @@ public class WalletService implements HandleOrderPlacedUseCase,
     private enum Side {
         BUY,
         SELL
+    }
+
+    private record TransferAccounts(WalletAccount sender, WalletAccount recipient) {
     }
 
     @FunctionalInterface

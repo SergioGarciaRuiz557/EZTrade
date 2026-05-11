@@ -3,6 +3,7 @@ package com.trading.platform.eztrade.wallet.adapter.out.persistence.jpa;
 import com.trading.platform.eztrade.wallet.domain.MovementType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -11,6 +12,8 @@ import java.util.Optional;
 public interface SpringDataWalletTransactionRepository extends JpaRepository<WalletTransactionJpaEntity, Long> {
 
     Optional<WalletTransactionJpaEntity> findByOwnerAndReferenceIdAndMovementType(String owner, String referenceId, MovementType movementType);
+
+    List<WalletTransactionJpaEntity> findByOwnerOrderByOccurredAtDescIdDesc(String owner);
 
     boolean existsByOwnerAndReferenceIdAndMovementType(String owner, String referenceId, MovementType movementType);
 }

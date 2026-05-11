@@ -192,6 +192,31 @@ export const walletApi = {
     })
     return handleResponse<WalletBalance>(response)
   },
+
+  withdraw: async (amount: number, description?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/withdraw`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ amount, description }),
+    })
+    return handleResponse<WalletBalance>(response)
+  },
+
+  transfer: async (recipient: string, amount: number, description?: string) => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/transfer`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ recipient, amount, description }),
+    })
+    return handleResponse<WalletBalance>(response)
+  },
+
+  getTransactions: async () => {
+    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/transactions`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse<WalletTransaction[]>(response)
+  },
 }
 
 // Market API (requieren autenticacion)
@@ -282,6 +307,29 @@ export interface WalletBalance {
   owner: string
   availableBalance: number
   reservedBalance: number
+}
+
+export interface WalletTransaction {
+  id: number
+  movementType:
+    | "DEPOSIT"
+    | "WITHDRAWAL"
+    | "TRANSFER_OUT"
+    | "TRANSFER_IN"
+    | "RESERVE"
+    | "RELEASE"
+    | "SETTLEMENT_DEBIT"
+    | "SETTLEMENT_CREDIT"
+    | "FEE"
+  amount: number
+  availableDelta: number
+  reservedDelta: number
+  availableBalanceAfter: number
+  reservedBalanceAfter: number
+  referenceType: "ORDER" | "MANUAL"
+  referenceId: string
+  description: string | null
+  occurredAt: string
 }
 
 export interface MarketPrice {

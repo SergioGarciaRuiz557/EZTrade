@@ -12,11 +12,11 @@
  * Limites:
  * <ul>
  *   <li>No ejecuta ordenes (eso pertenece al modulo trading).</li>
- *   <li>No consulta precios de mercado directamente.</li>
+ *   <li>Consulta precios de mercado solo a traves de la API publica del modulo market.</li>
  * </ul>
  */
 @ApplicationModule(
-        allowedDependencies = {"trading :: events", "wallet :: events"}
+        allowedDependencies = {"trading :: events", "wallet :: events", "market :: api"}
 )
 package com.trading.platform.eztrade.portfolio;
 
