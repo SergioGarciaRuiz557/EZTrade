@@ -10,7 +10,13 @@ type NotificationPayload = {
   title?: string
   body?: string
   occurredAt?: string
+  severity?: string
+  level?: string
+  status?: string
+  variant?: string
 }
+
+type ToastVariant = "default" | "destructive" | "success" | "warning"
 
 // Valores por defecto para conectar al endpoint STOMP del backend.
 const DEFAULT_WS_PATH = "/ws"
@@ -34,16 +40,49 @@ function getWsUrl(): string {
   return `${wsBaseUrl}${DEFAULT_WS_PATH}`
 }
 
-// Traduce el tipo de notificacion del backend al tono visual del toast.
-function chooseVariant(type?: string) {
-  const normalized = type?.toLowerCase() || ""
-  if (normalized.includes("error") || normalized.includes("failed") || normalized.includes("cancel")) {
-    return "destructive" as const
+// Traduce la severidad/tipo del backend al tono visual del toast.
+function chooseVariant(payload: NotificationPayload): ToastVariant {
+  const explicitTone = `${payload.variant ?? payload.severity ?? payload.level ?? payload.status ?? ""}`.toLowerCase()
+
+  if (explicitTone.includes("warn")) return "warning"
+  if (explicitTone.includes("error") || explicitTone.includes("danger") || explicitTone.includes("destructive")) {
+    return "destructive"
   }
-  if (normalized.includes("success") || normalized.includes("executed") || normalized.includes("completed")) {
-    return "success" as const
+  if (explicitTone.includes("success")) return "success"
+
+  const content = `${payload.type ?? ""} ${payload.title ?? ""} ${payload.body ?? ""}`.toLowerCase()
+
+  if (content.includes("warn") || content.includes("warning") || content.includes("advert")) {
+    return "warning"
   }
-  return "default" as const
+  if (
+    content.includes("error") ||
+    content.includes("failed") ||
+    content.includes("insufficient") ||
+    content.includes("cancel") ||
+    content.includes("deleted") ||
+    content.includes("removed") ||
+    content.includes("elimin") ||
+    content.includes("reject")
+  ) {
+    return "destructive"
+  }
+  if (
+    content.includes("success") ||
+    content.includes("placed") ||
+    content.includes("registrad") ||
+    content.includes("created") ||
+    content.includes("cread") ||
+    content.includes("executed") ||
+    content.includes("ejecutad") ||
+    content.includes("updated") ||
+    content.includes("actualizad") ||
+    content.includes("completed")
+  ) {
+    return "success"
+  }
+
+  return "default"
 }
 
 // Acepta mensajes JSON y tambien cuerpos planos para que el toast no falle ante formatos simples.
@@ -85,7 +124,7 @@ export function NotificationsWebSocket() {
           toast({
             title: payload.title || payload.type || "Notificacion",
             description: payload.body || payload.occurredAt,
-            variant: chooseVariant(payload.type),
+            variant: chooseVariant(payload),
           })
         })
       },

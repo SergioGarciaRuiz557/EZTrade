@@ -130,19 +130,10 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
         quantity: nextQuantity,
         price: price.price,
       })
-      toast({
-        title: "Orden de compra creada",
-        description: `${formatNumber(nextQuantity)} acciones de ${nextSymbol} pendientes de ejecucion`,
-        variant: "success",
-      })
       setQuantity("")
       mutate("orders")
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo crear la orden de compra"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setIsSubmitting(false)
     }
@@ -294,19 +285,10 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
         quantity: quantityValue,
         price: priceValue,
       })
-      toast({
-        title: "Oferta publicada",
-        description: `${formatNumber(quantityValue)} acciones de ${selectedSymbol} a ${formatCurrency(priceValue)}`,
-        variant: "success",
-      })
       setQuantity("")
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo publicar la oferta"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setIsSubmitting(false)
     }
@@ -476,19 +458,10 @@ function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
     setActionLoading(offer.id)
     try {
       await tradingApi.buySellOffer(offer.id)
-      toast({
-        title: "Oferta comprada",
-        description: `${formatNumber(offer.quantity)} acciones de ${offer.symbol} a ${formatCurrency(offer.price)}`,
-        variant: "success",
-      })
       refreshOffers()
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo comprar la oferta"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setActionLoading(null)
     }
@@ -602,14 +575,9 @@ function OrdersList() {
     setActionLoading(orderId)
     try {
       await tradingApi.executeOrder(orderId)
-      toast({ title: "Orden ejecutada", description: "La orden se ha ejecutado correctamente", variant: "success" })
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo ejecutar la orden"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setActionLoading(null)
     }
@@ -620,14 +588,9 @@ function OrdersList() {
     setActionLoading(orderId)
     try {
       await tradingApi.cancelOrder(orderId)
-      toast({ title: "Orden cancelada", description: "La orden ha sido cancelada" })
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo cancelar la orden"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setActionLoading(null)
     }

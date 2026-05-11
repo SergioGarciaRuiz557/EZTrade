@@ -453,18 +453,10 @@ export default function HomePage() {
         price: parsedPrice,
       })
 
-      toast({
-        title: "Orden de compra creada",
-        description: `${selectedAsset.symbol} se ha enviado correctamente`,
-      })
       setSelectedAsset(null)
       router.push("/dashboard")
     } catch {
-      toast({
-        title: "No se pudo crear la orden",
-        description: "Revisa tus datos e intentalo de nuevo",
-        variant: "destructive",
-      })
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setIsBuying(false)
     }
