@@ -270,7 +270,7 @@ export default function HomePage() {
 
   const isLoggedIn = !!token
 
-  const loadMarketData = async () => {
+  const loadMarketData = async (signal?: AbortSignal) => {
     if (!token) return
     
     setLoading(true)
@@ -282,8 +282,9 @@ export default function HomePage() {
       // Cargar precios de acciones populares
       const stockPromises = POPULAR_SYMBOLS.map(async (symbol) => {
         try {
-          const priceData = await queueMarketRequest(() => marketApi.getPrice(symbol))
-          const overviewData = await queueMarketRequest(() => marketApi.getOverview(symbol)).catch(() => null)
+          const priceData = await queueMarketRequest(() => marketApi.getPrice(symbol, { signal }))
+          const overviewData = await queueMarketRequest(() => marketApi.getOverview(symbol, { signal })).catch(() => null)
+          if (signal?.aborted) return null
           const stock: StockData = {
             symbol,
             name: overviewData?.name || symbol,
@@ -292,6 +293,7 @@ export default function HomePage() {
           }
           return stock
         } catch {
+          if (signal?.aborted) throw new DOMException("Request aborted", "AbortError")
           return null
         }
       })
@@ -299,13 +301,15 @@ export default function HomePage() {
       // Cargar precios de indices
       const indexPromises = INDEX_SYMBOLS.map(async (index) => {
         try {
-          const priceData = await queueMarketRequest(() => marketApi.getPrice(index.symbol))
+          const priceData = await queueMarketRequest(() => marketApi.getPrice(index.symbol, { signal }))
+          if (signal?.aborted) return null
           return {
             symbol: index.symbol,
             name: index.name,
             price: priceData.price
           }
         } catch {
+          if (signal?.aborted) throw new DOMException("Request aborted", "AbortError")
           return null
         }
       })
@@ -317,6 +321,8 @@ export default function HomePage() {
 
       const validStocks = stockResults.filter((s): s is StockData => s !== null)
       const validIndices = indexResults.filter((i): i is { symbol: string; name: string; price: number } => i !== null)
+
+      if (signal?.aborted) return
 
       setStocks(validStocks)
       setIndices(validIndices)
@@ -339,15 +345,23 @@ export default function HomePage() {
       setDataLoaded(true)
 
     } catch (err) {
+      if (signal?.aborted) return
       setError("No se pudieron cargar los datos del mercado. Asegurate de que el backend este corriendo.")
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
     if (token && !dataLoaded) {
-      loadMarketData()
+      const controller = new AbortController()
+      loadMarketData(controller.signal)
+
+      return () => {
+        controller.abort()
+      }
     }
   }, [token, dataLoaded])
 
@@ -355,23 +369,34 @@ export default function HomePage() {
     if (!isLoggedIn) return
     if (candlesBySymbol[selectedChartSymbol]) return
 
+    const controller = new AbortController()
+
     const loadCandles = async () => {
       setCandlesLoading(true)
       setCandlesError(null)
       try {
-        const candles = await marketApi.getDailyCandles(selectedChartSymbol)
+        const candles = await marketApi.getDailyCandles(selectedChartSymbol, { signal: controller.signal })
+        if (controller.signal.aborted) return
         setCandlesBySymbol((prev) => ({
           ...prev,
           [selectedChartSymbol]: candles,
         }))
       } catch {
-        setCandlesError("No se pudieron cargar las velas diarias en este momento.")
+        if (!controller.signal.aborted) {
+          setCandlesError("No se pudieron cargar las velas diarias en este momento.")
+        }
       } finally {
-        setCandlesLoading(false)
+        if (!controller.signal.aborted) {
+          setCandlesLoading(false)
+        }
       }
     }
 
     loadCandles()
+
+    return () => {
+      controller.abort()
+    }
   }, [isLoggedIn, selectedChartSymbol, candlesBySymbol])
 
   const handleInteraction = () => {
@@ -493,7 +518,7 @@ export default function HomePage() {
           <Card className="mb-8">
             <CardContent className="py-8 text-center">
               <p className="text-muted-foreground mb-4">{error}</p>
-              <Button variant="outline" onClick={loadMarketData}>
+              <Button variant="outline" onClick={() => loadMarketData()}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Reintentar
               </Button>
@@ -558,7 +583,7 @@ export default function HomePage() {
                     </CardDescription>
                   </div>
                   {isLoggedIn && (
-                    <Button variant="outline" size="sm" onClick={loadMarketData}>
+                    <Button variant="outline" size="sm" onClick={() => loadMarketData()}>
                       <RefreshCw className="w-4 h-4 mr-2" />
                       Actualizar
                     </Button>

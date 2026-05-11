@@ -8,6 +8,7 @@ import com.trading.platform.eztrade.portfolio.domain.CashProjection;
 import com.trading.platform.eztrade.portfolio.domain.PortfolioSnapshot;
 import com.trading.platform.eztrade.portfolio.domain.Position;
 import com.trading.platform.eztrade.portfolio.domain.events.PortfolioValuationUpdatedEvent;
+import com.trading.platform.eztrade.portfolio.domain.events.PositionClosedEvent;
 import com.trading.platform.eztrade.portfolio.domain.events.PositionOpenedEvent;
 import com.trading.platform.eztrade.portfolio.domain.events.PositionReducedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
@@ -126,20 +127,65 @@ class PortfolioServiceTest {
                 new BigDecimal("15"),
                 LocalDateTime.now()
         );
+        Position closedPosition = Position.rehydrate(
+                "user@demo.com",
+                "AAPL",
+                BigDecimal.ZERO,
+                BigDecimal.ZERO,
+                new BigDecimal("20"),
+                LocalDateTime.now()
+        );
 
-        given(positionRepository.findByOwner("user@demo.com")).willReturn(List.of(position));
+        given(positionRepository.findByOwner("user@demo.com")).willReturn(List.of(position, closedPosition));
         given(cashProjectionRepository.findByOwner("user@demo.com"))
                 .willReturn(Optional.of(new CashProjection("user@demo.com", new BigDecimal("500"), LocalDateTime.now())));
         given(marketPriceLookupPort.currentPrice("IBM")).willReturn(new BigDecimal("140"));
 
         PortfolioSnapshot snapshot = portfolioService.getByOwner("user@demo.com");
 
-        assertThat(snapshot.totalRealizedPnl()).isEqualByComparingTo("15");
+        assertThat(snapshot.totalRealizedPnl()).isEqualByComparingTo("35");
+        assertThat(snapshot.positions()).containsExactly(position);
         assertThat(snapshot.marketValuationFor("IBM")).hasValueSatisfying(valuation -> {
             assertThat(valuation.currentPrice()).isEqualByComparingTo("140");
             assertThat(valuation.marketValue()).isEqualByComparingTo("280");
             assertThat(valuation.unrealizedPnl()).isEqualByComparingTo("40");
         });
+        assertThat(snapshot.marketValuationFor("AAPL")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("SELL que cierra posicion guarda el PnL realizado para que siga contando en el portfolio")
+    void sell_closing_position_saves_closed_position_realized_pnl() {
+        OrderExecutedEvent event = new OrderExecutedEvent(
+                12L,
+                "user@demo.com",
+                "IBM",
+                "SELL",
+                new BigDecimal("2"),
+                new BigDecimal("120"),
+                null
+        );
+
+        Position current = Position.open("user@demo.com", "IBM", new BigDecimal("2"), new BigDecimal("100"));
+
+        given(positionRepository.findByOwnerAndSymbol("user@demo.com", "IBM")).willReturn(Optional.of(current));
+        given(positionRepository.save(any(Position.class))).willAnswer(i -> i.getArgument(0));
+        given(positionRepository.findByOwner("user@demo.com")).willReturn(List.of(
+                current.reduce(new BigDecimal("2"), new BigDecimal("120")).position()
+        ));
+        given(cashProjectionRepository.findByOwner("user@demo.com"))
+                .willReturn(Optional.of(new CashProjection("user@demo.com", new BigDecimal("240"), LocalDateTime.now())));
+
+        portfolioService.handle(event);
+
+        ArgumentCaptor<Position> positionCaptor = ArgumentCaptor.forClass(Position.class);
+        verify(positionRepository, times(1)).save(positionCaptor.capture());
+        assertThat(positionCaptor.getValue().isClosed()).isTrue();
+        assertThat(positionCaptor.getValue().realizedPnl()).isEqualByComparingTo("40");
+
+        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher, atLeastOnce()).publish(eventCaptor.capture());
+        assertThat(eventCaptor.getAllValues()).anyMatch(PositionClosedEvent.class::isInstance);
     }
 
     @Test

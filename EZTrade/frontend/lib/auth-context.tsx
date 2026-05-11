@@ -154,14 +154,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (identifier: string, password: string) => {
     const response = await authApi.login(identifier, password)
     const jwtToken = response.token
-    localStorage.setItem("token", jwtToken)
-    setToken(jwtToken)
 
-    // Decode JWT to get user info (basic decode, no verification)
-    const payload = JSON.parse(atob(jwtToken.split(".")[1]))
-    const userInfo = await authApi.getUser(payload.sub)
-    localStorage.setItem("user", JSON.stringify(userInfo))
-    setUser(userInfo)
+    const payload = decodeJwtPayload(jwtToken)
+    if (!payload?.sub || isTokenExpired(payload)) {
+      throw new Error("Invalid token")
+    }
+
+    localStorage.setItem("token", jwtToken)
+
+    try {
+      const userInfo = await authApi.getUser(payload.sub, { token: jwtToken })
+      localStorage.setItem("user", JSON.stringify(userInfo))
+      setToken(jwtToken)
+      setUser(userInfo)
+    } catch (error) {
+      if (localStorage.getItem("token") === jwtToken) {
+        clearAuthStorage()
+      }
+      throw error
+    }
   }
 
   const register = async (data: {

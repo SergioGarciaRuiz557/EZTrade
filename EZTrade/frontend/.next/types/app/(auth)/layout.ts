@@ -1,4 +1,4 @@
-// File: /home/sergio/Eztrade/EZTrade/EZTrade/frontend/app/(auth)/layout.tsx
+// File: /home/sergio/Eztrade/frontend/app/(auth)/layout.tsx
 import * as entry from '../../../../app/(auth)/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

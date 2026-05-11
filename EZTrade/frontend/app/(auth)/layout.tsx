@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     if (!isLoading && token) {
-      router.push("/dashboard")
+      router.push("/")
     }
   }, [token, isLoading, router])
 

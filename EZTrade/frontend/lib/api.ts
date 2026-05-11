@@ -5,13 +5,29 @@ interface ApiError {
   status: number
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+interface ApiRequestOptions {
+  signal?: AbortSignal
+  token?: string | null
+}
+
+interface HandleResponseOptions {
+  requestToken?: string | null
+}
+
+function getStoredToken(): string | null {
+  return typeof window !== "undefined" ? localStorage.getItem("token") : null
+}
+
+async function handleResponse<T>(response: Response, options: HandleResponseOptions = {}): Promise<T> {
   if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        window.dispatchEvent(new Event("auth:unauthorized"))
+        const currentToken = getStoredToken()
+        if (options.requestToken && currentToken === options.requestToken) {
+          localStorage.removeItem("token")
+          localStorage.removeItem("user")
+          window.dispatchEvent(new Event("auth:unauthorized"))
+        }
       }
     }
     let message = response.statusText
@@ -44,12 +60,28 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json()
 }
 
-function getAuthHeaders(): HeadersInit {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+function getAuthHeaders(token = getStoredToken()): HeadersInit {
   return {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   }
+}
+
+async function fetchWithAuth<T>(
+  url: string,
+  init: RequestInit = {},
+  options: ApiRequestOptions = {}
+): Promise<T> {
+  const requestToken = options.token ?? getStoredToken()
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      ...getAuthHeaders(requestToken),
+      ...init.headers,
+    },
+    signal: options.signal,
+  })
+  return handleResponse<T>(response, { requestToken })
 }
 
 // Auth API
@@ -78,57 +110,47 @@ export const authApi = {
     return handleResponse<{ firstname: string; lastname: string; username: string; email: string }>(response)
   },
 
-  getUser: async (email: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/user?email=${encodeURIComponent(email)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<{ firstname: string; lastname: string; username: string; email: string }>(response)
+  getUser: async (email: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<{ firstname: string; lastname: string; username: string; email: string }>(
+      `${API_BASE_URL}/api/user?email=${encodeURIComponent(email)}`,
+      {},
+      options
+    )
   },
 }
 
 // Trading API
 export const tradingApi = {
   getOrders: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<TradeOrder[]>(response)
+    return fetchWithAuth<TradeOrder[]>(`${API_BASE_URL}/api/v1/trading/orders`)
   },
 
   placeOrder: async (order: PlaceOrderRequest) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(order),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   executeOrder: async (orderId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/execute`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/execute`, {
       method: "POST",
-      headers: getAuthHeaders(),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   cancelOrder: async (orderId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/cancel`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/cancel`, {
       method: "POST",
-      headers: getAuthHeaders(),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   buyFromMarket: async (order: BuyFromMarketRequest) => {
-    const priceResponse = await fetch(`${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(order.symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    const marketPrice = await handleResponse<MarketPrice>(priceResponse)
+    const marketPrice = await fetchWithAuth<MarketPrice>(
+      `${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(order.symbol)}`
+    )
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify({
         symbol: order.symbol,
         side: "BUY",
@@ -136,117 +158,98 @@ export const tradingApi = {
         price: marketPrice.price,
       }),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   placeSellOffer: async (offer: PlaceSellOfferRequest) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/offers`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(offer),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   getSellOffers: async (symbol?: string) => {
     const query = symbol ? `?symbol=${encodeURIComponent(symbol)}` : ""
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers${query}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<TradeOrder[]>(response)
+    return fetchWithAuth<TradeOrder[]>(`${API_BASE_URL}/api/v1/trading/offers${query}`)
   },
 
   buySellOffer: async (offerId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers/${offerId}/buy`, {
+    return fetchWithAuth<MarketplaceTrade>(`${API_BASE_URL}/api/v1/trading/offers/${offerId}/buy`, {
       method: "POST",
-      headers: getAuthHeaders(),
     })
-    return handleResponse<MarketplaceTrade>(response)
   },
 }
 
 // Portfolio API
 export const portfolioApi = {
   getPortfolio: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/portfolio`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<Portfolio>(response)
+    return fetchWithAuth<Portfolio>(`${API_BASE_URL}/api/portfolio`)
   },
 }
 
 // Wallet API
 export const walletApi = {
   getBalance: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/balance`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<WalletBalance>(response)
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/balance`)
   },
 
   deposit: async (amount: number, description?: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/deposit`, {
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/deposit`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify({ amount, description }),
     })
-    return handleResponse<WalletBalance>(response)
   },
 
   withdraw: async (amount: number, description?: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/withdraw`, {
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/withdraw`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify({ amount, description }),
     })
-    return handleResponse<WalletBalance>(response)
   },
 
   transfer: async (recipient: string, amount: number, description?: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/transfer`, {
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/transfer`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify({ recipient, amount, description }),
     })
-    return handleResponse<WalletBalance>(response)
   },
 
   getTransactions: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/transactions`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<WalletTransaction[]>(response)
+    return fetchWithAuth<WalletTransaction[]>(`${API_BASE_URL}/api/v1/wallet/transactions`)
   },
 }
 
 // Market API (requieren autenticacion)
 export const marketApi = {
-  getPrice: async (symbol: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<MarketPrice>(response)
+  getPrice: async (symbol: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<MarketPrice>(
+      `${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(symbol)}`,
+      {},
+      options
+    )
   },
 
-  search: async (input: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/search?input=${encodeURIComponent(input)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<Instrument[]>(response)
+  search: async (input: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<Instrument[]>(
+      `${API_BASE_URL}/api/v1/market/search?input=${encodeURIComponent(input)}`,
+      {},
+      options
+    )
   },
 
-  getOverview: async (symbol: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/get-overview?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<InstrumentOverview>(response)
+  getOverview: async (symbol: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<InstrumentOverview>(
+      `${API_BASE_URL}/api/v1/market/get-overview?symbol=${encodeURIComponent(symbol)}`,
+      {},
+      options
+    )
   },
 
-  getDailyCandles: async (symbol: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/get-daily-candles?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<Candle[]>(response)
+  getDailyCandles: async (symbol: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<Candle[]>(
+      `${API_BASE_URL}/api/v1/market/get-daily-candles?symbol=${encodeURIComponent(symbol)}`,
+      {},
+      options
+    )
   },
 }
 

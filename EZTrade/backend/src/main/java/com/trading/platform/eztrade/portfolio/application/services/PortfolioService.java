@@ -81,11 +81,15 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
     }
 
     private PortfolioSnapshot buildSnapshot(String owner, boolean includeMarketValuations) {
-        List<Position> positions = positionRepository.findByOwner(owner);
-        BigDecimal totalCostBasis = positions.stream()
+        List<Position> allPositions = positionRepository.findByOwner(owner);
+        List<Position> openPositions = allPositions.stream()
+                .filter(position -> !position.isClosed())
+                .toList();
+
+        BigDecimal totalCostBasis = openPositions.stream()
                 .map(Position::investedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalRealizedPnl = positions.stream()
+        BigDecimal totalRealizedPnl = allPositions.stream()
                 .map(Position::realizedPnl)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -94,10 +98,10 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                 .orElse(BigDecimal.ZERO);
 
         Map<String, PositionMarketValuation> marketValuations = includeMarketValuations
-                ? buildMarketValuations(positions)
+                ? buildMarketValuations(openPositions)
                 : Map.of();
 
-        return new PortfolioSnapshot(owner, cashAvailable, totalCostBasis, totalRealizedPnl, positions, marketValuations);
+        return new PortfolioSnapshot(owner, cashAvailable, totalCostBasis, totalRealizedPnl, openPositions, marketValuations);
     }
 
     private Map<String, PositionMarketValuation> buildMarketValuations(List<Position> positions) {
@@ -165,7 +169,7 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
         Position updated = result.position();
 
         if (updated.isClosed()) {
-            positionRepository.deleteByOwnerAndSymbol(owner, symbol);
+            positionRepository.save(updated);
             eventPublisher.publish(new PositionClosedEvent(
                     owner,
                     symbol,
