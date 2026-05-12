@@ -1,21 +1,44 @@
+// URL base del backend. Permite cambiar de entorno sin tocar el codigo fuente.
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8088"
 
+// Forma comun de los errores que se lanzan desde la capa API.
 interface ApiError {
   message: string
   status: number
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+// Opciones compartidas por las peticiones autenticadas.
+interface ApiRequestOptions {
+  signal?: AbortSignal
+  token?: string | null
+}
+
+// Permite comparar el token usado por una peticion con el token guardado al recibir un 401.
+interface HandleResponseOptions {
+  requestToken?: string | null
+}
+
+// Lee el token solo en navegador para evitar acceder a localStorage durante renderizado servidor.
+function getStoredToken(): string | null {
+  return typeof window !== "undefined" ? localStorage.getItem("token") : null
+}
+
+// Centraliza el tratamiento de respuestas HTTP, incluyendo errores, sesiones caducadas y respuestas vacias.
+async function handleResponse<T>(response: Response, options: HandleResponseOptions = {}): Promise<T> {
   if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       if (typeof window !== "undefined") {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        window.dispatchEvent(new Event("auth:unauthorized"))
+        const currentToken = getStoredToken()
+        if (options.requestToken && currentToken === options.requestToken) {
+          localStorage.removeItem("token")
+          localStorage.removeItem("user")
+          window.dispatchEvent(new Event("auth:unauthorized"))
+        }
       }
     }
     let message = response.statusText
     try {
+      // Se intenta extraer primero el mensaje estructurado que envia el backend.
       const payload = await response.clone().json()
       if (payload && typeof payload === "object") {
         if ("error" in payload && typeof payload.error === "string") {
@@ -44,15 +67,33 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json()
 }
 
-function getAuthHeaders(): HeadersInit {
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+// Construye cabeceras JSON y anade Authorization cuando hay token disponible.
+function getAuthHeaders(token = getStoredToken()): HeadersInit {
   return {
     "Content-Type": "application/json",
     ...(token && { Authorization: `Bearer ${token}` }),
   }
 }
 
-// Auth API
+// Wrapper unico de fetch para reutilizar autenticacion, cancelacion y parseo de errores.
+async function fetchWithAuth<T>(
+  url: string,
+  init: RequestInit = {},
+  options: ApiRequestOptions = {}
+): Promise<T> {
+  const requestToken = options.token ?? getStoredToken()
+  const response = await fetch(url, {
+    ...init,
+    headers: {
+      ...getAuthHeaders(requestToken),
+      ...init.headers,
+    },
+    signal: options.signal,
+  })
+  return handleResponse<T>(response, { requestToken })
+}
+
+// Endpoints de autenticacion y alta de usuarios.
 export const authApi = {
   login: async (identifier: string, password: string) => {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -78,57 +119,48 @@ export const authApi = {
     return handleResponse<{ firstname: string; lastname: string; username: string; email: string }>(response)
   },
 
-  getUser: async (email: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/user?email=${encodeURIComponent(email)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<{ firstname: string; lastname: string; username: string; email: string }>(response)
+  getUser: async (email: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<{ firstname: string; lastname: string; username: string; email: string }>(
+      `${API_BASE_URL}/api/user?email=${encodeURIComponent(email)}`,
+      {},
+      options
+    )
   },
 }
 
-// Trading API
+// Endpoints de trading: ordenes directas, ejecucion, cancelacion y marketplace.
 export const tradingApi = {
   getOrders: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<TradeOrder[]>(response)
+    return fetchWithAuth<TradeOrder[]>(`${API_BASE_URL}/api/v1/trading/orders`)
   },
 
   placeOrder: async (order: PlaceOrderRequest) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(order),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   executeOrder: async (orderId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/execute`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/execute`, {
       method: "POST",
-      headers: getAuthHeaders(),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   cancelOrder: async (orderId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/cancel`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders/${orderId}/cancel`, {
       method: "POST",
-      headers: getAuthHeaders(),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   buyFromMarket: async (order: BuyFromMarketRequest) => {
-    const priceResponse = await fetch(`${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(order.symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    const marketPrice = await handleResponse<MarketPrice>(priceResponse)
+    // Para compra rapida se consulta primero el precio actual y se crea una orden con ese precio.
+    const marketPrice = await fetchWithAuth<MarketPrice>(
+      `${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(order.symbol)}`
+    )
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/orders`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/orders`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify({
         symbol: order.symbol,
         side: "BUY",
@@ -136,96 +168,102 @@ export const tradingApi = {
         price: marketPrice.price,
       }),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   placeSellOffer: async (offer: PlaceSellOfferRequest) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers`, {
+    return fetchWithAuth<TradeOrder>(`${API_BASE_URL}/api/v1/trading/offers`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(offer),
     })
-    return handleResponse<TradeOrder>(response)
   },
 
   getSellOffers: async (symbol?: string) => {
     const query = symbol ? `?symbol=${encodeURIComponent(symbol)}` : ""
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers${query}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<TradeOrder[]>(response)
+    return fetchWithAuth<TradeOrder[]>(`${API_BASE_URL}/api/v1/trading/offers${query}`)
   },
 
   buySellOffer: async (offerId: number) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/trading/offers/${offerId}/buy`, {
+    return fetchWithAuth<MarketplaceTrade>(`${API_BASE_URL}/api/v1/trading/offers/${offerId}/buy`, {
       method: "POST",
-      headers: getAuthHeaders(),
     })
-    return handleResponse<MarketplaceTrade>(response)
   },
 }
 
-// Portfolio API
+// Endpoints del portfolio del usuario autenticado.
 export const portfolioApi = {
-  getPortfolio: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/portfolio`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<Portfolio>(response)
+  getPortfolio: async (options?: ApiRequestOptions) => {
+    return fetchWithAuth<Portfolio>(`${API_BASE_URL}/api/portfolio`, {}, options)
   },
 }
 
-// Wallet API
+// Endpoints de wallet: balance, movimientos de efectivo y transferencias.
 export const walletApi = {
   getBalance: async () => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/balance`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<WalletBalance>(response)
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/balance`)
   },
 
   deposit: async (amount: number, description?: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/wallet/deposit`, {
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/deposit`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify({ amount, description }),
     })
-    return handleResponse<WalletBalance>(response)
+  },
+
+  withdraw: async (amount: number, description?: string) => {
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/withdraw`, {
+      method: "POST",
+      body: JSON.stringify({ amount, description }),
+    })
+  },
+
+  transfer: async (recipient: string, amount: number, description?: string) => {
+    return fetchWithAuth<WalletBalance>(`${API_BASE_URL}/api/v1/wallet/transfer`, {
+      method: "POST",
+      body: JSON.stringify({ recipient, amount, description }),
+    })
+  },
+
+  getTransactions: async () => {
+    return fetchWithAuth<WalletTransaction[]>(`${API_BASE_URL}/api/v1/wallet/transactions`)
   },
 }
 
-// Market API (requieren autenticacion)
+// Endpoints de mercado. Todos pasan por fetchWithAuth porque requieren sesion activa.
 export const marketApi = {
-  getPrice: async (symbol: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<MarketPrice>(response)
+  getPrice: async (symbol: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<MarketPrice>(
+      `${API_BASE_URL}/api/v1/market/get-price?symbol=${encodeURIComponent(symbol)}`,
+      {},
+      options
+    )
   },
 
-  search: async (input: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/search?input=${encodeURIComponent(input)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<Instrument[]>(response)
+  search: async (input: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<Instrument[]>(
+      `${API_BASE_URL}/api/v1/market/search?input=${encodeURIComponent(input)}`,
+      {},
+      options
+    )
   },
 
-  getOverview: async (symbol: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/get-overview?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<InstrumentOverview>(response)
+  getOverview: async (symbol: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<InstrumentOverview>(
+      `${API_BASE_URL}/api/v1/market/get-overview?symbol=${encodeURIComponent(symbol)}`,
+      {},
+      options
+    )
   },
 
-  getDailyCandles: async (symbol: string) => {
-    const response = await fetch(`${API_BASE_URL}/api/v1/market/get-daily-candles?symbol=${encodeURIComponent(symbol)}`, {
-      headers: getAuthHeaders(),
-    })
-    return handleResponse<Candle[]>(response)
+  getDailyCandles: async (symbol: string, options?: ApiRequestOptions) => {
+    return fetchWithAuth<Candle[]>(
+      `${API_BASE_URL}/api/v1/market/get-daily-candles?symbol=${encodeURIComponent(symbol)}`,
+      {},
+      options
+    )
   },
 }
 
-// Types
+// Tipos compartidos entre pantallas y capa API. Reflejan las respuestas esperadas del backend.
 export interface TradeOrder {
   id: number
   owner: string
@@ -282,6 +320,29 @@ export interface WalletBalance {
   owner: string
   availableBalance: number
   reservedBalance: number
+}
+
+export interface WalletTransaction {
+  id: number
+  movementType:
+    | "DEPOSIT"
+    | "WITHDRAWAL"
+    | "TRANSFER_OUT"
+    | "TRANSFER_IN"
+    | "RESERVE"
+    | "RELEASE"
+    | "SETTLEMENT_DEBIT"
+    | "SETTLEMENT_CREDIT"
+    | "FEE"
+  amount: number
+  availableDelta: number
+  reservedDelta: number
+  availableBalanceAfter: number
+  reservedBalanceAfter: number
+  referenceType: "ORDER" | "MANUAL"
+  referenceId: string
+  description: string | null
+  occurredAt: string
 }
 
 export interface MarketPrice {

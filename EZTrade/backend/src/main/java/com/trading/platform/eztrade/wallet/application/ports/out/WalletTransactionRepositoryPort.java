@@ -3,6 +3,7 @@ package com.trading.platform.eztrade.wallet.application.ports.out;
 import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.WalletTransaction;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -18,6 +19,9 @@ public interface WalletTransactionRepositoryPort {
 
     /** Busca una transacción por (owner, referencia, tipo de movimiento). */
     Optional<WalletTransaction> findByOwnerAndReferenceIdAndMovementType(String owner, String referenceId, MovementType movementType);
+
+    /** Devuelve el historico del wallet, primero los movimientos mas recientes. */
+    List<WalletTransaction> findByOwnerOrderByOccurredAtDesc(String owner);
 
     /**
      * Indica si ya existe una transacción por (owner, referencia, tipo de movimiento).

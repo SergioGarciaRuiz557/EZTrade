@@ -12,12 +12,14 @@ import { toast } from "@/components/ui/toaster"
 import { TrendingUp, Loader2 } from "lucide-react"
 
 export default function LoginPage() {
+  // Estado controlado del formulario de acceso y del spinner de envio.
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { login } = useAuth()
   const router = useRouter()
 
+  // Envia credenciales al AuthProvider, guarda sesion si son validas y vuelve al inicio.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -38,12 +40,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <div className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-2 rounded-lg transition-opacity hover:opacity-80">
               <div className="h-10 w-10 rounded-lg bg-primary flex items-center justify-center">
                 <TrendingUp className="h-6 w-6 text-primary-foreground" />
               </div>
               <span className="text-2xl font-bold">EZTrade</span>
-            </div>
+            </Link>
           </div>
           <CardTitle className="text-2xl">Iniciar sesion</CardTitle>
           <CardDescription>Introduce tus credenciales para acceder a tu cuenta</CardDescription>

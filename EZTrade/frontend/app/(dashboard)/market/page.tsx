@@ -11,11 +11,13 @@ import { Search, Loader2, TrendingUp, Building2, Globe, DollarSign, BarChart3, S
 import Link from "next/link"
 
 function InstrumentDetails({ symbol, onClose }: { symbol: string; onClose: () => void }) {
+  // Carga detalle y precio del instrumento seleccionado dentro del dialogo.
   const [overview, setOverview] = useState<InstrumentOverview | null>(null)
   const [price, setPrice] = useState<MarketPrice | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // El flag cancelled evita setState si el usuario cierra el dialogo antes de terminar la llamada.
     let cancelled = false
 
     const fetchData = async () => {
@@ -131,12 +133,14 @@ function InstrumentDetails({ symbol, onClose }: { symbol: string; onClose: () =>
 }
 
 export default function MarketPage() {
+  // Estado de busqueda, resultados y simbolo seleccionado para el dialogo de detalle.
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<Instrument[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null)
   const [hasSearched, setHasSearched] = useState(false)
 
+  // Ejecuta la busqueda contra el backend y marca que ya hay una consulta realizada.
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!query.trim()) return
@@ -153,6 +157,7 @@ export default function MarketPage() {
     }
   }
 
+  // Accesos rapidos para probar busquedas comunes sin escribir en el formulario.
   const popularSymbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META"]
 
   return (

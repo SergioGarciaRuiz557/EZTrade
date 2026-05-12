@@ -2,6 +2,9 @@ package com.trading.platform.eztrade.portfolio.domain;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Vista de dominio de la cartera de un usuario.
@@ -11,7 +14,28 @@ public record PortfolioSnapshot(
         BigDecimal cashAvailable,
         BigDecimal totalCostBasis,
         BigDecimal totalRealizedPnl,
-        List<Position> positions
+        List<Position> positions,
+        Map<String, PositionMarketValuation> marketValuations
 ) {
+
+    public PortfolioSnapshot(String owner,
+                             BigDecimal cashAvailable,
+                             BigDecimal totalCostBasis,
+                             BigDecimal totalRealizedPnl,
+                             List<Position> positions) {
+        this(owner, cashAvailable, totalCostBasis, totalRealizedPnl, positions, Map.of());
+    }
+
+    public PortfolioSnapshot {
+        positions = List.copyOf(positions);
+        marketValuations = Map.copyOf(marketValuations);
+    }
+
+    public Optional<PositionMarketValuation> marketValuationFor(String symbol) {
+        if (symbol == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(marketValuations.get(symbol.toUpperCase(Locale.ROOT)));
+    }
 }
 

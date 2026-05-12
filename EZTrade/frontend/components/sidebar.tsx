@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
+// Entradas principales del area autenticada con su ruta e icono.
 const navigation = [
   { name: "Inicio", href: "/", icon: Home },
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -34,6 +35,7 @@ const navigation = [
 ]
 
 export function Sidebar() {
+  // usePathname permite resaltar la ruta activa sin mantener estado manual.
   const pathname = usePathname()
   const { user, logout } = useAuth()
 

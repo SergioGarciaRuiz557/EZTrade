@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Variables del tema claro usadas por Tailwind mediante hsl(var(--...)). */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -22,12 +23,15 @@
     --destructive-foreground: 0 0% 98%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 98%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 0 0% 9%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
     --ring: 45 100% 51%;
     --radius: 0.5rem;
   }
 
+  /* Variables equivalentes para el modo oscuro, aplicado desde la clase .dark en el layout raiz. */
   .dark {
     --background: 0 0% 4%;
     --foreground: 0 0% 98%;
@@ -47,6 +51,8 @@
     --destructive-foreground: 0 0% 98%;
     --success: 142 71% 45%;
     --success-foreground: 0 0% 98%;
+    --warning: 45 100% 51%;
+    --warning-foreground: 0 0% 9%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
     --ring: 45 100% 51%;
@@ -54,9 +60,11 @@
 }
 
 @layer base {
+  /* Todos los elementos heredan el color de borde definido en el tema. */
   * {
     @apply border-border;
   }
+  /* Estilos globales de fondo y texto de la aplicacion. */
   body {
     @apply bg-background text-foreground;
   }

@@ -4,6 +4,7 @@ import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
+import com.trading.platform.eztrade.wallet.application.ports.in.TransferWalletFundsUseCase;
 import com.trading.platform.eztrade.wallet.application.ports.out.DomainEventPublisherPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.WalletTransactionRepositoryPort;
 import com.trading.platform.eztrade.wallet.application.ports.out.WalletAccountRepositoryPort;
@@ -176,5 +177,44 @@ class WalletServiceTest {
         assertThat(eventCaptor.getAllValues()).anyMatch(FundsSettledEvent.class::isInstance);
         assertThat(eventCaptor.getAllValues()).anyMatch(AvailableCashUpdatedEvent.class::isInstance);
         assertThat(eventCaptor.getAllValues()).anyMatch(OrderExecutedEvent.class::isInstance);
+    }
+
+    @Test
+    @DisplayName("Transferencia mueve efectivo disponible entre wallets y registra ambos movimientos")
+    void transfer_moves_available_cash_between_wallets() {
+        given(ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType("alice@demo.com", "tr-1", MovementType.TRANSFER_OUT))
+                .willReturn(false);
+        given(ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType("bob@demo.com", "tr-1", MovementType.TRANSFER_IN))
+                .willReturn(false);
+        given(walletAccountRepository.findByOwnerForUpdate("alice@demo.com"))
+                .willReturn(Optional.of(WalletAccount.rehydrate("alice@demo.com", new BigDecimal("500"), BigDecimal.ZERO)));
+        given(walletAccountRepository.findByOwnerForUpdate("bob@demo.com"))
+                .willReturn(Optional.of(WalletAccount.rehydrate("bob@demo.com", new BigDecimal("100"), BigDecimal.ZERO)));
+        given(walletAccountRepository.save(any(WalletAccount.class))).willAnswer(i -> i.getArgument(0));
+        given(ledgerEntryRepository.save(any(WalletTransaction.class))).willAnswer(i -> i.getArgument(0));
+
+        walletService.transfer(new TransferWalletFundsUseCase.TransferCommand(
+                "alice@demo.com",
+                "bob@demo.com",
+                new BigDecimal("150"),
+                "tr-1",
+                "Shared payment"
+        ));
+
+        ArgumentCaptor<WalletAccount> accountCaptor = ArgumentCaptor.forClass(WalletAccount.class);
+        verify(walletAccountRepository, times(2)).save(accountCaptor.capture());
+        assertThat(accountCaptor.getAllValues())
+                .extracting(WalletAccount::owner)
+                .containsExactly("alice@demo.com", "bob@demo.com");
+        assertThat(accountCaptor.getAllValues().get(0).availableBalance()).isEqualByComparingTo("350");
+        assertThat(accountCaptor.getAllValues().get(1).availableBalance()).isEqualByComparingTo("250");
+
+        ArgumentCaptor<WalletTransaction> transactionCaptor = ArgumentCaptor.forClass(WalletTransaction.class);
+        verify(ledgerEntryRepository, times(2)).save(transactionCaptor.capture());
+        assertThat(transactionCaptor.getAllValues())
+                .extracting(WalletTransaction::movementType)
+                .containsExactly(MovementType.TRANSFER_OUT, MovementType.TRANSFER_IN);
+
+        verify(eventPublisher, times(2)).publish(any(AvailableCashUpdatedEvent.class));
     }
 }

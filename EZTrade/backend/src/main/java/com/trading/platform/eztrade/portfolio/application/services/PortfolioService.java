@@ -1,5 +1,6 @@
 package com.trading.platform.eztrade.portfolio.application.services;
 
+import com.trading.platform.eztrade.market.api.MarketPriceLookupPort;
 import com.trading.platform.eztrade.portfolio.application.ports.in.GetPortfolioUseCase;
 import com.trading.platform.eztrade.portfolio.application.ports.in.HandleOrderExecutedUseCase;
 import com.trading.platform.eztrade.portfolio.application.ports.in.HandleWalletCashUpdatedUseCase;
@@ -10,6 +11,7 @@ import com.trading.platform.eztrade.portfolio.domain.CashProjection;
 import com.trading.platform.eztrade.portfolio.domain.PortfolioDomainException;
 import com.trading.platform.eztrade.portfolio.domain.PortfolioSnapshot;
 import com.trading.platform.eztrade.portfolio.domain.Position;
+import com.trading.platform.eztrade.portfolio.domain.PositionMarketValuation;
 import com.trading.platform.eztrade.portfolio.domain.events.PortfolioValuationUpdatedEvent;
 import com.trading.platform.eztrade.portfolio.domain.events.PositionClosedEvent;
 import com.trading.platform.eztrade.portfolio.domain.events.PositionIncreasedEvent;
@@ -24,6 +26,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Servicio de aplicacion del modulo portfolio.
@@ -35,13 +39,16 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
     private final PositionRepositoryPort positionRepository;
     private final CashProjectionRepositoryPort cashProjectionRepository;
     private final DomainEventPublisherPort eventPublisher;
+    private final MarketPriceLookupPort marketPriceLookupPort;
 
     public PortfolioService(PositionRepositoryPort positionRepository,
                             CashProjectionRepositoryPort cashProjectionRepository,
-                            DomainEventPublisherPort eventPublisher) {
+                            DomainEventPublisherPort eventPublisher,
+                            MarketPriceLookupPort marketPriceLookupPort) {
         this.positionRepository = positionRepository;
         this.cashProjectionRepository = cashProjectionRepository;
         this.eventPublisher = eventPublisher;
+        this.marketPriceLookupPort = marketPriceLookupPort;
     }
 
     @Override
@@ -57,7 +64,7 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
             case SELL -> handleSell(owner, symbol, quantity, price);
         }
 
-        PortfolioSnapshot snapshot = getByOwner(owner);
+        PortfolioSnapshot snapshot = buildSnapshot(owner, false);
         eventPublisher.publish(new PortfolioValuationUpdatedEvent(
                 owner,
                 snapshot.cashAvailable(),
@@ -70,11 +77,19 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
     @Override
     @Transactional(readOnly = true)
     public PortfolioSnapshot getByOwner(String owner) {
-        List<Position> positions = positionRepository.findByOwner(owner);
-        BigDecimal totalCostBasis = positions.stream()
+        return buildSnapshot(owner, true);
+    }
+
+    private PortfolioSnapshot buildSnapshot(String owner, boolean includeMarketValuations) {
+        List<Position> allPositions = positionRepository.findByOwner(owner);
+        List<Position> openPositions = allPositions.stream()
+                .filter(position -> !position.isClosed())
+                .toList();
+
+        BigDecimal totalCostBasis = openPositions.stream()
                 .map(Position::investedAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalRealizedPnl = positions.stream()
+        BigDecimal totalRealizedPnl = allPositions.stream()
                 .map(Position::realizedPnl)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -82,7 +97,24 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                 .map(CashProjection::availableCash)
                 .orElse(BigDecimal.ZERO);
 
-        return new PortfolioSnapshot(owner, cashAvailable, totalCostBasis, totalRealizedPnl, positions);
+        Map<String, PositionMarketValuation> marketValuations = includeMarketValuations
+                ? buildMarketValuations(openPositions)
+                : Map.of();
+
+        return new PortfolioSnapshot(owner, cashAvailable, totalCostBasis, totalRealizedPnl, openPositions, marketValuations);
+    }
+
+    private Map<String, PositionMarketValuation> buildMarketValuations(List<Position> positions) {
+        return positions.stream()
+                .collect(Collectors.toMap(
+                        Position::symbol,
+                        this::marketValuationFor
+                ));
+    }
+
+    private PositionMarketValuation marketValuationFor(Position position) {
+        BigDecimal currentPrice = marketPriceLookupPort.currentPrice(position.symbol());
+        return PositionMarketValuation.from(position, currentPrice);
     }
 
     @Override
@@ -137,7 +169,7 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
         Position updated = result.position();
 
         if (updated.isClosed()) {
-            positionRepository.deleteByOwnerAndSymbol(owner, symbol);
+            positionRepository.save(updated);
             eventPublisher.publish(new PositionClosedEvent(
                     owner,
                     symbol,

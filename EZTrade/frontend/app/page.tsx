@@ -39,6 +39,7 @@ const MARKET_REQUEST_DELAY_MS = 700
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
+// Crea una cola secuencial para espaciar peticiones y reducir errores por limite de la API externa.
 function createMarketRequestQueue(delayMs: number) {
   let queue = Promise.resolve()
 
@@ -96,6 +97,7 @@ interface StockData {
   sector?: string
 }
 
+// Activo elegido desde la portada para abrir el modal de compra.
 interface SelectedAsset {
   symbol: string
   name: string
@@ -104,6 +106,7 @@ interface SelectedAsset {
   type: "accion" | "indice"
 }
 
+// Punto adaptado para Recharts: conserva datos OHLC y anade una etiqueta legible en el eje X.
 interface CandleChartPoint {
   time: string
   label: string
@@ -124,6 +127,7 @@ function SectorBarChart({ data, blurred }: { data: { name: string; count: number
     )
   }
 
+  // La barra mas grande ocupa el 100% y el resto se calcula proporcionalmente.
   const maxValue = Math.max(...data.map(d => d.count), 1)
   
   return (
@@ -146,7 +150,9 @@ function SectorBarChart({ data, blurred }: { data: { name: string; count: number
   )
 }
 
+// Grafico compacto de cierres diarios con resumen de cierre y variacion del periodo.
 function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean }) {
+  // Se limita a las ultimas 30 velas para mantener la grafica legible en tarjetas pequenas.
   const chartData: CandleChartPoint[] = data
     .slice(-30)
     .map((candle) => {
@@ -165,6 +171,7 @@ function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean
     return <p className="text-sm text-muted-foreground">No hay velas diarias disponibles para este simbolo.</p>
   }
 
+  // Calcula variacion desde la apertura inicial hasta el ultimo cierre visible.
   const latest = chartData[chartData.length - 1]
   const first = chartData[0]
   const change = latest.close - first.open
@@ -224,55 +231,36 @@ function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean
   )
 }
 
-// Modal de login requerido
-function LoginRequiredModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Lock className="w-6 h-6 text-primary" />
-          </div>
-          <CardTitle>Acceso requerido</CardTitle>
-          <CardDescription>
-            Para ver los datos reales del mercado y gestionar tu portfolio, necesitas iniciar sesion.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Link href="/login" className="block">
-            <Button className="w-full">Iniciar sesion</Button>
-          </Link>
-          <Link href="/register" className="block">
-            <Button variant="outline" className="w-full">Crear cuenta</Button>
-          </Link>
-          <Button variant="ghost" className="w-full" onClick={onClose}>
-            Seguir explorando
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  )
+// Elimina una sesion local posiblemente caducada antes de enviar al usuario al login.
+function clearCachedAuthSession() {
+  localStorage.removeItem("token")
+  localStorage.removeItem("user")
+  window.dispatchEvent(new Event("auth:unauthorized"))
 }
 
 // Overlay para datos borrosos
-function BlurOverlay({ onClick }: { onClick: () => void }) {
+function BlurOverlay() {
   return (
-    <div 
+    <Link
+      href="/login"
+      aria-label="Iniciar sesion para ver datos reales"
       className="absolute inset-0 flex items-center justify-center bg-background/30 backdrop-blur-[2px] cursor-pointer z-10 rounded-lg"
-      onClick={onClick}
+      onClick={(event) => {
+        event.stopPropagation()
+        clearCachedAuthSession()
+      }}
     >
       <div className="flex flex-col items-center gap-2 text-center p-4">
         <Lock className="w-6 h-6 text-primary" />
         <span className="text-sm font-medium">Inicia sesion para ver datos reales</span>
       </div>
-    </div>
+    </Link>
   )
 }
 
 export default function HomePage() {
   const { token } = useAuth()
   const router = useRouter()
-  const [showLoginModal, setShowLoginModal] = useState(false)
   const [stocks, setStocks] = useState<StockData[]>([])
   const [indices, setIndices] = useState<{ symbol: string; name: string; price: number }[]>([])
   const [sectors, setSectors] = useState<{ name: string; count: number }[]>([])
@@ -288,9 +276,11 @@ export default function HomePage() {
   const [candlesLoading, setCandlesLoading] = useState(false)
   const [candlesError, setCandlesError] = useState<string | null>(null)
 
+  // La portada cambia entre datos reales y datos demo segun exista token.
   const isLoggedIn = !!token
 
-  const loadMarketData = async () => {
+  // Carga acciones, indices y sectores reales cuando el usuario esta autenticado.
+  const loadMarketData = async (signal?: AbortSignal) => {
     if (!token) return
     
     setLoading(true)
@@ -302,8 +292,9 @@ export default function HomePage() {
       // Cargar precios de acciones populares
       const stockPromises = POPULAR_SYMBOLS.map(async (symbol) => {
         try {
-          const priceData = await queueMarketRequest(() => marketApi.getPrice(symbol))
-          const overviewData = await queueMarketRequest(() => marketApi.getOverview(symbol)).catch(() => null)
+          const priceData = await queueMarketRequest(() => marketApi.getPrice(symbol, { signal }))
+          const overviewData = await queueMarketRequest(() => marketApi.getOverview(symbol, { signal })).catch(() => null)
+          if (signal?.aborted) return null
           const stock: StockData = {
             symbol,
             name: overviewData?.name || symbol,
@@ -312,6 +303,7 @@ export default function HomePage() {
           }
           return stock
         } catch {
+          if (signal?.aborted) throw new DOMException("Request aborted", "AbortError")
           return null
         }
       })
@@ -319,17 +311,20 @@ export default function HomePage() {
       // Cargar precios de indices
       const indexPromises = INDEX_SYMBOLS.map(async (index) => {
         try {
-          const priceData = await queueMarketRequest(() => marketApi.getPrice(index.symbol))
+          const priceData = await queueMarketRequest(() => marketApi.getPrice(index.symbol, { signal }))
+          if (signal?.aborted) return null
           return {
             symbol: index.symbol,
             name: index.name,
             price: priceData.price
           }
         } catch {
+          if (signal?.aborted) throw new DOMException("Request aborted", "AbortError")
           return null
         }
       })
 
+      // Las peticiones internas van en paralelo, pero cada llamada real pasa por la cola espaciada.
       const [stockResults, indexResults] = await Promise.all([
         Promise.all(stockPromises),
         Promise.all(indexPromises)
@@ -337,6 +332,8 @@ export default function HomePage() {
 
       const validStocks = stockResults.filter((s): s is StockData => s !== null)
       const validIndices = indexResults.filter((i): i is { symbol: string; name: string; price: number } => i !== null)
+
+      if (signal?.aborted) return
 
       setStocks(validStocks)
       setIndices(validIndices)
@@ -359,53 +356,78 @@ export default function HomePage() {
       setDataLoaded(true)
 
     } catch (err) {
+      if (signal?.aborted) return
       setError("No se pudieron cargar los datos del mercado. Asegurate de que el backend este corriendo.")
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
     }
   }
 
   useEffect(() => {
+    // La carga inicial solo se dispara una vez por sesion y se cancela al desmontar.
     if (token && !dataLoaded) {
-      loadMarketData()
+      const controller = new AbortController()
+      loadMarketData(controller.signal)
+
+      return () => {
+        controller.abort()
+      }
     }
   }, [token, dataLoaded])
 
   useEffect(() => {
+    // Las velas se cachean por simbolo para no repetir llamadas al cambiar entre botones.
     if (!isLoggedIn) return
     if (candlesBySymbol[selectedChartSymbol]) return
+
+    const controller = new AbortController()
 
     const loadCandles = async () => {
       setCandlesLoading(true)
       setCandlesError(null)
       try {
-        const candles = await marketApi.getDailyCandles(selectedChartSymbol)
+        const candles = await marketApi.getDailyCandles(selectedChartSymbol, { signal: controller.signal })
+        if (controller.signal.aborted) return
         setCandlesBySymbol((prev) => ({
           ...prev,
           [selectedChartSymbol]: candles,
         }))
       } catch {
-        setCandlesError("No se pudieron cargar las velas diarias en este momento.")
+        if (!controller.signal.aborted) {
+          setCandlesError("No se pudieron cargar las velas diarias en este momento.")
+        }
       } finally {
-        setCandlesLoading(false)
+        if (!controller.signal.aborted) {
+          setCandlesLoading(false)
+        }
       }
     }
 
     loadCandles()
+
+    return () => {
+      controller.abort()
+    }
   }, [isLoggedIn, selectedChartSymbol, candlesBySymbol])
 
+  // Cualquier interaccion bloqueada en modo invitado redirige al login.
   const handleInteraction = () => {
     if (!token) {
-      setShowLoginModal(true)
+      clearCachedAuthSession()
+      router.push("/login")
     }
   }
 
+  // Prepara el modal con el activo elegido y precarga el precio limite.
   const openAssetDialog = (asset: SelectedAsset) => {
     setSelectedAsset(asset)
     setBuyQuantity("1")
     setBuyPrice(asset.price.toFixed(2))
   }
 
+  // Valida y envia una orden de compra desde la portada sin pasar por la pantalla Trading.
   const handleBuyFromHome = async () => {
     if (!selectedAsset) return
 
@@ -431,18 +453,10 @@ export default function HomePage() {
         price: parsedPrice,
       })
 
-      toast({
-        title: "Orden de compra creada",
-        description: `${selectedAsset.symbol} se ha enviado correctamente`,
-      })
       setSelectedAsset(null)
       router.push("/dashboard")
     } catch {
-      toast({
-        title: "No se pudo crear la orden",
-        description: "Revisa tus datos e intentalo de nuevo",
-        variant: "destructive",
-      })
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setIsBuying(false)
     }
@@ -465,20 +479,20 @@ export default function HomePage() {
           </div>
           <nav className="flex items-center gap-4">
             {token ? (
-              <Link href="/dashboard">
-                <Button>
+              <Button asChild>
+                <Link href="/dashboard">
                   Ir al Dashboard
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             ) : (
               <>
-                <Link href="/login">
-                  <Button variant="ghost">Iniciar sesion</Button>
-                </Link>
-                <Link href="/register">
-                  <Button>Registrarse</Button>
-                </Link>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Iniciar sesion</Link>
+                </Button>
+                <Button asChild>
+                  <Link href="/register">Registrarse</Link>
+                </Button>
               </>
             )}
           </nav>
@@ -512,7 +526,7 @@ export default function HomePage() {
           <Card className="mb-8">
             <CardContent className="py-8 text-center">
               <p className="text-muted-foreground mb-4">{error}</p>
-              <Button variant="outline" onClick={loadMarketData}>
+              <Button variant="outline" onClick={() => loadMarketData()}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Reintentar
               </Button>
@@ -539,7 +553,7 @@ export default function HomePage() {
                     })
                   }}
                 >
-                  {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                  {!isLoggedIn && <BlurOverlay />}
                   <CardContent className={`p-4 ${!isLoggedIn ? "blur-sm" : ""}`}>
                     <div className="flex items-center justify-between">
                       <div>
@@ -564,7 +578,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Stock List */}
             <Card className="lg:col-span-2 relative overflow-hidden">
-              {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+              {!isLoggedIn && <BlurOverlay />}
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -577,7 +591,7 @@ export default function HomePage() {
                     </CardDescription>
                   </div>
                   {isLoggedIn && (
-                    <Button variant="outline" size="sm" onClick={loadMarketData}>
+                    <Button variant="outline" size="sm" onClick={() => loadMarketData()}>
                       <RefreshCw className="w-4 h-4 mr-2" />
                       Actualizar
                     </Button>
@@ -628,7 +642,7 @@ export default function HomePage() {
             {/* Sector Distribution */}
             <div className="space-y-6">
               <Card className="relative overflow-hidden">
-                {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                {!isLoggedIn && <BlurOverlay />}
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <PieChart className="w-5 h-5 text-primary" />
@@ -644,7 +658,7 @@ export default function HomePage() {
               </Card>
 
               <Card className="relative overflow-hidden">
-                {!isLoggedIn && <BlurOverlay onClick={handleInteraction} />}
+                {!isLoggedIn && <BlurOverlay />}
                 <CardHeader>
                   <div className="flex items-center justify-between gap-2">
                     <div>
@@ -738,12 +752,12 @@ export default function HomePage() {
           
           {!token && (
             <div className="text-center mt-12">
-              <Link href="/register">
-                <Button size="lg" className="px-8">
+              <Button size="lg" className="px-8" asChild>
+                <Link href="/register">
                   Empieza a invertir gratis
                   <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           )}
         </div>
@@ -755,9 +769,6 @@ export default function HomePage() {
           <p>&copy; 2024 EZTrade. Todos los derechos reservados.</p>
         </div>
       </footer>
-
-      {/* Login Required Modal */}
-      {showLoginModal && <LoginRequiredModal onClose={() => setShowLoginModal(false)} />}
 
       {/* Asset Buy Modal */}
       <Dialog

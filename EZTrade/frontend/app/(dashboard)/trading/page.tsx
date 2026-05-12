@@ -28,15 +28,18 @@ import { DollarSign, LineChart, Loader2, Play, Search, ShoppingCart, Store, Tags
 
 type TradingTab = "buy" | "sell" | "marketplace" | "orders"
 
+// Normaliza simbolos para que busquedas y ordenes usen el formato esperado por el backend.
 function normalizeSymbol(value: string) {
   return value.trim().toUpperCase()
 }
 
+// Devuelve 0 si el input no es un numero positivo, facilitando validaciones de formularios.
 function parsePositiveNumber(value: string) {
   const parsed = Number.parseFloat(value)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
 }
 
+// Extrae mensajes de errores lanzados por la capa API y usa un texto seguro si no hay detalle.
 function getErrorMessage(error: unknown, fallback: string) {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: unknown }).message
@@ -45,12 +48,14 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
+// Refresca caches relacionadas tras ejecutar acciones de trading.
 function refreshTradingData() {
   mutate("orders")
   mutate("portfolio")
   mutate("wallet")
 }
 
+// Formulario para crear ordenes de compra usando el precio actual del mercado.
 function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
   const [symbol, setSymbol] = useState("")
   const [quantity, setQuantity] = useState("")
@@ -59,6 +64,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
+    // Si se llega desde Mercado o la portada, precarga simbolo y precio automaticamente.
     const nextSymbol = normalizeSymbol(initialSymbol)
     if (!nextSymbol) return
 
@@ -84,6 +90,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
     }
   }, [initialSymbol])
 
+  // Consulta manual del precio para el simbolo escrito.
   const handleLookup = async () => {
     const nextSymbol = normalizeSymbol(symbol)
     if (!nextSymbol) return
@@ -105,6 +112,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
     }
   }
 
+  // Crea la orden BUY tras validar simbolo y cantidad.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     const nextSymbol = normalizeSymbol(symbol)
@@ -122,24 +130,16 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
         quantity: nextQuantity,
         price: price.price,
       })
-      toast({
-        title: "Orden de compra creada",
-        description: `${formatNumber(nextQuantity)} acciones de ${nextSymbol} pendientes de ejecucion`,
-        variant: "success",
-      })
       setQuantity("")
       mutate("orders")
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo crear la orden de compra"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  // Valores derivados que alimentan resumen visual y estado del boton.
   const quantityValue = parsePositiveNumber(quantity)
   const estimatedTotal = quantityValue * (marketPrice?.price || 0)
   const canSubmit = Boolean(normalizeSymbol(symbol)) && quantityValue > 0
@@ -220,6 +220,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
   )
 }
 
+// Formulario para publicar ofertas de venta desde posiciones existentes del portfolio.
 function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   const { data: portfolio, isLoading } = useSWR<Portfolio>("portfolio", () => portfolioApi.getPortfolio())
   const [selectedSymbol, setSelectedSymbol] = useState("")
@@ -229,15 +230,18 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   const [isPriceLoading, setIsPriceLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Solo se pueden vender posiciones con cantidad disponible.
   const positions = portfolio?.positions?.filter((position) => position.quantity > 0) || []
   const selectedPosition = positions.find((position) => position.symbol === selectedSymbol)
 
   useEffect(() => {
+    // Preselecciona el simbolo si la navegacion lo trae por query string.
     const nextSymbol = normalizeSymbol(initialSymbol)
     if (nextSymbol) setSelectedSymbol(nextSymbol)
   }, [initialSymbol])
 
   useEffect(() => {
+    // Al elegir posicion se consulta el precio de mercado para limitar el precio de la oferta.
     if (!selectedSymbol) {
       setMarketPrice(null)
       return
@@ -265,6 +269,7 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
     }
   }, [selectedSymbol])
 
+  // Publica una oferta SELL en el marketplace local.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!selectedPosition) return
@@ -280,24 +285,16 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
         quantity: quantityValue,
         price: priceValue,
       })
-      toast({
-        title: "Oferta publicada",
-        description: `${formatNumber(quantityValue)} acciones de ${selectedSymbol} a ${formatCurrency(priceValue)}`,
-        variant: "success",
-      })
       setQuantity("")
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo publicar la oferta"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  // Validaciones derivadas: no vender mas acciones ni por encima del precio de mercado.
   const quantityValue = parsePositiveNumber(quantity)
   const priceValue = parsePositiveNumber(price)
   const maxPrice = marketPrice?.price
@@ -430,45 +427,41 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   )
 }
 
+// Lista y compra ofertas de venta publicadas por otros usuarios.
 function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState("")
   const [actionLoading, setActionLoading] = useState<number | null>(null)
 
   useEffect(() => {
+    // Si llega un simbolo inicial, se usa tambien como filtro del marketplace.
     const nextSymbol = normalizeSymbol(initialSymbol)
     if (!nextSymbol) return
     setQuery(nextSymbol)
     setFilter(nextSymbol)
   }, [initialSymbol])
 
+  // La key incluye el filtro para que SWR cachee resultados por simbolo.
   const { data: offers, isLoading, mutate: refreshOffers } = useSWR<TradeOrder[]>(
     ["sell-offers", filter],
     () => tradingApi.getSellOffers(filter || undefined)
   )
 
+  // Aplica el filtro escrito por el usuario.
   const handleFilter = (event: React.FormEvent) => {
     event.preventDefault()
     setFilter(normalizeSymbol(query))
   }
 
+  // Compra una oferta concreta y refresca wallet, portfolio, ordenes y marketplace.
   const handleBuyOffer = async (offer: TradeOrder) => {
     setActionLoading(offer.id)
     try {
       await tradingApi.buySellOffer(offer.id)
-      toast({
-        title: "Oferta comprada",
-        description: `${formatNumber(offer.quantity)} acciones de ${offer.symbol} a ${formatCurrency(offer.price)}`,
-        variant: "success",
-      })
       refreshOffers()
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo comprar la oferta"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setActionLoading(null)
     }
@@ -572,39 +565,32 @@ function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
   )
 }
 
+// Muestra ordenes abiertas e historial, con acciones de ejecutar o cancelar.
 function OrdersList() {
   const { data: orders, isLoading } = useSWR<TradeOrder[]>("orders", () => tradingApi.getOrders())
   const [actionLoading, setActionLoading] = useState<number | null>(null)
 
+  // Ejecuta manualmente una orden de compra pendiente.
   const handleExecute = async (orderId: number) => {
     setActionLoading(orderId)
     try {
       await tradingApi.executeOrder(orderId)
-      toast({ title: "Orden ejecutada", description: "La orden se ha ejecutado correctamente", variant: "success" })
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo ejecutar la orden"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setActionLoading(null)
     }
   }
 
+  // Cancela una orden pendiente y libera recursos reservados en backend.
   const handleCancel = async (orderId: number) => {
     setActionLoading(orderId)
     try {
       await tradingApi.cancelOrder(orderId)
-      toast({ title: "Orden cancelada", description: "La orden ha sido cancelada" })
       refreshTradingData()
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: getErrorMessage(error, "No se pudo cancelar la orden"),
-        variant: "destructive",
-      })
+    } catch {
+      // Las notificaciones de ordenes las emite el backend por WebSocket.
     } finally {
       setActionLoading(null)
     }
@@ -618,6 +604,7 @@ function OrdersList() {
     )
   }
 
+  // Se separan pendientes e historial para mostrar cada grupo en su tab.
   const pendingOrders = orders?.filter((order) => order.status === "PENDING") || []
   const historyOrders = orders?.filter((order) => order.status !== "PENDING") || []
 
@@ -760,6 +747,7 @@ export default function TradingPage() {
   const [initialSymbol, setInitialSymbol] = useState("")
 
   useEffect(() => {
+    // Lee query params generados desde Mercado o la portada para abrir la pestana correcta.
     const params = new URLSearchParams(window.location.search)
     const symbol = normalizeSymbol(params.get("symbol") || "")
     const side = params.get("side")
