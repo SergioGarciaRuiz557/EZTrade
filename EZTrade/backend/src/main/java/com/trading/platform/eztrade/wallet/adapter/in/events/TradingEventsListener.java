@@ -35,6 +35,8 @@ public class TradingEventsListener {
     @EventListener
     public void on(OrderPlacedEvent event) {
         // Delegación directa al caso de uso.
+        // Sincronico a proposito: si wallet no puede reservar fondos, trading
+        // debe abortar la transaccion y no dejar una BUY pendiente sin respaldo.
         handleOrderPlacedUseCase.handle(event);
     }
 

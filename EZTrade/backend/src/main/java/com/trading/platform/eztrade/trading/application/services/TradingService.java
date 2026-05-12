@@ -105,15 +105,22 @@ public class TradingService implements PlaceOrderUseCase,
 
         TradeOrder saved = tradeOrderRepositoryPort.save(order);
 
-        domainEventPublisherPort.publish(new OrderPlacedEvent(
-                saved.id().value(),
-                saved.owner(),
-                saved.symbol(),
-                saved.side().name(),
-                saved.quantity().value(),
-                saved.price().value(),
-                LocalDateTime.now()
-        ));
+        try {
+            domainEventPublisherPort.publish(new OrderPlacedEvent(
+                    saved.id().value(),
+                    saved.owner(),
+                    saved.symbol(),
+                    saved.side().name(),
+                    saved.quantity().value(),
+                    saved.price().value(),
+                    LocalDateTime.now()
+            ));
+        } catch (RuntimeException ex) {
+            if (isWalletInsufficientFunds(ex)) {
+                throw new TradingDomainException(ex.getMessage());
+            }
+            throw ex;
+        }
 
         return saved;
     }

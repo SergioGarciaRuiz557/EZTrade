@@ -6,8 +6,10 @@ import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
-import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * Adaptador de entrada del modulo notifications basado en eventos Spring.
@@ -30,7 +32,8 @@ public class DomainEventsListener {
      *
      * @param event evento emitido por trading al crear una orden
      */
-    @EventListener
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void on(OrderPlacedEvent event) {
         notifyOnDomainEventsUseCase.handle(event);
     }
@@ -40,7 +43,8 @@ public class DomainEventsListener {
      *
      * @param event evento emitido por trading al ejecutar una orden
      */
-    @EventListener
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void on(OrderExecutedEvent event) {
         notifyOnDomainEventsUseCase.handle(event);
     }
@@ -50,7 +54,8 @@ public class DomainEventsListener {
      *
      * @param event evento emitido por trading al cancelar una orden
      */
-    @EventListener
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void on(OrderCancelledEvent event) {
         notifyOnDomainEventsUseCase.handle(event);
     }
@@ -60,7 +65,8 @@ public class DomainEventsListener {
      *
      * @param event evento de fondos insuficientes
      */
-    @EventListener
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void on(InsufficientFundsEvent event) {
         notifyOnDomainEventsUseCase.handle(event);
     }
@@ -70,7 +76,8 @@ public class DomainEventsListener {
      *
      * @param event evento de portfolio con datos de cash/coste/pnl
      */
-    @EventListener
+    @Async
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void on(PortfolioValuationUpdatedEvent event) {
         notifyOnDomainEventsUseCase.handle(event);
     }

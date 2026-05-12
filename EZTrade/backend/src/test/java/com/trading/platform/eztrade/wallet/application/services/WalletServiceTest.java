@@ -12,6 +12,7 @@ import com.trading.platform.eztrade.wallet.domain.WalletTransaction;
 import com.trading.platform.eztrade.wallet.domain.MovementType;
 import com.trading.platform.eztrade.wallet.domain.ReferenceType;
 import com.trading.platform.eztrade.wallet.domain.WalletAccount;
+import com.trading.platform.eztrade.wallet.domain.WalletDomainException;
 import com.trading.platform.eztrade.wallet.domain.events.AvailableCashUpdatedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReleasedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.FundsReservedEvent;
@@ -30,6 +31,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.atLeastOnce;
@@ -103,7 +105,9 @@ class WalletServiceTest {
         given(walletAccountRepository.findByOwnerForUpdate("user@demo.com"))
                 .willReturn(Optional.of(WalletAccount.rehydrate("user@demo.com", new BigDecimal("20"), BigDecimal.ZERO)));
 
-        walletService.handle(event);
+        assertThatThrownBy(() -> walletService.handle(event))
+                .isInstanceOf(WalletDomainException.class)
+                .hasMessageContaining("Insufficient wallet funds");
 
         verify(walletAccountRepository, never()).save(any(WalletAccount.class));
         verify(ledgerEntryRepository, never()).save(any(WalletTransaction.class));

@@ -9,6 +9,7 @@ import com.trading.platform.eztrade.trading.application.ports.in.BuySellOfferUse
 import com.trading.platform.eztrade.trading.application.ports.in.GetSellOffersUseCase;
 import com.trading.platform.eztrade.trading.application.ports.in.PlaceSellOfferUseCase;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -55,7 +56,7 @@ public class TradingMarketplaceController {
      * caso de uso desde AlphaVantage y la orden se crea como BUY ejecutada.
      */
     @PostMapping("/market/buy")
-    public ResponseEntity<TradeOrderResponse> buyFromMarket(@RequestBody BuyFromMarketRequest request,
+    public ResponseEntity<TradeOrderResponse> buyFromMarket(@Valid @RequestBody BuyFromMarketRequest request,
                                                             Authentication authentication) {
         TradeOrder order = buyFromMarketUseCase.buy(new BuyFromMarketUseCase.BuyFromMarketCommand(
                 authentication.getName(),
@@ -72,7 +73,7 @@ public class TradingMarketplaceController {
      * acciones suficientes y el precio no puede superar el precio actual.
      */
     @PostMapping("/offers")
-    public ResponseEntity<TradeOrderResponse> placeSellOffer(@RequestBody PlaceSellOfferRequest request,
+    public ResponseEntity<TradeOrderResponse> placeSellOffer(@Valid @RequestBody PlaceSellOfferRequest request,
                                                              Authentication authentication) {
         TradeOrder offer = placeSellOfferUseCase.placeSellOffer(new PlaceSellOfferUseCase.PlaceSellOfferCommand(
                 authentication.getName(),

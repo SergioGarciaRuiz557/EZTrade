@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from "react"
-import { authApi } from "./api"
+import { authApi } from "@/features/auth/api"
 
 // Datos minimos del usuario que el frontend necesita para mostrar identidad y menu.
 interface User {

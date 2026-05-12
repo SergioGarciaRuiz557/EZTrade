@@ -4,7 +4,9 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/lib/auth-context"
-import { marketApi, tradingApi, type Candle } from "@/lib/api"
+import { marketApi } from "@/features/market/api"
+import { tradingApi } from "@/features/trading/api"
+import type { Candle } from "@/features/market/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -238,6 +240,14 @@ function clearCachedAuthSession() {
   window.dispatchEvent(new Event("auth:unauthorized"))
 }
 
+function getErrorMessage(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "message" in error) {
+    const message = (error as { message?: unknown }).message
+    if (typeof message === "string" && message.trim()) return message
+  }
+  return fallback
+}
+
 // Overlay para datos borrosos
 function BlurOverlay() {
   return (
@@ -269,7 +279,6 @@ export default function HomePage() {
   const [dataLoaded, setDataLoaded] = useState(false)
   const [selectedAsset, setSelectedAsset] = useState<SelectedAsset | null>(null)
   const [buyQuantity, setBuyQuantity] = useState("1")
-  const [buyPrice, setBuyPrice] = useState("")
   const [isBuying, setIsBuying] = useState(false)
   const [selectedChartSymbol, setSelectedChartSymbol] = useState(POPULAR_SYMBOLS[0])
   const [candlesBySymbol, setCandlesBySymbol] = useState<Record<string, Candle[]>>({})
@@ -424,7 +433,6 @@ export default function HomePage() {
   const openAssetDialog = (asset: SelectedAsset) => {
     setSelectedAsset(asset)
     setBuyQuantity("1")
-    setBuyPrice(asset.price.toFixed(2))
   }
 
   // Valida y envia una orden de compra desde la portada sin pasar por la pantalla Trading.
@@ -432,31 +440,32 @@ export default function HomePage() {
     if (!selectedAsset) return
 
     const parsedQuantity = parseFloat(buyQuantity)
-    const parsedPrice = parseFloat(buyPrice)
 
     if (!Number.isFinite(parsedQuantity) || parsedQuantity <= 0) {
       toast({ title: "Cantidad invalida", description: "Introduce una cantidad mayor que 0", variant: "destructive" })
       return
     }
 
-    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      toast({ title: "Precio invalido", description: "Introduce un precio mayor que 0", variant: "destructive" })
-      return
-    }
-
     setIsBuying(true)
     try {
-      await tradingApi.placeOrder({
+      await tradingApi.buyFromMarket({
         symbol: selectedAsset.symbol,
-        side: "BUY",
         quantity: parsedQuantity,
-        price: parsedPrice,
       })
 
+      toast({
+        title: "Compra enviada",
+        description: `${selectedAsset.symbol} se compro al precio validado por el servidor`,
+        variant: "success",
+      })
       setSelectedAsset(null)
       router.push("/dashboard")
-    } catch {
-      // Las notificaciones de ordenes las emite el backend por WebSocket.
+    } catch (error) {
+      toast({
+        title: "No se pudo comprar",
+        description: getErrorMessage(error, "El backend rechazo la compra"),
+        variant: "destructive",
+      })
     } finally {
       setIsBuying(false)
     }
@@ -796,33 +805,20 @@ export default function HomePage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="home-buy-quantity">Cantidad</Label>
-                <Input
-                  id="home-buy-quantity"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={buyQuantity}
-                  onChange={(e) => setBuyQuantity(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="home-buy-price">Precio limite</Label>
-                <Input
-                  id="home-buy-price"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={buyPrice}
-                  onChange={(e) => setBuyPrice(e.target.value)}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="home-buy-quantity">Cantidad</Label>
+              <Input
+                id="home-buy-quantity"
+                type="number"
+                min="0"
+                step="0.01"
+                value={buyQuantity}
+                onChange={(e) => setBuyQuantity(e.target.value)}
+              />
             </div>
 
             <div className="rounded-lg border p-3 text-sm text-muted-foreground">
-              Total estimado: ${((parseFloat(buyQuantity) || 0) * (parseFloat(buyPrice) || 0)).toFixed(2)}
+              Total estimado: ${((parseFloat(buyQuantity) || 0) * (selectedAsset?.price || 0)).toFixed(2)}
             </div>
           </div>
 

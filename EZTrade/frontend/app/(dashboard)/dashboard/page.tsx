@@ -1,7 +1,12 @@
 "use client"
 
 import useSWR from "swr"
-import { portfolioApi, walletApi, tradingApi, Portfolio, Position, WalletBalance, TradeOrder } from "@/lib/api"
+import { portfolioApi } from "@/features/portfolio/api"
+import { tradingApi } from "@/features/trading/api"
+import { walletApi } from "@/features/wallet/api"
+import type { Portfolio, Position } from "@/features/portfolio/types"
+import type { TradeOrder } from "@/features/trading/types"
+import type { WalletBalance } from "@/features/wallet/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency, formatNumber, formatDate } from "@/lib/utils"
 import { TrendingUp, TrendingDown, Wallet, Briefcase, Activity, Clock, AlertTriangle, Loader2 } from "lucide-react"

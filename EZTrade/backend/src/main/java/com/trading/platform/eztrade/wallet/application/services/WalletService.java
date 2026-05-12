@@ -102,7 +102,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
         WalletAccount account = lockOrOpenAccount(owner);
         if (account.availableBalance().compareTo(amount) < 0) {
             publishInsufficientFunds(orderRef, owner, amount, account, "Available balance is not enough to reserve funds");
-            return;
+            throw new WalletDomainException("Insufficient wallet funds to reserve buy order " + orderRef);
         }
 
         // Aplicamos el cambio de dominio y persistimos.

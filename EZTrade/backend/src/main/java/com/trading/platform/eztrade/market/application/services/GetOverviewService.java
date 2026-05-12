@@ -4,7 +4,6 @@ import com.trading.platform.eztrade.market.application.ports.in.GetOverviewUserC
 import com.trading.platform.eztrade.market.application.ports.out.GetOverviewProviderPort;
 import com.trading.platform.eztrade.market.domain.InstrumentOverview;
 import com.trading.platform.eztrade.market.domain.Symbol;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -24,7 +23,6 @@ public class GetOverviewService implements GetOverviewUserCase {
     }
 
     @Override
-    @Cacheable(cacheNames = "instrumentOverview", key = "#symbol.value()", unless = "#result == null")
     public InstrumentOverview getOverview(Symbol symbol) {
         return getOverviewProviderPort.getOverview(symbol);
     }
