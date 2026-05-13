@@ -4,6 +4,12 @@ import com.trading.platform.eztrade.portfolio.application.ports.out.DomainEventP
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
+/**
+ * Adaptador de salida que publica eventos de portfolio mediante Spring Events.
+ * <p>
+ * El nombre del bean evita ambiguedades con otros publicadores equivalentes de
+ * modulos como trading o wallet.
+ */
 @Component("portfolioDomainEventPublisher")
 public class SpringDomainEventPublisher implements DomainEventPublisherPort {
 

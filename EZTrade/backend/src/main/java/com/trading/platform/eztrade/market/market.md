@@ -1,106 +1,76 @@
-# Documentación del Módulo Market
+# Modulo Market
 
-El módulo `market` es un componente de la aplicación EZTrade encargado de proveer al sistema y a los clientes información sobre las condiciones actuales o históricas del mercado financiero. Emplea los principios de Arquitectura Hexagonal (Puertos y Adaptadores) para separar sus responsabilidades en diferentes capas: Dominio, Aplicación y Adaptadores.
+## Proposito
 
-## Flujo de Trabajo (Workflow)
+`market` proporciona datos de mercado a clientes HTTP y a otros modulos. Consulta AlphaVantage, valida simbolos y cachea respuestas para reducir llamadas externas.
 
-El flujo típico de información dentro de este módulo es el siguiente:
-1. Una petición HTTP entra por el adaptador web, `MarketController` o por Websocket.
-2. El controlador delega la petición invocando a un "puerto de entrada", que es una interfaz que define un caso de uso (ej. `GetPriceUserCase`).
-3. El servicio de aplicación pertinente (ej. `GetPriceService`) que implementa la interfaz, recibe la petición.
-4. El servicio orquesta la lógica de recuperar la información para los elementos de dominio involucrados, recurriendo a los puertos de salida (ej. `GetPriceMarketProviderPort`).
-5. La respuesta viaja de vuelta desde el servicio hacia el cliente a través del controlador, convertido en respuesta HTTP.
+## Dominio
 
-## Estructura de Clases
+- `Symbol`: value object que valida y normaliza el ticker.
+- `MarketPrice`: precio actual de un simbolo y timestamp.
+- `Instrument`: resultado de busqueda de instrumentos.
+- `InstrumentOverview`: datos fundamentales resumidos.
+- `Candle`: vela historica OHLCV.
+- `InvalidSymbolException` y `ExternalApiException`: errores propios del modulo.
 
-### 1. Capa de Adaptadores (`adapter`)
+## Aplicacion
 
-Contiene los puntos de entrada (in) o salida (out) del núcleo de la aplicación.
-En `adapter/in/web` reside el controlador REST que expone el módulo mediante Endpoints de la API:
+Puertos de entrada:
 
-**`MarketController`**
-Controlador principal que expone los endpoints para interactuar con la información bursátil. Su única preocupación es adaptar formatos HTTP al Dominio y viceversa.
-```java
-@RestController
-@RequestMapping("/api/v1/market")
-public class MarketController {
-    private final GetPriceUserCase getPriceUserCase;
+- `GetPriceUserCase`
+- `SearchInstrumentUserCase`
+- `GetOverviewUserCase`
+- `GetDailyCandlesUserCase`
 
-    // ... Constructor ...
+Servicios:
 
-    @GetMapping("/price")
-    public ResponseEntity<MarketPrice> getPrice(@RequestParam String symbol) {
-        return ResponseEntity.ok(getPriceUserCase.getPrice(new Symbol(symbol)));
-    }
-}
-```
+- `GetPriceService`
+- `SearchInstrumentService`
+- `GetOverviewService`
+- `GetDailyCandlesService`
 
-### 2. Capa de Aplicación (`application`)
+Puertos de salida:
 
-La capa de aplicación funciona como orquestador, compuesta por los Casos de Uso (puertos de entrada) y sus respectivas implementaciones. 
+- `GetPriceMarketProviderPort`
+- `SearchInstrumentProviderPort`
+- `GetOverviewProviderPort`
+- `GetDailyCandlesProviderPort`
 
-**Puertos de Entrada (Casos de Uso)**
-Las interfaces residen en `application/ports/in`. Cada caso de uso define de forma clara una acción que puede realizar el usuario u otro sistema.
-Ejemplos: `GetPriceUserCase`, `GetDailyCandlesUserCase`, `GetOverviewUserCase`, `SearchInstrumentUserCase`.
+## Adaptadores
 
-```java
-public interface GetPriceUserCase {
-    MarketPrice getPrice(Symbol symbol);
-}
-```
+### Entrada REST
 
-**Servicios (Implementaciones)**
-Los implementaciones en `application/services` delegan en su respectivo puerto de salida o integran alguna pequeña lógica necesaria:
+`MarketController` expone:
 
-**`GetPriceService`**
-```java
-@Service
-public class GetPriceService implements GetPriceUserCase {
-    private final GetPriceMarketProviderPort getPriceMarketProviderPort;
-
-    public GetPriceService(GetPriceMarketProviderPort getPriceMarketProviderPort) {
-        this.getPriceMarketProviderPort = getPriceMarketProviderPort;
-    }
-
-    @Override
-    public MarketPrice getPrice(Symbol symbol) {
-        return getPriceMarketProviderPort.getMarketPrice(symbol);
-    }
-}
-```
-
-### 3. Capa de Dominio (`domain`)
-
-La capa donde residen las entidades puras y las lógicas intrínsecas del negocio. No posee dependencias ajenas al propio modelo.
-
-**`MarketPrice`**
-Representa el precio en el mercado en un instante para un instrumento.
-```java
-public class MarketPrice {
-    // Almacenara el último precio y la marca de tiempo (timestamp)
-}
-```
-
-**`Symbol`**
-Es un tipo de valor (Value Object) que envuelve el identificador de mercado, encapsulando validaciones asociadas a su formato.
-```java
-public record Symbol(String value) {
-    public Symbol {
-        if (value == null || value.isBlank()) {
-            throw new InvalidSymbolException("Symbol cannot be empty");
-        }
-    }
-}
-```
-
-**Excepciones de Dominio**
-Contiene excepciones de negocio como `InvalidSymbolException` o `ExternalApiException` si las conexiones hacia el proveedor externo fallan al nutrir los datos de un activo bursátil concreto.
-
-## Resumen de Responsabilidades
-
-| Componente | Capa | Responsabilidad |
+| Metodo | Ruta | Uso |
 |---|---|---|
-| `MarketController` | Adaptador IN | Recibir peticiones HTTP de los clientes sobre mercado. |
-| `GetPriceUserCase` | Aplicación (Puerto) | Define el contrato para obtener el precio actual. |
-| `GetPriceService` | Aplicación (Servicio)| Ejecuta el caso de obtener el precio, usando adaptadores de salida. |
-| `MarketPrice`, `Symbol` | Dominio | Representan el lenguaje ubicuo o entidades propias del contexto financiero. |
+| `GET` | `/api/v1/market/get-price?symbol=AAPL` | Precio actual. |
+| `GET` | `/api/v1/market/search?input=apple` | Busqueda de instrumentos. |
+| `GET` | `/api/v1/market/get-overview?symbol=AAPL` | Resumen fundamental. |
+| `GET` | `/api/v1/market/get-daily-candles?symbol=AAPL` | Velas diarias. |
+
+Los DTOs de salida son `MarketPriceResponse`, `InstrumentResponse`, `InstrumentOverviewResponse` y `CandleResponse`.
+
+### Salida externa
+
+`AlphaVantageAPI` implementa los puertos de proveedor. Construye URLs, aplica timeouts, controla rate limit y transforma JSON externo a modelos de dominio.
+
+### Cache
+
+`CachedMarketDataProvider` decora al proveedor externo con `@Cacheable`:
+
+- cache `marketPrice`,
+- cache `instrumentOverview`,
+- cache `dailyCandles`.
+
+## API interna
+
+`MarketPriceLookupPort` esta en `market/api` y permite a trading y portfolio obtener precios actuales sin depender de adaptadores internos. Su implementacion es `MarketPriceLookupAdapter`.
+
+## Flujo
+
+1. El controlador recibe un simbolo o input.
+2. El caso de uso delega en su puerto de salida.
+3. El adaptador cacheado intenta resolver desde cache.
+4. Si no hay cache, `AlphaVantageAPI` consulta el proveedor externo.
+5. El resultado se transforma a dominio y despues a DTO REST.

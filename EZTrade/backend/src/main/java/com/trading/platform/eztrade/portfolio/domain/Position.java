@@ -7,6 +7,10 @@ import java.util.Objects;
 
 /**
  * Agregado de dominio que representa una posicion de un usuario en un simbolo.
+ * <p>
+ * Mantiene cantidad abierta, coste medio ponderado y PnL realizado. Es
+ * inmutable: cada compra o venta devuelve una nueva instancia, lo que deja las
+ * transiciones del dominio explicitas.
  */
 public class Position {
 
@@ -37,6 +41,9 @@ public class Position {
         return new Position(owner, symbol, quantity, executionPrice, BigDecimal.ZERO, LocalDateTime.now());
     }
 
+    /**
+     * Reconstruye la posicion desde persistencia conservando sus valores ya calculados.
+     */
     public static Position rehydrate(String owner,
                                      String symbol,
                                      BigDecimal quantity,
@@ -46,6 +53,12 @@ public class Position {
         return new Position(owner, symbol, quantity, averageCost, realizedPnl, updatedAt);
     }
 
+    /**
+     * Aumenta la posicion con una compra adicional.
+     * <p>
+     * El coste medio se recalcula ponderando coste actual y coste de la nueva
+     * compra: {@code (cantidadActual * costeMedio + cantidadNueva * precio) / cantidadTotal}.
+     */
     public Position increase(BigDecimal quantityToAdd, BigDecimal executionPrice) {
         requirePositive(quantityToAdd, "Quantity to add");
         requirePositive(executionPrice, "Execution price");
@@ -59,6 +72,11 @@ public class Position {
         return new Position(owner, symbol, newQuantity, newAverageCost, realizedPnl, LocalDateTime.now());
     }
 
+    /**
+     * Reduce la posicion por una venta y calcula el PnL realizado de esa venta.
+     *
+     * @return resultado con la posicion actualizada y el delta de PnL realizado
+     */
     public SellResult reduce(BigDecimal quantityToSell, BigDecimal executionPrice) {
         requirePositive(quantityToSell, "Quantity to sell");
         requirePositive(executionPrice, "Execution price");
@@ -86,10 +104,12 @@ public class Position {
         return new SellResult(updated, realizedDelta);
     }
 
+    /** @return capital actualmente invertido en la posicion abierta. */
     public BigDecimal investedAmount() {
         return quantity.multiply(averageCost);
     }
 
+    /** @return true cuando la cantidad abierta es cero. */
     public boolean isClosed() {
         return quantity.compareTo(BigDecimal.ZERO) == 0;
     }
@@ -118,6 +138,9 @@ public class Position {
         return updatedAt;
     }
 
+    /**
+     * Resultado de una venta: posicion posterior y PnL generado por esa operacion.
+     */
     public record SellResult(Position position, BigDecimal realizedPnlDelta) {
     }
 

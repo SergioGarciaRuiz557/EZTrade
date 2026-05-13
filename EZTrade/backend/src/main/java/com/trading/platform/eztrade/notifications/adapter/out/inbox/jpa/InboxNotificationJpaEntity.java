@@ -9,6 +9,12 @@ import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entidad JPA de una notificacion guardada en la bandeja del usuario.
+ * <p>
+ * Complementa los canales en tiempo real: aunque el usuario no este conectado,
+ * el mensaje queda persistido como no leido.
+ */
 @Entity
 @Table(name = "notification_inbox")
 public class InboxNotificationJpaEntity {

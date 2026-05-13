@@ -11,6 +11,12 @@ import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+/**
+ * Entidad JPA con la ultima proyeccion de cash disponible conocida por portfolio.
+ * <p>
+ * El valor procede de {@code AvailableCashUpdatedEvent}; wallet sigue siendo la
+ * fuente de verdad del dinero.
+ */
 @Entity
 @Table(
         name = "portfolio_cash_projection",
