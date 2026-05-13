@@ -1,0 +1,53 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Backend - Patron de componentes hexagonales
+
+package "Adaptadores de entrada" as InLayer {
+  component "Controladores REST\nAuth/User/Market/Trading/\nWallet/Portfolio" as RestIn EZ_FRONTEND
+  component "Listeners de eventos Spring\nwallet, portfolio, notifications" as EventIn EZ_FRONTEND
+  component "Autenticacion STOMP de entrada\nStompAuthChannelInterceptor" as StompIn EZ_FRONTEND
+}
+
+package "Capa de aplicacion" as AppLayer EZ_BACKEND {
+  component "Puertos de entrada\ninterfaces de casos de uso" as PortsIn
+  component "Servicios de aplicacion\nAuthService, UserService,\nGetPriceService, TradingService,\nWalletService, PortfolioService,\nNotificationService" as AppServices
+  component "Puertos de salida\nrepositorios, publicador de eventos,\nproveedor de mercado, canales de notificacion" as PortsOut
+}
+
+package "Capa de dominio" as DomainLayer EZ_DOMAIN {
+  component "Agregados\nTradeOrder, WalletAccount,\nPosition, User" as Aggregates
+  component "Value objects y records\nMoney, Quantity, Symbol,\nWalletTransaction, eventos" as ValueObjects
+  component "Excepciones de dominio\nTrading/Wallet/Portfolio/Market/User" as Exceptions
+}
+
+package "Adaptadores de salida" as OutLayer {
+  database "Spring Data JPA\nadaptadores de repositorio + entidades" as Jpa EZ_DB
+  component "AlphaVantageAPI\nadaptador RestClient" as AlphaAdapter EZ_EXTERNAL
+  component "Proveedor cacheado con Caffeine\ndecorador @Primary" as CacheAdapter
+  component "Publicadores Eventos Spring\nApplicationEventPublisher" as SpringPublisher
+  component "Canales de notificacion\nWebSocket, inbox,\nemail/push con logging" as NotificationAdapters
+}
+
+RestIn --> PortsIn
+EventIn --> PortsIn
+StompIn --> AppServices : authenticates STOMP frames
+PortsIn --> AppServices
+AppServices --> Aggregates
+AppServices --> ValueObjects
+AppServices --> Exceptions
+AppServices --> PortsOut
+PortsOut <|.. Jpa
+PortsOut <|.. AlphaAdapter
+PortsOut <|.. CacheAdapter
+PortsOut <|.. SpringPublisher
+PortsOut <|.. NotificationAdapters
+CacheAdapter --> AlphaAdapter
+
+note right of AppServices
+Each business module follows this shape,
+aunque security y notifications son mas
+cross-cutting than pure domain modules.
+end note
+
+@enduml

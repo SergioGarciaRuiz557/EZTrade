@@ -1,0 +1,37 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade DevOps - Evidencia Docker y limite del renderizado documental
+
+package "Artefactos de tiempo de ejecucion de aplicacion buscados" as AppArtifacts EZ_RISK {
+  component "Dockerfile\nno encontrado" as DockerfileMissing
+  component "docker-compose.yml/.yaml\nno encontrado" as ComposeMissing
+  component "configuracion Nginx / Traefik\nno encontrada" as ProxyMissing
+  component "Kubernetes / Helm / Terraform\nno encontrado" as IaCMissing
+}
+
+package "Herramientas documentales anadidas" as DocsTooling EZ_DEVOPS {
+  component "render-diagrams.sh" as BashScript
+  component "render-diagrams.ps1" as PsScript
+  component "PlantUML Docker image\nplantuml/plantuml:latest" as PlantumlImage
+  folder "plantuml/" as PumlFolders
+  folder "rendered/\nPNG + SVG" as RenderedFolders
+}
+
+PumlFolders --> BashScript
+PumlFolders --> PsScript
+BashScript --> PlantumlImage : docker run
+PsScript --> PlantumlImage : docker run
+PlantumlImage --> RenderedFolders : renderiza diagramas
+
+note right of AppArtifacts
+El repositorio no define contenedores de aplicacion.
+Por tanto, no se afirma ninguna topologia de despliegue ni de servicios Docker.
+end note
+
+note bottom
+Docker se usa en este entregable solo como renderizador PlantUML reproducible.
+Esto es independiente de la contenedorizacion de la aplicacion.
+end note
+
+@enduml

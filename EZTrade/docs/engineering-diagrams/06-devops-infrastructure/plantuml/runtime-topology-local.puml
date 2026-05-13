@@ -1,0 +1,36 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Infrastructure - Topologia local inferida desde configuracion
+
+node "Maquina de desarrollo / entorno local" as Local {
+  node "Proceso frontend" as FrontNode EZ_FRONTEND {
+    component "Next.js dev/start\npuerto inferido por defecto de Next 3000" as Next
+    component "NEXT_PUBLIC_API_URL\nhttp://localhost:8088" as ApiEnv
+    component "NEXT_PUBLIC_WS_URL\nws://localhost:8088/ws" as WsEnv
+  }
+
+  node "Proceso backend" as BackNode EZ_BACKEND {
+    component "Spring Boot app\nserver.port=8088" as Spring
+    component "JWT + CORS\nAPP_CORS_ALLOWED_ORIGINS" as SecurityConfig
+    component "Cache de mercado\nTTL desde MARKET_CACHE_TTL_SECONDS" as Cache
+    component "Logs de acceso Tomcat\nlogs/access*.log" as AccessLogs
+  }
+
+  database "MySQL local\nlocalhost:3306/EZTrade" as MySQL EZ_DB
+}
+
+cloud "Alpha Vantage\nhttps://www.alphavantage.co/query" as Alpha EZ_EXTERNAL
+
+Next --> Spring : REST + WebSocket\nlocalhost:8088
+Spring --> MySQL : JDBC MySQL
+Spring --> Alpha : HTTPS RestClient\nALPHA_VANTAGE_API_KEY
+Spring --> AccessLogs : Tomcat access log
+Spring --> Cache : Caffeine
+
+note bottom
+Esta topologia se infiere desde .env.example y application.properties.
+No se ha encontrado docker-compose.yml, Dockerfile, reverse proxy ni manifiesto de despliegue productivo.
+end note
+
+@enduml

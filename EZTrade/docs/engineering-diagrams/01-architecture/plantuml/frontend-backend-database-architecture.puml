@@ -1,0 +1,53 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade - Arquitectura frontend-backend-base de datos
+
+package "Frontend Next.js" as FE EZ_FRONTEND {
+  component "Inicio publico\napp/page.tsx" as Home
+  component "Rutas de autenticacion\n/login, /register" as AuthRoutes
+  component "Rutas protegidas de dashboard\n/dashboard, /trading, /wallet, /market" as DashRoutes
+  component "AuthProvider\nlib/auth-context.tsx" as AuthCtx
+  component "Cliente API\nlib/api-client.ts + features/*/api.ts" as ApiClient
+  component "SWR + estado local de componente" as State
+  component "Cliente STOMP\nNotificationsWebSocket" as StompClient
+}
+
+package "Backend Spring Boot" as BE EZ_BACKEND {
+  component "Capa de seguridad\nJwtAuthFilter, UserAccessFilter,\nAuthenticationConfig" as Sec
+  component "Adaptadores REST de entrada\ncontrollers" as Rest
+  component "Servicios de aplicacion\ncasos de uso" as Services
+  component "Modelo de dominio\nagregados + eventos" as Domain EZ_DOMAIN
+  component "Adaptadores de salida\nJPA, AlphaVantage, WebSocket, Inbox" as Out
+  component "Eventos Spring\nlisteners sincronicos + asincronicos" as EventBus
+  component "STOMP broker\n/ws, /user/queue/notifications" as WsBroker
+}
+
+database "Esquema MySQL\ninferido por JPA" as DB EZ_DB
+component "Alpha Vantage" as Alpha EZ_EXTERNAL
+
+Home --> ApiClient : market data\noptional buy redirect
+AuthRoutes --> AuthCtx : login/register
+DashRoutes --> AuthCtx : route guard
+DashRoutes --> State : lecturas SWR + formularios locales
+State --> ApiClient
+ApiClient --> Sec : REST JSON\nJWT Bearer
+Sec --> Rest
+Rest --> Services
+Services --> Domain
+Services --> Out
+Out --> DB : Spring Data JPA
+Out --> Alpha : RestClient
+Domain --> EventBus : eventos de dominio
+EventBus --> Services : listeners invocan casos de uso
+EventBus --> WsBroker : notification adapter
+StompClient --> WsBroker : subscribe
+WsBroker --> StompClient : mensajes privados
+
+note bottom
+Las rutas REST y destinos WebSocket se toman de controladores,
+WebSocketConfig y clientes de feature frontend. La estructura de tablas se infiere
+desde entidades JPA, no desde ficheros de migracion.
+end note
+
+@enduml

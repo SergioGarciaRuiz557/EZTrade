@@ -1,0 +1,89 @@
+' Estilo visual comun para los diagramas de ingenieria de EZTrade.
+' Diagramas basados en evidencias obtenidas por ingenieria inversa del repositorio.
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam handwritten false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam ArrowColor #394150
+skinparam ArrowThickness 1.2
+skinparam linetype ortho
+
+skinparam title {
+  FontSize 20
+  FontStyle bold
+  FontColor #1F2937
+}
+
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #1F2937
+}
+
+skinparam rectangle {
+  BackgroundColor #FFFFFF
+  BorderColor #64748B
+  FontColor #1F2937
+  RoundCorner 8
+}
+
+skinparam component {
+  BackgroundColor #F8FAFC
+  BorderColor #475569
+  FontColor #1F2937
+}
+
+skinparam database {
+  BackgroundColor #ECFEFF
+  BorderColor #0891B2
+  FontColor #164E63
+}
+
+skinparam actor {
+  BorderColor #475569
+  FontColor #1F2937
+}
+
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #F97316
+  FontColor #7C2D12
+}
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #475569
+  FontColor #1F2937
+  AttributeFontColor #334155
+  MethodFontColor #334155
+}
+
+skinparam sequence {
+  ArrowColor #394150
+  LifeLineBorderColor #94A3B8
+  LifeLineBackgroundColor #F8FAFC
+  ParticipantBorderColor #475569
+  ParticipantBackgroundColor #F8FAFC
+  ParticipantFontColor #1F2937
+  ActorBorderColor #475569
+  ActorBackgroundColor #FFFFFF
+  BoxBackgroundColor #F8FAFC
+  BoxBorderColor #CBD5E1
+}
+
+!define EZ_FRONTEND #DBEAFE
+!define EZ_BACKEND #DCFCE7
+!define EZ_DOMAIN #FEF3C7
+!define EZ_DB #ECFEFF
+!define EZ_EXTERNAL #FCE7F3
+!define EZ_DEVOPS #EDE9FE
+!define EZ_RISK #FEE2E2
+
+!define FRONTEND_COMPONENT(alias, label) component label as alias EZ_FRONTEND
+!define BACKEND_COMPONENT(alias, label) component label as alias EZ_BACKEND
+!define DOMAIN_COMPONENT(alias, label) component label as alias EZ_DOMAIN
+!define DB_COMPONENT(alias, label) database label as alias EZ_DB
+!define EXTERNAL_COMPONENT(alias, label) component label as alias EZ_EXTERNAL
+!define DEVOPS_COMPONENT(alias, label) component label as alias EZ_DEVOPS

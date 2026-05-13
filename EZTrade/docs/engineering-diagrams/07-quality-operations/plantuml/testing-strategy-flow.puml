@@ -1,0 +1,31 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Calidad - Flujo de estrategia de pruebas backend
+
+start
+:GitHub Actions o el desarrollador local ejecuta\nmvn -B clean verify;
+:Compile backend;
+:Ejecuta suite de pruebas JUnit;
+fork
+  :Pruebas de dominio\nTradeOrder, WalletAccount,\nPosition, modelos Market;
+fork again
+  :Pruebas de servicios de aplicacion\nTrading, Wallet, Portfolio,\nMarket, User, Auth, Notifications;
+fork again
+  :Pruebas de controladores y seguridad\nAuth/User/Market/Wallet/Portfolio,\nseguridad Trading, filtros JWT;
+fork again
+  :Pruebas de integracion/arquitectura\nMarketCachingIntegrationTest,\nModulithStructureTest;
+end fork
+if (Todas las pruebas pasan?) then (si)
+  :Verify succeeds;
+else (no)
+  :CI falla y bloquea confianza tecnica;
+endif
+stop
+
+note right
+Evidencia: backend/src/test/java y ../.github/workflows/maven.yml.
+No se han encontrado ficheros de pruebas unitarias/e2e frontend.
+end note
+
+@enduml

@@ -1,0 +1,67 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Secuencia - Compra directa al mercado end-to-end
+autonumber
+
+actor "Usuario autenticado" as User
+participant "TradingPage\nBuyOrderForm" as TradingPage
+participant "tradingApi" as TradingApi
+participant "TradingMarketplaceController\nPOST /api/v1/trading/market/buy" as Controller
+participant "TradingService\nbuy()" as TradingService
+participant "MarketPriceLookupPort" as MarketPort
+participant "CachedMarketDataProvider\nAlphaVantageAPI" as MarketProvider
+database "trade_order" as TradeOrderDb
+participant "Eventos Spring" as Events
+participant "Wallet TradingEventsListener" as WalletListener
+participant "WalletService" as WalletService
+database "wallet_account\nwallet_ledger_entry" as WalletDb
+participant "Listeners de Portfolio" as PortfolioListeners
+participant "PortfolioService" as PortfolioService
+database "portfolio_position\nportfolio_cash_projection" as PortfolioDb
+participant "Listener/servicio de Notifications" as Notifications
+
+User -> TradingPage : envia symbol + quantity
+TradingPage -> TradingApi : buyFromMarket({symbol, quantity})
+TradingApi -> Controller : POST /api/v1/trading/market/buy\nJWT Bearer
+Controller -> TradingService : buy(BuyFromMarketCommand)
+TradingService -> MarketPort : currentPrice(symbol)
+MarketPort -> MarketProvider : getMarketPrice(symbol)
+MarketProvider --> TradingService : current price
+
+TradingService -> TradingService : place BUY order\nstatus=PENDING
+TradingService -> TradeOrderDb : save order
+TradeOrderDb --> TradingService : orden con id
+TradingService -> Events : publish OrderPlacedEvent
+Events -> WalletListener : synchronous @EventListener
+WalletListener -> WalletService : handle(OrderPlacedEvent)
+WalletService -> WalletDb : lock/open wallet\nreserve amount\nwrite RESERVE ledger
+WalletService -> Events : FundsReservedEvent\nAvailableCashUpdatedEvent
+
+TradingService -> TradingService : execute(orderId)
+TradingService -> TradeOrderDb : load + save EXECUTED
+TradingService -> Events : publish OrderExecutionRequestEvent
+Events -> WalletListener : synchronous @EventListener
+WalletListener -> WalletService : handle(OrderExecutionRequestEvent)
+WalletService -> WalletDb : settle reserved debit\nwrite SETTLEMENT_DEBIT ledger
+WalletService -> Events : OrderExecutedEvent\nAvailableCashUpdatedEvent\nFundsSettledEvent
+
+Events -> PortfolioListeners : OrderExecutedEvent\nAvailableCashUpdatedEvent
+PortfolioListeners -> PortfolioService : update position/cash projection
+PortfolioService -> PortfolioDb : save position\nsave cash projection
+PortfolioService -> Events : PortfolioValuationUpdatedEvent
+Events -> Notifications : despues de commit / eventos asincronos de notificacion
+Notifications --> User : toast WebSocket + canales inbox/logging
+
+TradingService --> Controller : TradeOrder ejecutada
+Controller --> TradingApi : 201 TradeOrderResponse
+TradingApi --> TradingPage : refresh SWR caches\norders/portfolio/wallet
+
+note bottom
+Evidencia: TradingMarketplaceController.buyFromMarket, TradingService.buy/place/execute,
+WalletService.handle(OrderPlacedEvent/OrderExecutionRequestEvent),
+PortfolioService.handle(OrderExecutedEvent/AvailableCashUpdatedEvent),
+DomainEventsListener y tradingApi frontend.
+end note
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade - Contexto del sistema
+
+actor "Usuario final\n(inversor/trader)" as User
+actor "Desarrollador/a" as Dev
+
+rectangle "EZTrade\nPlataforma web de trading" as System EZ_BACKEND {
+  component "Frontend\nNext.js + React" as Frontend EZ_FRONTEND
+  component "Backend\nSpring Boot + Spring Modulith" as Backend EZ_BACKEND
+}
+
+database "MySQL local\nBase EZTrade" as MySQL EZ_DB
+component "Alpha Vantage API\nprecios, busqueda, overview, velas" as Alpha EZ_EXTERNAL
+component "GitHub Actions\nCI backend Maven" as GHA EZ_DEVOPS
+
+User --> Frontend : Navega, opera,\nrecibe notificaciones
+Frontend --> Backend : REST JSON\nJWT Bearer
+Frontend --> Backend : WebSocket/STOMP\n/ws, /user/queue/notifications
+Backend --> MySQL : JPA/Hibernate\nDDL auto update
+Backend --> Alpha : HTTPS RestClient\nAPI key + throttle
+Dev --> GHA : push / pull_request\na main
+GHA --> Backend : mvn -B clean verify\nworking-directory EZTrade/backend
+
+note right of System
+Evidencia: frontend/package.json, frontend/lib/api-client.ts,
+backend/pom.xml, application.properties, .env.example,
+AlphaVantageAPI.java y ../.github/workflows/maven.yml.
+end note
+
+note bottom of GHA
+No se han encontrado Dockerfile, docker-compose,
+Nginx, Terraform, Kubernetes ni scripts de despliegue
+para la aplicacion.
+end note
+
+@enduml

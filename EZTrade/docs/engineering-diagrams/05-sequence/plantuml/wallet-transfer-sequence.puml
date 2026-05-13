@@ -1,0 +1,53 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Secuencia - Transferencia de wallet entre usuarios
+autonumber
+
+actor "Emisor" as Emisor
+participant "WalletPage\nTransferDialog" as WalletPage
+participant "walletApi" as WalletApi
+participant "WalletController\nPOST /api/v1/wallet/transfer" as Controller
+participant "UserOwnerLookupPort" as UserLookup
+participant "WalletService\ntransfer()" as WalletService
+participant "WalletAccountRepositoryPort" as AccountRepo
+participant "WalletTransactionRepositoryPort" as LedgerRepo
+database "wallet_account" as WalletAccountDb
+database "wallet_ledger_entry" as LedgerDb
+participant "Eventos Spring" as Events
+participant "Portfolio WalletEventsListener" as PortfolioListener
+participant "PortfolioService" as PortfolioService
+database "portfolio_cash_projection" as CashProjectionDb
+
+Emisor -> WalletPage : enters recipient + amount
+WalletPage -> WalletApi : transfer(recipient, amount, description)
+WalletApi -> Controller : POST /api/v1/wallet/transfer\nJWT Bearer
+Controller -> UserLookup : findOwner(recipient)
+UserLookup --> Controller : recipientOwner
+Controller -> WalletService : transfer(TransferCommand)
+WalletService -> LedgerRepo : exists sender TRANSFER_OUT\nexists recipient TRANSFER_IN
+LedgerRepo --> WalletService : no procesado
+WalletService -> AccountRepo : lockTransferAccounts\nsorted owners to reduce deadlock risk
+AccountRepo -> WalletAccountDb : findByOwnerForUpdate(sender)
+AccountRepo -> WalletAccountDb : findByOwnerForUpdate(recipient)
+WalletService -> AccountRepo : save sender.withdraw(amount)
+WalletService -> AccountRepo : save recipient.deposit(amount)
+WalletService -> LedgerRepo : save TRANSFER_OUT entry
+LedgerRepo -> LedgerDb : insert sender ledger
+WalletService -> LedgerRepo : save TRANSFER_IN entry
+LedgerRepo -> LedgerDb : insert recipient ledger
+WalletService -> Events : AvailableCashUpdatedEvent(sender)
+WalletService -> Events : AvailableCashUpdatedEvent(recipient)
+Events -> PortfolioListener : @EventListener
+PortfolioListener -> PortfolioService : update cash projection
+PortfolioService -> CashProjectionDb : save projection
+WalletService --> Controller : completed
+Controller --> WalletApi : WalletBalanceResponse(sender)
+WalletApi --> WalletPage : refresh wallet + transactions
+
+note bottom
+Evidencia: WalletController.transfer, UserOwnerLookupAdapter/Port,
+WalletService.transfer, repositorios wallet y Portfolio WalletEventsListener.
+end note
+
+@enduml

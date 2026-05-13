@@ -1,0 +1,25 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Calidad - Senales de calidad estatica y arquitectonica
+
+component "Reglas de modulos Spring Modulith\npackage-info.java allowedDependencies" as ModuleRules EZ_BACKEND
+component "ModulithStructureTest\nApplicationModules.verify()" as ModulithTest EZ_BACKEND
+component "Maven verify in CI" as MavenVerify EZ_DEVOPS
+component "Configuracion del compilador TypeScript\ntsconfig.json" as TsConfig EZ_FRONTEND
+component "Script de lint Next\npackage.json: next lint" as NextLint EZ_FRONTEND
+component "Ejecucion CI frontend\nno presente" as FrontendCiGap EZ_RISK
+component "No se encontro Sonar/Checkstyle/SpotBugs" as StaticGap EZ_RISK
+
+ModuleRules --> ModulithTest : verifica grafo de dependencias
+ModulithTest --> MavenVerify : ejecutado en la fase test
+TsConfig ..> NextLint : herramientas locales de calidad disponibles
+NextLint ..> FrontendCiGap : script declarado, pero no en el flujo de trabajo
+StaticGap ..> MavenVerify : no dedicated static analysis step
+
+note bottom
+Evidencia: backend package-info.java files, ModulithStructureTest.java,
+frontend/package.json, frontend/tsconfig.json y flujo de trabajo de GitHub Actions.
+end note
+
+@enduml

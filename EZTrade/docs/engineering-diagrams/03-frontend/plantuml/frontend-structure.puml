@@ -1,0 +1,81 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Frontend - Estructura del proyecto
+
+package "frontend" as Root EZ_FRONTEND {
+  package "app" {
+    component "layout.tsx\nRootLayout" as RootLayout
+    component "page.tsx\nInicio publico de mercado" as HomePage
+    package "(auth)" {
+      component "layout.tsx\nGuard de ruta de autenticacion" as AuthLayout
+      component "login/page.tsx" as LoginPage
+      component "register/page.tsx" as RegisterPage
+    }
+    package "(dashboard)" {
+      component "layout.tsx\nGuard de ruta protegida + Sidebar" as DashboardLayout
+      component "dashboard/page.tsx" as DashboardPage
+      component "trading/page.tsx" as TradingPage
+      component "wallet/page.tsx" as WalletPage
+      component "market/page.tsx" as MarketPage
+    }
+  }
+
+  package "components" {
+    component "sidebar.tsx\nnavegacion + menu de usuario" as Sidebar
+    component "notifications/notifications-ws.tsx\ncliente STOMP" as NotificationsWs
+    component "ui/*\nbutton, card, dialog, tabs,\nselect, toaster..." as UiKit
+  }
+
+  package "features" {
+    component "auth\napi.ts + types.ts" as AuthFeature
+    component "market\napi.ts + types.ts" as MarketFeature
+    component "trading\napi.ts + types.ts" as TradingFeature
+    component "wallet\napi.ts + types.ts" as WalletFeature
+    component "portfolio\napi.ts + types.ts" as PortfolioFeature
+  }
+
+  package "lib" {
+    component "api-client.ts\nfetchWithAuth + handleResponse" as ApiClient
+    component "auth-context.tsx\nAuthProvider + useAuth" as AuthContext
+    component "api.ts\nbarrel exports" as ApiBarrel
+    component "utils.ts" as Utils
+  }
+}
+
+RootLayout --> AuthContext
+RootLayout --> NotificationsWs
+RootLayout --> UiKit : Toaster
+DashboardLayout --> Sidebar
+DashboardLayout --> AuthContext
+AuthLayout --> AuthContext
+HomePage --> AuthContext
+
+LoginPage --> AuthFeature
+RegisterPage --> AuthFeature
+DashboardPage --> PortfolioFeature
+DashboardPage --> WalletFeature
+DashboardPage --> TradingFeature
+TradingPage --> TradingFeature
+TradingPage --> MarketFeature
+TradingPage --> PortfolioFeature
+WalletPage --> WalletFeature
+MarketPage --> MarketFeature
+
+AuthFeature --> ApiClient
+MarketFeature --> ApiClient
+TradingFeature --> ApiClient
+WalletFeature --> ApiClient
+PortfolioFeature --> ApiClient
+ApiBarrel --> AuthFeature
+ApiBarrel --> MarketFeature
+ApiBarrel --> TradingFeature
+ApiBarrel --> WalletFeature
+ApiBarrel --> PortfolioFeature
+
+note bottom
+Evidencia: frontend/app, frontend/components, frontend/features y frontend/lib.
+El proyecto usa clientes API organizados por feature en lugar de server actions.
+end note
+
+@enduml

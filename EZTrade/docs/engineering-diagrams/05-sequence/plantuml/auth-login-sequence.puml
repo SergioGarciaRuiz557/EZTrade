@@ -1,0 +1,49 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Secuencia - Login JWT y restauracion de sesion
+autonumber
+
+actor "Usuario" as User
+participant "LoginPage" as LoginPage
+participant "AuthProvider\nuseAuth()" as AuthProvider
+participant "authApi" as AuthApi
+participant "AuthController\nPOST /auth/login" as AuthController
+participant "AuthService" as AuthService
+participant "AuthenticationProvider" as AuthProviderBackend
+participant "JwtService" as JwtService
+database "localStorage" as LocalStorage
+participant "UserController\nGET /api/user" as UserController
+participant "UserService / repository" as UserService
+
+User -> LoginPage : envia identificador + password
+LoginPage -> AuthProvider : login(identifier, password)
+AuthProvider -> AuthApi : login(...)
+AuthApi -> AuthController : POST /auth/login\n{ email, password }
+AuthController -> AuthService : login(identifier, password)
+AuthService -> AuthProviderBackend : authenticate credentials
+AuthProviderBackend --> AuthService : authenticated principal
+AuthService -> JwtService : generateToken(...)
+JwtService --> AuthService : JWT
+AuthService --> AuthController : token
+AuthController --> AuthApi : 200 JwtResponse
+AuthApi --> AuthProvider : token
+AuthProvider -> AuthProvider : decodifica payload JWT\nsolo en cliente
+AuthProvider -> LocalStorage : set token
+AuthProvider -> AuthApi : getUser(payload.sub,\nwith token)
+AuthApi -> UserController : GET /api/user?email=...
+UserController -> UserService : getUser(email)
+UserService --> UserController : modelo de dominio User
+UserController --> AuthApi : UserDTO
+AuthApi --> AuthProvider : UserProfile
+AuthProvider -> LocalStorage : set user
+AuthProvider --> LoginPage : session ready
+LoginPage -> User : router.push("/")
+
+note bottom
+Evidencia: frontend/app/(auth)/login/page.tsx, lib/auth-context.tsx,
+features/auth/api.ts, AuthController.java, AuthService.java y JwtService.java.
+El frontend decodifica el JWT solo para UX/restauracion de sesion; la validacion de firma es responsabilidad del backend.
+end note
+
+@enduml

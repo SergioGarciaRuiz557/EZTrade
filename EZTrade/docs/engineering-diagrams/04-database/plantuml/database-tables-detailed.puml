@@ -1,0 +1,104 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Base de datos - Tablas detalladas inferidas desde JPA
+
+entity "user" as TUser {
+  * id : BIGINT <<PK, identity>>
+  --
+  name : VARCHAR
+  surname : VARCHAR
+  username : VARCHAR <<unique>>
+  email : VARCHAR <<unique>>
+  password : VARCHAR
+  role : VARCHAR <<EnumType.STRING>>
+}
+
+entity "trade_order" as TTrade {
+  * id : BIGINT <<PK, identity>>
+  --
+  owner : VARCHAR <<not null>>
+  symbol : VARCHAR(10) <<not null>>
+  side : VARCHAR <<not null, enum>>
+  quantity : DECIMAL(19,8) <<not null>>
+  price : DECIMAL(19,8) <<not null>>
+  status : VARCHAR <<not null, enum>>
+  createdAt : DATETIME <<not null>>
+  executedAt : DATETIME
+}
+
+entity "wallet_account" as TWalletAccount {
+  * id : BIGINT <<PK, identity>>
+  --
+  owner : VARCHAR <<not null, unique>>
+  availableBalance : DECIMAL(19,8) <<not null>>
+  reservedBalance : DECIMAL(19,8) <<not null>>
+}
+
+entity "wallet_ledger_entry" as TWalletLedger {
+  * id : BIGINT <<PK, identity>>
+  --
+  owner : VARCHAR <<not null>>
+  movementType : VARCHAR <<not null, enum>>
+  amount : DECIMAL(19,8) <<not null>>
+  availableDelta : DECIMAL(19,8) <<not null>>
+  reservedDelta : DECIMAL(19,8) <<not null>>
+  availableBalanceAfter : DECIMAL(19,8) <<not null>>
+  reservedBalanceAfter : DECIMAL(19,8) <<not null>>
+  referenceType : VARCHAR <<not null, enum>>
+  referenceId : VARCHAR <<not null>>
+  description : VARCHAR
+  occurredAt : DATETIME <<not null>>
+  --
+  idx_wallet_ledger_owner_occurred(owner, occurredAt)
+  uk_wallet_ledger_owner_ref_movement(owner, referenceId, movementType)
+}
+
+entity "portfolio_position" as TPosition {
+  * id : BIGINT <<PK, identity>>
+  --
+  owner : VARCHAR <<not null>>
+  symbol : VARCHAR(10) <<not null>>
+  quantity : DECIMAL(19,8) <<not null>>
+  averageCost : DECIMAL(19,8) <<not null>>
+  realizedPnl : DECIMAL(19,8) <<not null>>
+  updatedAt : DATETIME <<not null>>
+  --
+  uk_portfolio_position_owner_symbol(owner, symbol)
+}
+
+entity "portfolio_cash_projection" as TCash {
+  * id : BIGINT <<PK, identity>>
+  --
+  owner : VARCHAR <<not null>>
+  availableCash : DECIMAL(19,8) <<not null>>
+  updatedAt : DATETIME <<not null>>
+  --
+  uk_portfolio_cash_projection_owner(owner)
+}
+
+entity "notification_inbox" as TNotification {
+  * id : BIGINT <<PK, identity>>
+  --
+  recipient : VARCHAR <<not null>>
+  type : VARCHAR(50) <<not null>>
+  title : VARCHAR(150) <<not null>>
+  body : VARCHAR(800) <<not null>>
+  occurredAt : DATETIME <<not null>>
+  is_read : BOOLEAN <<not null>>
+}
+
+TUser ||..o{ TTrade : owner
+TUser ||..o{ TWalletLedger : owner
+TUser ||..o| TWalletAccount : owner
+TUser ||..o{ TPosition : owner
+TUser ||..o| TCash : owner
+TUser ||..o{ TNotification : recipient
+TTrade ||..o{ TWalletLedger : referenceId when ORDER
+
+note bottom
+Los tipos se infieren desde campos Java y anotaciones JPA.
+El DDL real de MySQL puede diferir ligeramente porque Hibernate lo genera en ejecucion con ddl-auto=update.
+end note
+
+@enduml

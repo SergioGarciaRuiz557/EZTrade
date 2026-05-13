@@ -1,0 +1,54 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Frontend - Vista general de rutas React / Next
+
+actor "Usuario del navegador" as User
+
+rectangle "RootLayout\nAuthProvider + NotificationsWebSocket + Toaster" as Root EZ_FRONTEND
+
+package "Rutas publicas" {
+  component "/\napp/page.tsx" as Home
+}
+
+package "Grupo de rutas de autenticacion (auth)" {
+  component "/login\napp/(auth)/login/page.tsx" as Login
+  component "/register\napp/(auth)/register/page.tsx" as Register
+  component "AuthLayout\nredirige usuarios autenticados a /" as AuthGuard
+}
+
+package "Grupo de rutas protegidas (dashboard)" {
+  component "DashboardLayout\nrequiere token; redirige a /login" as DashboardGuard
+  component "/dashboard" as Dashboard
+  component "/trading" as Trading
+  component "/wallet" as Wallet
+  component "/market" as Market
+  component "Sidebar\nenlaces a /, /dashboard,\n/trading, /wallet, /market" as Sidebar
+}
+
+User --> Root
+Root --> Home
+Root --> AuthGuard
+AuthGuard --> Login
+AuthGuard --> Register
+Root --> DashboardGuard
+DashboardGuard --> Sidebar
+DashboardGuard --> Dashboard
+DashboardGuard --> Trading
+DashboardGuard --> Wallet
+DashboardGuard --> Market
+
+Home --> Login : Link / login redirect\nwhen protected buy action
+Home --> Register : CTA
+Home --> Dashboard : si esta autenticado y compra\nrouter.push("/dashboard")
+Market --> Trading : Link /trading?symbol=...&side=BUY|SELL
+Market --> Trading : Link /trading?symbol=...&tab=marketplace
+Login --> Home : successful login\nrouter.push("/")
+Register --> Login : successful register\nrouter.push("/login")
+
+note bottom
+Las rutas se infieren desde ficheros Next.js App Router.
+Los guards de ruta son efectos en cliente en app/(auth)/layout.tsx y app/(dashboard)/layout.tsx.
+end note
+
+@enduml

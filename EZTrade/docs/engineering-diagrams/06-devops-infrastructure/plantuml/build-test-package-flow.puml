@@ -1,0 +1,36 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade DevOps - Flujo backend de compilacion, pruebas y empaquetado
+
+component "mvn -B clean verify" as Maven EZ_DEVOPS
+component "clean\nelimina target" as Clean
+component "compile\nJava release 21" as Compile
+component "test-compile" as TestCompile
+component "test\npruebas JUnit/Mockito/Spring" as Test
+component "verify\nverificacion del ciclo de vida" as Verify
+component "spring-boot-maven-plugin" as BootPlugin
+component "spring-modulith-starter-test\nApplicationModules.verify()" as ModulithTest
+component "Pruebas de controller/service/domain/security/cache" as TestSuite
+
+Maven --> Clean
+Clean --> Compile
+Compile --> TestCompile
+TestCompile --> Test
+Test --> TestSuite
+Test --> ModulithTest
+Test --> Verify
+Verify --> BootPlugin : plugin disponible en la compilacion
+
+note right of Compile
+pom.xml declares java.version=23,
+pero maven-compiler-plugin usa release=21.
+CI installs JDK 23.
+end note
+
+note bottom
+Evidencia: backend/pom.xml, backend/src/test/java y flujo de trabajo de GitHub Actions.
+No hay configurada una fase Maven de construccion de imagen Docker ni de despliegue.
+end note
+
+@enduml
