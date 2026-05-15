@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { marketApi, Instrument, InstrumentOverview, MarketPrice } from "@/lib/api"
+import { marketApi } from "@/features/market/api"
+import type { Instrument, InstrumentOverview, MarketPrice } from "@/features/market/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

@@ -10,6 +10,7 @@ import com.trading.platform.eztrade.trading.domain.OrderId;
 import com.trading.platform.eztrade.trading.domain.OrderSide;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
 import com.trading.platform.eztrade.trading.domain.TradingDomainException;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -58,7 +59,7 @@ public class TradingController {
      * @return orden creada
      */
     @PostMapping
-    public ResponseEntity<TradeOrderResponse> placeOrder(@RequestBody PlaceOrderRequest request,
+    public ResponseEntity<TradeOrderResponse> placeOrder(@Valid @RequestBody PlaceOrderRequest request,
                                                          Authentication authentication) {
         TradeOrder order = placeOrderUseCase.place(new PlaceOrderUseCase.PlaceOrderCommand(
                 authentication.getName(),

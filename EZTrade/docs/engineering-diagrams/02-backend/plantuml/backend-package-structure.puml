@@ -1,0 +1,81 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Backend - Estructura de paquetes y modulos
+
+package "com.trading.platform.eztrade" {
+  component "EzTradeApplication\n@SpringBootApplication" as App EZ_BACKEND
+
+  package "user" {
+    component "domain\nUser, Role, exceptions" as UserDomain EZ_DOMAIN
+    component "application\nports in/out, UserService" as UserApp
+    component "adapter/in\nUserController, advice" as UserIn
+    component "adapter/out\nJPA, security lookup" as UserOut
+    component "api\nNamed interfaces" as UserApi
+  }
+
+  package "security" {
+    component "controller\nAuthController" as SecController
+    component "service\nAuthService" as SecService
+    component "jwt\nJwtService, provider" as SecJwt
+    component "filter\nJwtAuthFilter, UserAccessFilter,\nStompAuthChannelInterceptor" as SecFilter
+    component "configuration\nAuthentication, WebSocket,\nHTTP logging" as SecConfig
+  }
+
+  package "market" {
+    component "domain\nSymbol, MarketPrice,\nInstrument, Candle" as MarketDomain EZ_DOMAIN
+    component "application\nmarket use cases + ports" as MarketApp
+    component "adapter/in\nMarketController" as MarketIn
+    component "adapter/out/external\nAlphaVantageAPI" as MarketExternal
+    component "adapter/out/cache\nCachedMarketDataProvider" as MarketCache
+    component "api\nMarketPriceLookupPort" as MarketApi
+  }
+
+  package "trading" {
+    component "domain\nTradeOrder, Money,\nQuantity, eventos" as TradingDomain EZ_DOMAIN
+    component "application\nTradingService + ports" as TradingApp
+    component "adapter/in/web\nTradingController,\nMarketplaceController" as TradingIn
+    component "adapter/out/persistence\nJPA repositories" as TradingPersistence
+    component "adapter/out/events\npublicador Spring" as TradingEvents
+  }
+
+  package "wallet" {
+    component "domain\nWalletAccount,\nWalletTransaction, eventos" as WalletDomain EZ_DOMAIN
+    component "application\nWalletService + ports" as WalletApp
+    component "adapter/in/web\nWalletController" as WalletWeb
+    component "adapter/in/events\nTradingEventsListener" as WalletEventIn
+    component "adapter/out/persistence\nJPA repositories" as WalletPersistence
+    component "adapter/out/events\npublicador Spring" as WalletEvents
+  }
+
+  package "portfolio" {
+    component "domain\nPosition, CashProjection,\nPortfolioSnapshot, eventos" as PortfolioDomain EZ_DOMAIN
+    component "application\nPortfolioService + ports" as PortfolioApp
+    component "adapter/in/web\nPortfolioController" as PortfolioWeb
+    component "adapter/in/events\nTrading/Wallet listeners" as PortfolioEventIn
+    component "adapter/out/persistence\nJPA repositories" as PortfolioPersistence
+    component "adapter/out/events\npublicador Spring" as PortfolioEvents
+  }
+
+  package "notifications" {
+    component "domain\nNotificationMessage,\nNotificationType" as NotificationsDomain EZ_DOMAIN
+    component "application\nNotificationService + ports" as NotificationsApp
+    component "adapter/in/events\nDomainEventsListener" as NotificationsIn
+    component "adapter/out\nWebSocket, inbox,\nlogging email/push" as NotificationsOut
+  }
+}
+
+App --> UserDomain
+App --> SecConfig
+App --> MarketDomain
+App --> TradingDomain
+App --> WalletDomain
+App --> PortfolioDomain
+App --> NotificationsDomain
+
+note bottom
+Evidencia: backend/src/main/java package tree, package-info.java module declarations,
+controladores, servicios de aplicacion, puertos, adaptadores y carpetas JPA.
+end note
+
+@enduml

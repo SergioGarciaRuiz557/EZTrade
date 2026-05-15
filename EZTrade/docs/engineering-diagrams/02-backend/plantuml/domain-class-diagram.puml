@@ -1,0 +1,179 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Backend - Diagrama de clases del dominio principal
+
+class User {
+  - Long id
+  - String name
+  - String surname
+  - String username
+  - String email
+  - String password
+  - Role role
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+class TradeOrder {
+  - OrderId id
+  - String owner
+  - String symbol
+  - OrderSide side
+  - Quantity quantity
+  - Money price
+  - OrderStatus status
+  - LocalDateTime createdAt
+  - LocalDateTime executedAt
+  + place(...)
+  + rehydrate(...)
+  + execute()
+  + cancel(requestedBy)
+  + totalAmount()
+}
+
+class OrderId <<value object>> {
+  + Long value
+}
+
+class Quantity <<value object>> {
+  + BigDecimal value
+}
+
+class Money <<value object>> {
+  + BigDecimal value
+  + multiply(quantity)
+}
+
+enum OrderSide {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  PENDING
+  EXECUTED
+  CANCELLED
+}
+
+class WalletAccount {
+  - String owner
+  - BigDecimal availableBalance
+  - BigDecimal reservedBalance
+  + open(owner)
+  + deposit(amount)
+  + withdraw(amount)
+  + reserve(amount)
+  + release(amount)
+  + settleReservedDebit(amount)
+  + settleCredit(amount)
+}
+
+class WalletTransaction <<record>> {
+  + Long id
+  + String owner
+  + MovementType movementType
+  + BigDecimal amount
+  + BigDecimal availableDelta
+  + BigDecimal reservedDelta
+  + BigDecimal availableBalanceAfter
+  + BigDecimal reservedBalanceAfter
+  + ReferenceType referenceType
+  + String referenceId
+  + LocalDateTime occurredAt
+}
+
+enum MovementType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER_OUT
+  TRANSFER_IN
+  RESERVE
+  RELEASE
+  SETTLEMENT_DEBIT
+  SETTLEMENT_CREDIT
+  FEE
+}
+
+enum ReferenceType {
+  ORDER
+  MANUAL
+}
+
+class Position {
+  - String owner
+  - String symbol
+  - BigDecimal quantity
+  - BigDecimal averageCost
+  - BigDecimal realizedPnl
+  - LocalDateTime updatedAt
+  + open(owner, symbol, quantity, price)
+  + increase(quantity, price)
+  + reduce(quantity, price)
+  + investedAmount()
+  + isClosed()
+}
+
+class CashProjection <<record/domain>> {
+  + String owner
+  + BigDecimal availableCash
+  + LocalDateTime updatedAt
+}
+
+class PortfolioSnapshot <<record/domain>> {
+  + String owner
+  + BigDecimal cashAvailable
+  + BigDecimal totalCostBasis
+  + BigDecimal totalRealizedPnl
+  + List<Position> positions
+}
+
+class NotificationMessage <<record>> {
+  + String recipient
+  + NotificationType type
+  + String title
+  + String body
+  + LocalDateTime occurredAt
+}
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_EXECUTED
+  ORDER_CANCELLED
+  INSUFFICIENT_FUNDS
+  PORTFOLIO_VALUATION_UPDATED
+}
+
+class MarketPrice <<domain>> {
+  + Symbol symbol
+  + double price
+  + Instant timestamp
+}
+
+class Symbol <<value object>> {
+  + String value
+}
+
+User --> Role
+TradeOrder *-- OrderId
+TradeOrder *-- Quantity
+TradeOrder *-- Money
+TradeOrder --> OrderSide
+TradeOrder --> OrderStatus
+WalletTransaction --> MovementType
+WalletTransaction --> ReferenceType
+Position <-- PortfolioSnapshot
+CashProjection <-- PortfolioSnapshot
+NotificationMessage --> NotificationType
+MarketPrice *-- Symbol
+
+note bottom
+El modelo no es deliberadamente un diagrama de clases JPA.
+Muestra las clases de dominio usadas por servicios y mappers.
+Las entidades de persistencia se documentan en los diagramas de base de datos.
+end note
+
+@enduml

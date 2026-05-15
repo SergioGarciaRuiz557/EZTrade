@@ -75,7 +75,7 @@ class MarketControllerTest {
         mockMvc.perform(get("/api/v1/market/get-price").param("symbol", symbol.value()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.symbol.value", is("IBM")))
+                .andExpect(jsonPath("$.symbol", is("IBM")))
                 .andExpect(jsonPath("$.price", is(150.5)))
                 .andExpect(jsonPath("$.timestamp", is("2026-03-04T10:15:30Z")));
     }

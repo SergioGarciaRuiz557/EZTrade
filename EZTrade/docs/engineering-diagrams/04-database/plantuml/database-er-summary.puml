@@ -1,0 +1,86 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Base de datos - Resumen entidad-relacion
+
+entity "user" as UserTable {
+  * id : BIGINT <<PK>>
+  --
+  username : VARCHAR <<unique>>
+  email : VARCHAR <<unique>>
+  role : VARCHAR
+}
+
+entity "trade_order" as TradeOrderTable {
+  * id : BIGINT <<PK>>
+  --
+  owner : VARCHAR
+  symbol : VARCHAR(10)
+  side : VARCHAR
+  status : VARCHAR
+  quantity : DECIMAL(19,8)
+  price : DECIMAL(19,8)
+}
+
+entity "wallet_account" as WalletAccountTable {
+  * id : BIGINT <<PK>>
+  --
+  owner : VARCHAR <<unique>>
+  availableBalance : DECIMAL(19,8)
+  reservedBalance : DECIMAL(19,8)
+}
+
+entity "wallet_ledger_entry" as WalletLedgerTable {
+  * id : BIGINT <<PK>>
+  --
+  owner : VARCHAR
+  movementType : VARCHAR
+  referenceType : VARCHAR
+  referenceId : VARCHAR
+  occurredAt : DATETIME
+}
+
+entity "portfolio_position" as PositionTable {
+  * id : BIGINT <<PK>>
+  --
+  owner : VARCHAR
+  symbol : VARCHAR(10)
+  quantity : DECIMAL(19,8)
+  averageCost : DECIMAL(19,8)
+  realizedPnl : DECIMAL(19,8)
+}
+
+entity "portfolio_cash_projection" as CashProjectionTable {
+  * id : BIGINT <<PK>>
+  --
+  owner : VARCHAR <<unique>>
+  availableCash : DECIMAL(19,8)
+  updatedAt : DATETIME
+}
+
+entity "notification_inbox" as NotificationTable {
+  * id : BIGINT <<PK>>
+  --
+  recipient : VARCHAR
+  type : VARCHAR(50)
+  title : VARCHAR(150)
+  is_read : BOOLEAN
+}
+
+UserTable ||..o{ TradeOrderTable : logical owner identifier
+UserTable ||..o| WalletAccountTable : logical owner identifier
+UserTable ||..o{ WalletLedgerTable : logical owner identifier
+UserTable ||..o{ PositionTable : logical owner identifier
+UserTable ||..o| CashProjectionTable : logical owner identifier
+UserTable ||..o{ NotificationTable : recipient
+TradeOrderTable ||..o{ WalletLedgerTable : referenceType=ORDER\nreferenceId=order id
+TradeOrderTable ||..o{ PositionTable : owner + symbol\nvia eventos de orden ejecutada
+WalletAccountTable ||..o{ WalletLedgerTable : owner + balance deltas
+WalletAccountTable ||..o| CashProjectionTable : AvailableCashUpdatedEvent
+
+note bottom
+No se declaran claves foraneas fisicas en las entidades JPA inspeccionadas.
+Las relaciones discontinuas son enlaces logicos inferidos desde campos, eventos y metodos de repositorio.
+end note
+
+@enduml

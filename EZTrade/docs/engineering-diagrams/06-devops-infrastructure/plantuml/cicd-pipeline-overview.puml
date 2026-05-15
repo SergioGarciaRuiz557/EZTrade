@@ -1,0 +1,28 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade DevOps - Pipeline CI real de GitHub Actions
+
+start
+:Desarrollador hace push a main\no abre pull_request a main;
+:GitHub Actions arranca\n"Java CI with Maven";
+:Runner ubuntu-latest;
+:actions/checkout@v4;
+:actions/setup-java@v4\njava-version 23\ndistribution oracle\ncache maven;
+:Working directory\nEZTrade/backend;
+:Ejecuta mvn -B clean verify;
+if (Maven verify succeeds?) then (yes)
+  :Estado CI en verde;
+else (no)
+  :Estado CI fallido;
+endif
+stop
+
+note right
+Evidencia: ../.github/workflows/maven.yml.
+El flujo de trabajo solo compila y prueba backend.
+No hay compilacion/lint/pruebas de frontend, construccion Docker,
+publicacion de imagen ni job de despliegue declarado.
+end note
+
+@enduml

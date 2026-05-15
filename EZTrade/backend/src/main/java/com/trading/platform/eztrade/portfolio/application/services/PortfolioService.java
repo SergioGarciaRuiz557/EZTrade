@@ -31,6 +31,17 @@ import java.util.stream.Collectors;
 
 /**
  * Servicio de aplicacion del modulo portfolio.
+ * <p>
+ * Orquesta tres flujos:
+ * <ul>
+ *   <li>Actualizar posiciones al recibir {@link OrderExecutedEvent}.</li>
+ *   <li>Sincronizar la proyeccion de cash desde {@link AvailableCashUpdatedEvent}.</li>
+ *   <li>Construir la vista agregada que consume la API REST.</li>
+ * </ul>
+ * <p>
+ * Para las consultas de usuario tambien enriquece las posiciones abiertas con
+ * valoracion de mercado mediante {@link MarketPriceLookupPort}. Esa dependencia
+ * entra por la API publica de market para respetar Spring Modulith.
  */
 @Service
 @Transactional
@@ -53,6 +64,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
 
     @Override
     public void handle(OrderExecutedEvent event) {
+        // El evento llega ya confirmado por wallet. Portfolio solo refleja el
+        // efecto economico sobre posiciones y publica su snapshot agregada.
         String owner = event.owner();
         String symbol = normalizeSymbol(event.symbol());
         BigDecimal quantity = positive(event.quantity(), "Quantity");
@@ -77,10 +90,13 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
     @Override
     @Transactional(readOnly = true)
     public PortfolioSnapshot getByOwner(String owner) {
+        // En lectura HTTP si se incluyen precios actuales para mostrar valor de mercado.
         return buildSnapshot(owner, true);
     }
 
     private PortfolioSnapshot buildSnapshot(String owner, boolean includeMarketValuations) {
+        // Las posiciones cerradas se conservan en persistencia para mantener el
+        // PnL realizado acumulado, pero no forman parte de posiciones abiertas.
         List<Position> allPositions = positionRepository.findByOwner(owner);
         List<Position> openPositions = allPositions.stream()
                 .filter(position -> !position.isClosed())
@@ -97,6 +113,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                 .map(CashProjection::availableCash)
                 .orElse(BigDecimal.ZERO);
 
+        // Las valoraciones de mercado se omiten en eventos internos para evitar
+        // llamadas externas innecesarias al recalcular tras cada ejecucion.
         Map<String, PositionMarketValuation> marketValuations = includeMarketValuations
                 ? buildMarketValuations(openPositions)
                 : Map.of();
@@ -119,6 +137,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
 
     @Override
     public void handle(AvailableCashUpdatedEvent event) {
+        // Wallet es la fuente de verdad. Portfolio solo persiste la ultima foto
+        // recibida para componer consultas de cartera.
         if (event.owner() == null || event.owner().isBlank()) {
             throw new PortfolioDomainException("Owner is required");
         }
@@ -138,6 +158,7 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
         Position saved;
 
         if (current == null) {
+            // Primera compra del simbolo: se abre una posicion nueva.
             saved = positionRepository.save(Position.open(owner, symbol, quantity, price));
             eventPublisher.publish(new PositionOpenedEvent(
                     owner,
@@ -147,6 +168,7 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                     LocalDateTime.now()
             ));
         } else {
+            // Compra adicional: se recalcula el coste medio ponderado en dominio.
             saved = positionRepository.save(current.increase(quantity, price));
             eventPublisher.publish(new PositionIncreasedEvent(
                     owner,
@@ -169,6 +191,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
         Position updated = result.position();
 
         if (updated.isClosed()) {
+            // Se guarda la posicion cerrada en vez de borrarla para conservar el
+            // PnL realizado historico en snapshots posteriores.
             positionRepository.save(updated);
             eventPublisher.publish(new PositionClosedEvent(
                     owner,

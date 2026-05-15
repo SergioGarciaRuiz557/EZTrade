@@ -1,0 +1,57 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Base de datos - Correspondencia entre entidades JPA y tablas
+
+package "Modelo de dominio" as Domain EZ_DOMAIN {
+  class User
+  class TradeOrder
+  class WalletAccount
+  class WalletTransaction <<record>>
+  class Position
+  class CashProjection
+  class NotificationMessage <<record>>
+}
+
+package "Entidades JPA de infraestructura" as Jpa EZ_BACKEND {
+  class UserJpaEntity
+  class TradeOrderJpaEntity
+  class WalletAccountJpaEntity
+  class WalletTransactionJpaEntity
+  class PositionJpaEntity
+  class CashProjectionJpaEntity
+  class InboxNotificationJpaEntity
+}
+
+package "Tablas relacionales" as Tables EZ_DB {
+  class "user" as TUser <<table>>
+  class "trade_order" as TTrade <<table>>
+  class "wallet_account" as TWalletAccount <<table>>
+  class "wallet_ledger_entry" as TWalletLedger <<table>>
+  class "portfolio_position" as TPosition <<table>>
+  class "portfolio_cash_projection" as TCash <<table>>
+  class "notification_inbox" as TNotification <<table>>
+}
+
+User <.. UserJpaEntity : UserJpaMapper
+TradeOrder <.. TradeOrderJpaEntity : TradeOrderMapper
+WalletAccount <.. WalletAccountJpaEntity : WalletAccountMapper
+WalletTransaction <.. WalletTransactionJpaEntity : WalletTransactionMapper
+Position <.. PositionJpaEntity : PositionMapper
+CashProjection <.. CashProjectionJpaEntity : CashProjectionMapper
+NotificationMessage <.. InboxNotificationJpaEntity : InboxNotificationAdapter
+
+UserJpaEntity --> TUser : @Table(name="user")
+TradeOrderJpaEntity --> TTrade : @Table(name="trade_order")
+WalletAccountJpaEntity --> TWalletAccount : @Table(name="wallet_account")
+WalletTransactionJpaEntity --> TWalletLedger : @Table(name="wallet_ledger_entry")
+PositionJpaEntity --> TPosition : @Table(name="portfolio_position")
+CashProjectionJpaEntity --> TCash : @Table(name="portfolio_cash_projection")
+InboxNotificationJpaEntity --> TNotification : @Table(name="notification_inbox")
+
+note bottom
+Evidencia: paquetes adapter/out/persistence/jpa y clases mapper.
+El modelo de dominio se mantiene libre de anotaciones JPA; la persistencia se resuelve mediante adaptadores y mappers.
+end note
+
+@enduml

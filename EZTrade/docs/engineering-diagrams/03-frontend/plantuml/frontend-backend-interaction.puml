@@ -1,0 +1,44 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Frontend - APIs de feature hacia endpoints backend
+
+package "Clientes de feature frontend" as FE EZ_FRONTEND {
+  component "authApi" as AuthApi
+  component "marketApi" as MarketApi
+  component "tradingApi" as TradingApi
+  component "walletApi" as WalletApi
+  component "portfolioApi" as PortfolioApi
+  component "fetchWithAuth\nhandleResponse" as FetchWithAuth
+}
+
+package "Controladores REST backend" as BE EZ_BACKEND {
+  component "AuthController\nPOST /auth/login" as AuthController
+  component "UserController\nPOST /api/user/register\nGET /api/user" as UserController
+  component "MarketController\nGET /api/v1/market/*" as MarketController
+  component "TradingController\n/api/v1/trading/orders" as TradingController
+  component "TradingMarketplaceController\n/api/v1/trading/market/buy\n/api/v1/trading/offers" as MarketplaceController
+  component "WalletController\n/api/v1/wallet/*" as WalletController
+  component "PortfolioController\nGET /api/portfolio" as PortfolioController
+}
+
+AuthApi --> AuthController : login
+AuthApi --> UserController : register, getUser
+MarketApi --> MarketController : getPrice, search,\ngetOverview, getDailyCandles
+TradingApi --> TradingController : get/place/execute/cancel orders
+TradingApi --> MarketplaceController : buyFromMarket,\nplaceSellOffer,\ngetSellOffers, buySellOffer
+WalletApi --> WalletController : balance, deposit,\nwithdraw, transfer,\ntransactions
+PortfolioApi --> PortfolioController : getPortfolio
+
+AuthApi --> FetchWithAuth : protected getUser
+MarketApi --> FetchWithAuth
+TradingApi --> FetchWithAuth
+WalletApi --> FetchWithAuth
+PortfolioApi --> FetchWithAuth
+
+note bottom
+Evidencia: frontend/features/*/api.ts y anotaciones de controladores backend.
+La base de la API frontend es NEXT_PUBLIC_API_URL, con valor por defecto http://localhost:8088.
+end note
+
+@enduml

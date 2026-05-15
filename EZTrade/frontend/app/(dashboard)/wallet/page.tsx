@@ -2,7 +2,8 @@
 
 import { useState, type ElementType, type ReactElement } from "react"
 import useSWR, { mutate } from "swr"
-import { walletApi, type WalletBalance, type WalletTransaction } from "@/lib/api"
+import { walletApi } from "@/features/wallet/api"
+import type { WalletBalance, WalletTransaction } from "@/features/wallet/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

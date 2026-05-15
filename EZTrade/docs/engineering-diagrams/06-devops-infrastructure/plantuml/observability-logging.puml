@@ -1,0 +1,34 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade DevOps - Observabilidad, logging y senales de ejecucion
+
+component "Dependencia Spring Boot Actuator" as Actuator EZ_BACKEND
+component "Dependencia de observabilidad Spring Modulith" as ModulithObs EZ_BACKEND
+component "Logs de acceso Tomcat\nserver.tomcat.accesslog.*" as AccessLogs EZ_BACKEND
+component "CommonsRequestLoggingFilter\nincluye query + payload" as RequestLogging EZ_BACKEND
+component "Logs de aplicacion\nloggers SLF4J" as AppLogs EZ_BACKEND
+component "Fallos en canales de notificacion\nlog.warn" as NotificationLogs EZ_BACKEND
+component "Errores de mercado externo\nExternalApiException" as MarketErrors EZ_BACKEND
+
+folder "logs/\naccess*.log" as LogsFolder EZ_DB
+
+AccessLogs --> LogsFolder
+RequestLogging --> AppLogs
+NotificationLogs --> AppLogs
+MarketErrors --> AppLogs
+Actuator ..> AppLogs : dependencia presente
+ModulithObs ..> AppLogs : dependencia presente
+
+note right
+No hay registro Prometheus, dashboard Grafana,
+OpenTelemetry tracing, centralized log shipper
+ni configuracion de alertas.
+end note
+
+note bottom
+Evidencia: application.properties, HttpObservabilityConfig.java, pom.xml,
+NotificationService.java y AlphaVantageAPI.java.
+end note
+
+@enduml

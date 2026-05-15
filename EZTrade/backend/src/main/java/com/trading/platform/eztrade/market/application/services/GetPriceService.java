@@ -4,7 +4,6 @@ import com.trading.platform.eztrade.market.application.ports.in.GetPriceUserCase
 import com.trading.platform.eztrade.market.application.ports.out.GetPriceMarketProviderPort;
 import com.trading.platform.eztrade.market.domain.MarketPrice;
 import com.trading.platform.eztrade.market.domain.Symbol;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,7 +21,6 @@ public class GetPriceService implements GetPriceUserCase {
     }
 
     @Override
-    @Cacheable(cacheNames = "marketPrice", key = "#symbol.value()", unless = "#result == null")
     public MarketPrice getPrice(Symbol symbol) {
         return getPriceMarketProviderPort.getMarketPrice(symbol);
     }

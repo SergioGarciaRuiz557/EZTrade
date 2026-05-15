@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
@@ -28,13 +29,13 @@ class UserRepositoryAdapterTest {
     @DisplayName("findByEmail delega en JpaUserRepository")
     void findByEmail_delegatesToJpaRepository() {
         String email = "john.doe@test.com";
-        User user = new User("John", "Doe", "johnny", email, "pwd");
+        UserJpaEntity entity = new UserJpaEntity(1L, "John", "Doe", "johnny", email, "pwd", null);
 
-        given(jpaUserRepository.findByEmail(eq(email))).willReturn(Optional.of(user));
+        given(jpaUserRepository.findByEmail(eq(email))).willReturn(Optional.of(entity));
 
         Optional<User> result = userRepositoryAdapter.findByEmail(email);
 
-        assertThat(result).contains(user);
+        assertThat(result).map(User::getEmail).contains(email);
         verify(jpaUserRepository).findByEmail(email);
     }
 
@@ -42,13 +43,13 @@ class UserRepositoryAdapterTest {
     @DisplayName("findByUsername delega en JpaUserRepository")
     void findByUsername_delegatesToJpaRepository() {
         String username = "johnny";
-        User user = new User("John", "Doe", username, "john.doe@test.com", "pwd");
+        UserJpaEntity entity = new UserJpaEntity(1L, "John", "Doe", username, "john.doe@test.com", "pwd", null);
 
-        given(jpaUserRepository.findByUsername(eq(username))).willReturn(Optional.of(user));
+        given(jpaUserRepository.findByUsername(eq(username))).willReturn(Optional.of(entity));
 
         Optional<User> result = userRepositoryAdapter.findByUsername(username);
 
-        assertThat(result).contains(user);
+        assertThat(result).map(User::getUsernameValue).contains(username);
         verify(jpaUserRepository).findByUsername(username);
     }
 
@@ -56,12 +57,14 @@ class UserRepositoryAdapterTest {
     @DisplayName("save delega en JpaUserRepository")
     void save_delegatesToJpaRepository() {
         User user = new User("John", "Doe", "johnny", "john.doe@test.com", "pwd");
+        UserJpaEntity saved = new UserJpaEntity(1L, "John", "Doe", "johnny", "john.doe@test.com", "pwd", null);
 
-        given(jpaUserRepository.save(user)).willReturn(user);
+        given(jpaUserRepository.save(any(UserJpaEntity.class))).willReturn(saved);
 
         User result = userRepositoryAdapter.save(user);
 
-        assertThat(result).isSameAs(user);
-        verify(jpaUserRepository).save(user);
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getEmail()).isEqualTo("john.doe@test.com");
+        verify(jpaUserRepository).save(any(UserJpaEntity.class));
     }
 }

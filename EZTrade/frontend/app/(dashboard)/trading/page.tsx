@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react"
 import useSWR, { mutate } from "swr"
-import {
-  marketApi,
-  portfolioApi,
-  tradingApi,
-  MarketPrice,
-  Portfolio,
-  TradeOrder,
-} from "@/lib/api"
+import { marketApi } from "@/features/market/api"
+import { portfolioApi } from "@/features/portfolio/api"
+import { tradingApi } from "@/features/trading/api"
+import type { MarketPrice } from "@/features/market/types"
+import type { Portfolio } from "@/features/portfolio/types"
+import type { TradeOrder } from "@/features/trading/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -78,8 +76,15 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
       .then((data) => {
         if (!cancelled) setMarketPrice(data)
       })
-      .catch(() => {
-        if (!cancelled) setMarketPrice(null)
+      .catch((error) => {
+        if (!cancelled) {
+          setMarketPrice(null)
+          toast({
+            title: "Precio no disponible",
+            description: "No se pudo precargar el precio actual",
+            variant: "destructive",
+          })
+        }
       })
       .finally(() => {
         if (!cancelled) setIsPriceLoading(false)
@@ -123,17 +128,23 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
     try {
       const price = marketPrice ?? await marketApi.getPrice(nextSymbol)
       setMarketPrice(price)
-
-      await tradingApi.placeOrder({
+      await tradingApi.buyFromMarket({
         symbol: nextSymbol,
-        side: "BUY",
         quantity: nextQuantity,
-        price: price.price,
       })
       setQuantity("")
-      mutate("orders")
-    } catch {
-      // Las notificaciones de ordenes las emite el backend por WebSocket.
+      refreshTradingData()
+      toast({
+        title: "Compra enviada",
+        description: `${nextSymbol} se compro al precio validado por el servidor`,
+        variant: "success",
+      })
+    } catch (error) {
+      toast({
+        title: "No se pudo comprar",
+        description: getErrorMessage(error, "El backend rechazo la compra"),
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -151,7 +162,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
           <ShoppingCart className="h-5 w-5 text-success" />
           Preparar compra
         </CardTitle>
-        <CardDescription>Crea una orden pendiente con el precio actual de mercado</CardDescription>
+        <CardDescription>Compra al mercado con precio calculado por el servidor</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -211,7 +222,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
                 Procesando...
               </>
             ) : (
-              `Crear orden ${normalizeSymbol(symbol) || "..."}`
+              `Comprar ${normalizeSymbol(symbol) || "..."}`
             )}
           </Button>
         </form>
@@ -258,7 +269,14 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
         setPrice((current) => current || data.price.toString())
       })
       .catch(() => {
-        if (!cancelled) setMarketPrice(null)
+        if (!cancelled) {
+          setMarketPrice(null)
+          toast({
+            title: "Precio no disponible",
+            description: getErrorMessage(error, "No se pudo consultar el precio maximo para vender"),
+            variant: "destructive",
+          })
+        }
       })
       .finally(() => {
         if (!cancelled) setIsPriceLoading(false)
@@ -287,8 +305,17 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
       })
       setQuantity("")
       refreshTradingData()
-    } catch {
-      // Las notificaciones de ordenes las emite el backend por WebSocket.
+      toast({
+        title: "Oferta publicada",
+        description: `${selectedSymbol} ya esta disponible en el marketplace`,
+        variant: "success",
+      })
+    } catch (error) {
+      toast({
+        title: "No se pudo publicar la oferta",
+        description: getErrorMessage(error, "El backend rechazo la venta"),
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -460,8 +487,17 @@ function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
       await tradingApi.buySellOffer(offer.id)
       refreshOffers()
       refreshTradingData()
-    } catch {
-      // Las notificaciones de ordenes las emite el backend por WebSocket.
+      toast({
+        title: "Oferta comprada",
+        description: `${offer.symbol} se compro correctamente`,
+        variant: "success",
+      })
+    } catch (error) {
+      toast({
+        title: "No se pudo comprar la oferta",
+        description: getErrorMessage(error, "El backend rechazo la operacion"),
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(null)
     }
@@ -576,8 +612,17 @@ function OrdersList() {
     try {
       await tradingApi.executeOrder(orderId)
       refreshTradingData()
-    } catch {
-      // Las notificaciones de ordenes las emite el backend por WebSocket.
+      toast({
+        title: "Orden ejecutada",
+        description: `La orden #${orderId} se ejecuto correctamente`,
+        variant: "success",
+      })
+    } catch (error) {
+      toast({
+        title: "No se pudo ejecutar la orden",
+        description: getErrorMessage(error, "El backend rechazo la ejecucion"),
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(null)
     }
@@ -589,8 +634,17 @@ function OrdersList() {
     try {
       await tradingApi.cancelOrder(orderId)
       refreshTradingData()
-    } catch {
-      // Las notificaciones de ordenes las emite el backend por WebSocket.
+      toast({
+        title: "Orden cancelada",
+        description: `La orden #${orderId} se cancelo correctamente`,
+        variant: "success",
+      })
+    } catch (error) {
+      toast({
+        title: "No se pudo cancelar la orden",
+        description: getErrorMessage(error, "El backend rechazo la cancelacion"),
+        variant: "destructive",
+      })
     } finally {
       setActionLoading(null)
     }

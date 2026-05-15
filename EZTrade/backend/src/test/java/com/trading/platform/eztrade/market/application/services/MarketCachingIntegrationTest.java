@@ -1,7 +1,10 @@
 package com.trading.platform.eztrade.market.application.services;
 
+import com.trading.platform.eztrade.market.adapter.out.cache.CachedMarketDataProvider;
+import com.trading.platform.eztrade.market.adapter.out.cache.MarketCacheConfig;
 import com.trading.platform.eztrade.market.application.ports.in.GetOverviewUserCase;
 import com.trading.platform.eztrade.market.application.ports.in.GetPriceUserCase;
+import com.trading.platform.eztrade.market.application.ports.out.GetDailyCandlesProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.GetOverviewProviderPort;
 import com.trading.platform.eztrade.market.application.ports.out.GetPriceMarketProviderPort;
 import com.trading.platform.eztrade.market.domain.InstrumentOverview;
@@ -12,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -25,7 +29,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @SpringJUnitConfig
-@Import({MarketCacheConfig.class, GetPriceService.class, GetOverviewService.class, MarketCachingIntegrationTest.TestConfig.class})
+@Import({MarketCacheConfig.class, CachedMarketDataProvider.class, GetPriceService.class, GetOverviewService.class, MarketCachingIntegrationTest.TestConfig.class})
 class MarketCachingIntegrationTest {
 
     @Autowired
@@ -35,9 +39,11 @@ class MarketCachingIntegrationTest {
     private GetOverviewUserCase getOverviewService;
 
     @Autowired
+    @Qualifier("marketDataProvider")
     private GetPriceMarketProviderPort getPriceMarketProviderPort;
 
     @Autowired
+    @Qualifier("marketDataProvider")
     private GetOverviewProviderPort getOverviewProviderPort;
 
     @BeforeEach
@@ -84,15 +90,15 @@ class MarketCachingIntegrationTest {
 
     @TestConfiguration
     static class TestConfig {
-        @Bean
-        GetPriceMarketProviderPort getPriceMarketProviderPort() {
-            return Mockito.mock(GetPriceMarketProviderPort.class);
+        @Bean("marketDataProvider")
+        MarketDataProvider marketDataProvider() {
+            return Mockito.mock(MarketDataProvider.class);
         }
+    }
 
-        @Bean
-        GetOverviewProviderPort getOverviewProviderPort() {
-            return Mockito.mock(GetOverviewProviderPort.class);
-        }
+    interface MarketDataProvider extends GetPriceMarketProviderPort,
+            GetOverviewProviderPort,
+            GetDailyCandlesProviderPort {
     }
 }
 

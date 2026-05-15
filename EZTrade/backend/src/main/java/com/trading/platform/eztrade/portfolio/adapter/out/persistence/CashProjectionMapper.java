@@ -3,6 +3,9 @@ package com.trading.platform.eztrade.portfolio.adapter.out.persistence;
 import com.trading.platform.eztrade.portfolio.adapter.out.persistence.jpa.CashProjectionJpaEntity;
 import com.trading.platform.eztrade.portfolio.domain.CashProjection;
 
+/**
+ * Mapper interno de la proyeccion de cash entre dominio y JPA.
+ */
 final class CashProjectionMapper {
 
     private CashProjectionMapper() {

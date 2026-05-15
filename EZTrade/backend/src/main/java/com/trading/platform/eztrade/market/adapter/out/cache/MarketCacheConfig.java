@@ -1,4 +1,4 @@
-package com.trading.platform.eztrade.market.application.services;
+package com.trading.platform.eztrade.market.adapter.out.cache;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Configuracion de cache para consultas de market con TTL corto.
+ * Configuracion de infraestructura para cachear respuestas del proveedor market.
  */
 @Configuration
 @EnableCaching
@@ -28,4 +28,3 @@ public class MarketCacheConfig {
         return cacheManager;
     }
 }
-

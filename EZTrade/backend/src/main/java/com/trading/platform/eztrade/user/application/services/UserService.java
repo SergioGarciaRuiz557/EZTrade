@@ -1,18 +1,3 @@
-/**
- * <h2>UserService</h2>
- *
- * <p><strong>Módulo:</strong> user</p>
- * <p><strong>Capa:</strong> Application</p>
- *
- * <p><strong>Responsabilidad:</strong><br/>
- * Orquesta casos de uso y coordina reglas de negocio para 'User'.</p>
- *
- * <p><strong>Rol arquitectónico:</strong><br/>
- * Forma parte de la arquitectura hexagonal del módulo, manteniendo separación
- * entre dominio, aplicación e infraestructura mediante puertos y adaptadores.
- * Está gestionado por Spring Modulith.</p>
- */
-
 package com.trading.platform.eztrade.user.application.services;
 
 import com.trading.platform.eztrade.user.application.ports.in.GetUserUserCase;
@@ -25,46 +10,60 @@ import com.trading.platform.eztrade.user.domain.exceptions.UserNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+/**
+ * Servicio de aplicacion del modulo user.
+ * <p>
+ * Implementa los casos de uso de registro y consulta. Coordina el repositorio
+ * de usuarios, codifica la password antes de persistir y aplica reglas basicas
+ * como unicidad de email/username y rol por defecto.
+ */
 @Service
 public class UserService implements RegisterUserUserCase, GetUserUserCase {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    /**
-     * Ejecuta la operación principal asociada al caso de uso.
-     * @param userRepository dato de entrada requerido por la operación.
-     * @param passwordEncoder dato de entrada requerido por la operación.
-     * @return resultado devuelto por la operación.
-     */
 
+    /**
+     * Crea el servicio con sus dependencias de aplicacion e infraestructura.
+     *
+     * @param userRepository puerto de salida para persistencia y busqueda
+     * @param passwordEncoder componente de seguridad para codificar passwords
+     */
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
-
-    @Override
     /**
-     * Crea una nueva instancia o recurso en el sistema.
-     * @param user dato de entrada requerido por la operación.
-     * @return resultado devuelto por la operación.
+     * Registra un usuario nuevo.
+     * <p>
+     * Valida que email y username no existan, codifica la password recibida y
+     * asigna el rol funcional por defecto {@link Role#USER}.
+     *
+     * @throws UserExistsException si email o username ya estan ocupados
      */
+    @Override
     public User registerUser(User user) throws UserExistsException {
-        if (userRepository.findByEmail(user.getEmail()).isPresent()) throw new UserExistsException("User already exists");
-        if (userRepository.findByUsername(user.getUsernameValue()).isPresent()) throw new UserExistsException("User already exists");
+        if (userRepository.findByEmail(user.getEmail()).isPresent()) {
+            throw new UserExistsException("User already exists");
+        }
+        if (userRepository.findByUsername(user.getUsernameValue()).isPresent()) {
+            throw new UserExistsException("User already exists");
+        }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(Role.USER);
 
-
         return userRepository.save(user);
     }
 
-    @Override
     /**
-     * Obtiene información del estado interno del objeto.
-     * @param username dato de entrada requerido por la operación.
-     * @return resultado devuelto por la operación.
+     * Busca un usuario por email o username.
+     *
+     * @param username identificador escrito por el usuario en login/consulta
+     * @return usuario de dominio encontrado
+     * @throws UserNotFoundException si no existe ningun usuario con ese email o username
      */
+    @Override
     public User getUser(String username) throws UserNotFoundException {
         return userRepository.findByEmail(username)
                 .or(() -> userRepository.findByUsername(username))

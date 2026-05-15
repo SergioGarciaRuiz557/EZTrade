@@ -12,7 +12,11 @@ import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutedEvent;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import java.util.function.Consumer;
 
 /**
  * Servicio de aplicacion del modulo notifications.
@@ -23,6 +27,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class NotificationService implements NotifyOnDomainEventsUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
 
     private final EmailNotificationPort emailNotificationPort;
     private final PushNotificationPort pushNotificationPort;
@@ -136,10 +142,18 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
      * @param message mensaje normalizado listo para enviar/persistir
      */
     private void dispatch(NotificationMessage message) {
-        emailNotificationPort.send(message);
-        pushNotificationPort.send(message);
-        webSocketNotificationPort.send(message);
-        inboxNotificationPort.save(message);
+        deliver("email", message, emailNotificationPort::send);
+        deliver("push", message, pushNotificationPort::send);
+        deliver("websocket", message, webSocketNotificationPort::send);
+        deliver("inbox", message, inboxNotificationPort::save);
+    }
+
+    private void deliver(String channel, NotificationMessage message, Consumer<NotificationMessage> sender) {
+        try {
+            sender.accept(message);
+        } catch (RuntimeException ex) {
+            log.warn("Notification channel '{}' failed for recipient '{}'", channel, message.recipient(), ex);
+        }
     }
 }
 

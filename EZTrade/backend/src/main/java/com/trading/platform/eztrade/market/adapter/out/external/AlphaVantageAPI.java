@@ -30,7 +30,7 @@ import java.util.List;
  * Implementa los puertos de la capa de aplicación/dominio y traduce esas operaciones
  * en llamadas HTTP contra la API de Alpha Vantage.
  */
-@Component
+@Component("marketDataProvider")
 public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstrumentProviderPort, GetDailyCandlesProviderPort, GetOverviewProviderPort {
 
     /**

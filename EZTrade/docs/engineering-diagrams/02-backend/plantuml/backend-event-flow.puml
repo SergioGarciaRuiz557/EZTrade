@@ -1,0 +1,44 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Backend - Flujo de eventos de dominio
+
+component "TradingService" as Trading EZ_BACKEND
+component "trading SpringDomainEventPublisher" as TradingPublisher
+component "Wallet TradingEventsListener" as WalletListener EZ_FRONTEND
+component "WalletService" as Wallet EZ_BACKEND
+component "wallet SpringDomainEventPublisher" as WalletPublisher
+component "Portfolio TradingEventsListener" as PortfolioTradingListener EZ_FRONTEND
+component "Portfolio WalletEventsListener" as PortfolioWalletListener EZ_FRONTEND
+component "PortfolioService" as Portfolio EZ_BACKEND
+component "portfolio SpringDomainEventPublisher" as PortfolioPublisher
+component "Notifications DomainEventsListener\n@TransactionalEventListener(AFTER_COMMIT)\n@Async" as NotificationsListener EZ_FRONTEND
+component "NotificationService" as Notifications EZ_BACKEND
+
+Trading --> TradingPublisher : OrderPlacedEvent\nOrderCancelledEvent\nOrderExecutionRequestEvent
+TradingPublisher ..> WalletListener : Spring Event
+WalletListener --> Wallet : handle(...)
+
+Wallet --> WalletPublisher : FundsReservedEvent\nFundsReleasedEvent\nFundsSettledEvent\nInsufficientFundsEvent\nAvailableCashUpdatedEvent\nOrderExecutedEvent
+WalletPublisher ..> PortfolioTradingListener : OrderExecutedEvent
+WalletPublisher ..> PortfolioWalletListener : AvailableCashUpdatedEvent
+PortfolioTradingListener --> Portfolio : update positions
+PortfolioWalletListener --> Portfolio : update cash projection
+
+Portfolio --> PortfolioPublisher : PortfolioValuationUpdatedEvent\nPositionOpened/Closed/Changed
+TradingPublisher ..> NotificationsListener : eventos de orden
+WalletPublisher ..> NotificationsListener : InsufficientFundsEvent
+PortfolioPublisher ..> NotificationsListener : PortfolioValuationUpdatedEvent
+NotificationsListener --> Notifications : construye y envia mensaje
+
+note right of WalletListener
+OrderPlacedEvent se gestiona de forma sincronica en wallet:
+if BUY funds cannot be reserved, trading aborts.
+end note
+
+note bottom of NotificationsListener
+Las notificaciones se gestionan despues del commit con fallbackExecution=true
+y @Async. Esta evidencia procede de DomainEventsListener.java.
+end note
+
+@enduml

@@ -1,94 +1,86 @@
 # EZTrade Backend
 
-¡Bienvenido al backend de **EZTrade**! EZTrade es una plataforma de trading de simulación o ejecución diseñada con una arquitectura modular utilizando **Spring Boot** y **Spring Modulith**. Este enfoque garantiza un bajo acoplamiento y una alta cohesión, organizando el código en dominios lógicos de negocio.
+Backend de EZTrade construido con Spring Boot, Spring Security, Spring Data JPA y Spring Modulith. El proyecto se organiza por modulos de negocio y cada modulo sigue arquitectura hexagonal: dominio, aplicacion, puertos y adaptadores.
 
----
+## Arquitectura
 
-## 🏗 Arquitectura y Módulos
+Cada modulo mantiene esta separacion:
 
-El sistema está diseñado siguiendo los principios de la **Arquitectura Hexagonal** (también conocida como Puertos y Adaptadores) combinada con **Domain-Driven Design (DDD)**. Además, está organizado en módulos independientes utilizando **Spring Modulith** garantizando un bajo acoplamiento y una alta cohesión.
+- `domain`: entidades, value objects, eventos y excepciones de negocio. No depende de Spring ni JPA.
+- `application`: casos de uso y puertos. Orquesta el dominio y define que necesita de fuera.
+- `adapter/in`: entradas al modulo, como controladores REST o listeners de eventos.
+- `adapter/out`: infraestructura, como repositorios JPA, publicadores Spring Events o clientes externos.
+- `package-info.java`: declaracion Spring Modulith y dependencias permitidas.
 
-### ⬡ Arquitectura Hexagonal a nivel Módulo
+## Modulos
 
-Cada uno de los módulos de EZTrade implementa internamente una Arquitectura Hexagonal estricta estructurada de la siguiente manera:
+### User
 
-- **Domain (`domain/`)**: Contiene la lógica central empresarial, entidades (ej. `TradeOrder`, `Position`), Value Objects y excepciones del dominio. No depende de ninguna capa exterior ni del framework.
-- **Application (`application/`)**: Contiene los casos de uso (`services/`) y las interfaces (`ports/`).
-  - **Ports In:** Definen las operaciones y casos de uso que el módulo expone hacia el exterior.
-  - **Ports Out:** Definen los contratos que la capa de infraestructura deberá implementar (ej. persistir datos, llamar APIs externas).
-- **Adapters (`adapter/`)**:
-  - **Adapters In (`adapter/in/`):** Puntos de entrada al sistema como Controladores REST (`web/`), WebSockets (`ws/`) o Listeners de eventos (`events/`). Estás clases invocan los *Ports In*.
-  - **Adapters Out (`adapter/out/`):** Implementaciones reales de infraestructura como repositorios de base de datos o adaptadores que consultan APIs externas. Estas clases implementan los *Ports Out*.
+Gestiona usuarios, roles basicos y alta de cuentas.
 
-```mermaid
-graph LR
-    subgraph Adapters In
-        API[REST / WS]
-        EventListener[Event Listener]
-    end
-    subgraph Application & Domain
-        PortIn(Puerto Entrada)
-        UseCase(Servicio - Caso Uso)
-        Domain((Entidades Dominio))
-        PortOut(Puerto Salida)
-    end
-    subgraph Adapters Out
-        DB[(Base de Datos)]
-        ExternAPI[API Externa]
-    end
+- API: `POST /api/user/register`, `GET /api/user?email=...`
+- Dominio: `User`, `Role`
+- Puertos publicos para otros modulos: `user :: api`
+- Persistencia: `UserJpaEntity`, `JpaUserRepository`, `UserJpaMapper`
 
-    API -->|Usa| PortIn
-    EventListener -->|Usa| PortIn
-    PortIn --> UseCase
-    UseCase --> Domain
-    UseCase --> PortOut
-    PortOut -.->|Implementado por| DB
-    PortOut -.->|Implementado por| ExternAPI
+### Security
 
-    style Domain fill:#f9f,stroke:#333,stroke-width:2px
-```
+Gestiona login, JWT, filtros HTTP y autorizacion.
 
-### Resumen de Módulos
+- API publica: `POST /auth/login`
+- Filtros: `JwtAuthFilter`, `UserAccessFilter`, `StompAuthChannelInterceptor`
+- Configuracion: `AuthenticationConfig`, `BeansConfig`, `WebSocketConfig`
+- Depende del modulo user mediante `LoadUserForSecurityPort`.
 
-El sistema está dividido en los siguientes módulos de dominio lógicos de negocio:
+### Market
 
-### 1. Market (Mercado)
-- **Función:** Es la fuente de la verdad para los precios de los instrumentos financieros. Gestiona búsquedas de símbolos, entrega de precios actuales (MarketPrice) y datos históricos (Velas/Candles).
-- **Workflow:** Recibe peticiones (REST/WS), consulta APIs externas o bases de datos locales, y devuelve los datos del mercado en tiempo real.
+Consulta informacion de mercado desde AlphaVantage y la expone por REST y por una API interna para otros modulos.
 
-### 2. Trading (Operaciones)
-- **Función:** Responsable de procesar las órdenes de compra y venta (TradeOrders).
-- **Workflow:** El usuario solicita una orden. El módulo de Trading valida el precio de mercado actual (llamando a Market), verifica y bloquea los fondos/activos (interactuando con Wallet y Portfolio), y si todo es correcto, ejecuta la orden. Emite un evento `OrderExecutedEvent`.
+- API REST: `GET /api/v1/market/get-price`, `/search`, `/get-overview`, `/get-daily-candles`
+- API interna: `MarketPriceLookupPort`
+- Adaptadores: `AlphaVantageAPI`, `CachedMarketDataProvider`
+- Dominio: `Symbol`, `MarketPrice`, `Instrument`, `InstrumentOverview`, `Candle`
 
-### 3. Portfolio (Cartera)
-- **Función:** Mantiene el registro de las posiciones de los usuarios (acciones o criptomonedas poseídas) y una proyección de lectura del valor total de su cartera y efectivo disponible.
-- **Workflow:** Escucha los eventos del módulo de Trading para abrir o cerrar posiciones, y eventos de Wallet para mantener su vista de liquidez al día. Regularmente, solicita precios al módulo `Market` para actualizar la valoración de la cartera y emite el evento `PortfolioValuationUpdatedEvent`.
+### Trading
 
-### 4. Wallet (Billetera)
-- **Función:** Gestiona el balance de efectivo (fiat) de los usuarios (dinero disponible vs reservado). Procesa depósitos, retiros y retenciones de fondos. Es la **fuente de la verdad** del capital.
-- **Workflow:** Escucha los eventos de Trading para descontar dinero en compras o añadir dinero en ventas. Emite eventos propios (como `AvailableCashUpdatedEvent`) para notificar al resto del sistema. Mantiene el historial inmutable de transacciones (WalletTransaction/Ledger).
+Gestiona ordenes, ejecucion y marketplace entre usuarios.
 
-### 5. Notifications (Notificaciones)
-- **Función:** Sistema transversal encargado de alertar al usuario de lo que ocurre en su cuenta.
-- **Workflow:** Funciona puramente por eventos. Escucha los eventos de dominio (como `PositionClosedEvent`, transacciones, alertas de precio) y empuja notificaciones (NotificationMessage) al cliente mediante WebSockets u otros canales.
+- Ordenes: `POST /api/v1/trading/orders`, `POST /api/v1/trading/orders/{orderId}/execute`, `POST /api/v1/trading/orders/{orderId}/cancel`, `GET /api/v1/trading/orders`
+- Marketplace: `POST /api/v1/trading/market/buy`, `POST /api/v1/trading/offers`, `GET /api/v1/trading/offers`, `POST /api/v1/trading/offers/{offerId}/buy`
+- Depende de `market :: api` para validar precios actuales.
+- Publica `OrderPlacedEvent`, `OrderExecutionRequestEvent` y `OrderCancelledEvent`.
 
-### 6. User (Usuario)
-- **Función:** Gestiona la identidad, perfiles y roles básicos del sistema.
-- **Workflow:** Expone puertos para que otros módulos puedan consultar datos y preferencias del usuario.
+### Wallet
 
-### 7. Security (Seguridad)
-- **Función:** Protege el acceso al servidor, gestiona la autenticación (Login) y la validación de tokens JWT.
-- **Workflow:** Intercepta todas las llamadas HTTP. Consulta el módulo `User` a través de `LoadUserForSecurityPort` para verificar la identidad y permisos de acceso.
+Es la fuente de verdad del efectivo. Mantiene saldo disponible, saldo reservado y ledger.
 
----
+- API REST: `POST /api/v1/wallet/deposit`, `/withdraw`, `/transfer`, `GET /balance`, `GET /transactions`
+- Reacciona a eventos de trading para reservar, liberar y liquidar fondos.
+- Publica eventos de wallet como `FundsReservedEvent`, `FundsSettledEvent`, `FundsReleasedEvent`, `InsufficientFundsEvent` y `AvailableCashUpdatedEvent`.
+- Usa bloqueo pesimista al modificar cuentas.
 
-## 🔄 Flujo de Trabajo (Workflow General)
+### Portfolio
 
-A continuación se muestra un diagrama que ilustra cómo una orden de compra fluye a través de los módulos de EZTrade:
+Mantiene posiciones por usuario y simbolo, PnL realizado, cash proyectado y valoraciones de mercado.
+
+- API REST: `GET /api/portfolio`
+- Reacciona a `OrderExecutedEvent` para abrir, aumentar, reducir o cerrar posiciones.
+- Reacciona a `AvailableCashUpdatedEvent` para sincronizar cash disponible.
+- Depende de `market :: api` para calcular valoracion actual en consultas.
+
+### Notifications
+
+Transforma eventos de negocio en mensajes de usuario y los distribuye por varios canales.
+
+- Canales: email/log, push/log, WebSocket STOMP e inbox persistido.
+- Escucha eventos de trading, wallet y portfolio.
+- Modelo comun: `NotificationMessage` y `NotificationType`.
+
+## Flujo principal de compra al mercado
 
 ```mermaid
 sequenceDiagram
-    actor Cliente
+    actor Client
     participant Security
     participant Trading
     participant Market
@@ -96,76 +88,43 @@ sequenceDiagram
     participant Portfolio
     participant Notifications
 
-    Cliente->>Security: POST /api/trade (JWT)
-    Security-->>Trading: Autenticado
-    Trading->>Market: ¿Precio actual del Asset X?
-    Market-->>Trading: Precio: $150
-    Trading->>Wallet: ¿Hay fondos suficientes?
-    Wallet-->>Trading: Sí, fondos retenidos
-    Trading->>Portfolio: Añadir Asset X a posición
-    Portfolio-->>Trading: Posición actualizada
-    Trading-->>Cliente: Orden ejecutada con éxito
-    Trading--)Notifications: Emite Evento OrderExecuted
-    Notifications-->>Cliente: (WebSocket) "Compraste X!"
+    Client->>Security: JWT en Authorization
+    Client->>Trading: POST /api/v1/trading/market/buy
+    Trading->>Market: MarketPriceLookupPort.currentPrice(symbol)
+    Trading-->>Trading: Crea BUY pendiente
+    Trading--)Wallet: OrderPlacedEvent
+    Wallet-->>Wallet: Reserva fondos
+    Trading--)Wallet: OrderExecutionRequestEvent
+    Wallet-->>Wallet: Liquida fondos
+    Wallet--)Portfolio: OrderExecutedEvent
+    Portfolio-->>Portfolio: Actualiza posicion
+    Wallet-)Portfolio: AvailableCashUpdatedEvent
+    Portfolio-)Notifications: PortfolioValuationUpdatedEvent
+    Trading-->>Client: Orden ejecutada
 ```
 
----
+## Comandos
 
-## 🔗 Dependencias entre Módulos
-
-El proyecto sigue las directrices de **Spring Modulith**, lo que significa que el grafo de dependencias está altamente controlado. A continuación se define qué módulo conoce a qué otro:
-
-```mermaid
-graph TD
-    %% Definición de Módulos
-    Sec[Security]
-    Usr[User]
-    Trd[Trading]
-    Mkt[Market]
-    Ptf[Portfolio]
-    Wlt[Wallet]
-    Not[Notifications]
-
-    %% Dependencias Directas (Llamadas API/Ports)
-    Sec -->|Verifica Identidad| Usr
-    Trd -->|Consulta Precio| Mkt
-    Ptf -->|Actualiza Valoración| Mkt
-
-    %% Comunicación por Eventos (Desacoplada)
-    Trd -.->|Eventos de Orden| Wlt
-    Trd -.->|Eventos de Orden| Ptf
-    Wlt -.->|Eventos de Liquidez| Ptf
-    Ptf -.->|Eventos de Cartera| Not
-    Trd -.->|Eventos de Orden| Not
-    Wlt -.->|Eventos de Billetera| Not
-
-    style Not fill:#f9f,stroke:#333,stroke-width:2px
+```bash
+./mvnw test
+./mvnw spring-boot:run
 ```
 
-*Nota: Las líneas continuas indican invocaciones a nivel de código (Interfaces inyectadas / Puertos). Las líneas punteadas representan dependencias reventadas gobernadas por eventos de dominio (Asíncronos o Síncronos).*
+En Windows:
 
----
+```powershell
+.\mvnw.cmd test
+.\mvnw.cmd spring-boot:run
+```
 
-## 🚀 Empezando con el Proyecto
+## Documentacion por modulo
 
-Para compilar y correr el proyecto, incluyendo sus tests de arquitectura modulith:
+Cada modulo contiene su propio `.md` junto al codigo:
 
-1. **Prerrequisitos:**
-   - Java 17 o superior.
-   - Maven
-
-2. **Compilar y saltar tests:**
-   ```bash
-   ./mvnw clean install -DskipTests
-   ```
-
-3. **Verificar estructura de los Módulos:**
-   Puedes correr la prueba de estructura para generar la documentación de componentes de Modulith y asegurarte de que no hay saltos en las reglas de diseño arquitectónico:
-   ```bash
-   ./mvnw test -Dtest=ModulithStructureTest
-   ```
-
-4. **Arrancar en local:**
-   ```bash
-   ./mvnw spring-boot:run
-   ```
+- `src/main/java/com/trading/platform/eztrade/user/user.md`
+- `src/main/java/com/trading/platform/eztrade/security/security.md`
+- `src/main/java/com/trading/platform/eztrade/market/market.md`
+- `src/main/java/com/trading/platform/eztrade/trading/trading.md`
+- `src/main/java/com/trading/platform/eztrade/wallet/wallet.md`
+- `src/main/java/com/trading/platform/eztrade/portfolio/portfolio.md`
+- `src/main/java/com/trading/platform/eztrade/notifications/notifications.md`

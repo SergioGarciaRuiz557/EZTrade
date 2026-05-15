@@ -8,6 +8,9 @@ import java.util.Optional;
 
 /**
  * Vista de dominio de la cartera de un usuario.
+ * <p>
+ * Agrupa cash proyectado desde wallet, posiciones abiertas, coste base, PnL
+ * realizado y, en consultas REST, valoraciones de mercado por simbolo.
  */
 public record PortfolioSnapshot(
         String owner,
@@ -27,10 +30,14 @@ public record PortfolioSnapshot(
     }
 
     public PortfolioSnapshot {
+        // Copias defensivas: el snapshot debe ser una foto estable de lectura.
         positions = List.copyOf(positions);
         marketValuations = Map.copyOf(marketValuations);
     }
 
+    /**
+     * Busca la valoracion de mercado por simbolo normalizando a mayusculas.
+     */
     public Optional<PositionMarketValuation> marketValuationFor(String symbol) {
         if (symbol == null) {
             return Optional.empty();

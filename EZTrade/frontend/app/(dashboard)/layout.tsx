@@ -33,9 +33,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="min-h-screen">
       <Sidebar />
-      {/* Se reserva el ancho de la barra lateral fija para que el contenido no quede debajo. */}
-      <main className="pl-64">
-        <div className="p-8">{children}</div>
+      <main className="md:pl-64">
+        <div className="px-4 pb-24 pt-20 sm:px-6 md:p-8">{children}</div>
       </main>
     </div>
   )

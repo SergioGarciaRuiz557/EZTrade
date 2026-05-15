@@ -1,0 +1,43 @@
+@startuml
+!include ../../common/eztrade-style.puml
+
+title EZTrade Backend - Flujo de peticion HTTP
+
+actor "Cliente autenticado" as Client
+participant "Tomcat / Spring MVC\nserver.port=8088" as Tomcat
+participant "CorsConfigurationSource" as Cors
+participant "JwtAuthFilter" as JwtFilter
+participant "UserDetailsService\nLoadUserForSecurityAdapter" as UserDetails
+participant "UserAccessFilter" as AccessFilter
+participant "REST Controller" as Controller
+participant "Servicio de caso de uso" as Service
+participant "Agregado de dominio" as Domain
+participant "Adaptador de repositorio" as Repo
+database "MySQL" as Db
+
+Client -> Tomcat : peticion HTTP REST\nAuthorization: Bearer JWT
+Tomcat -> Cors : valida origenes configurados
+Cors --> Tomcat : allowed / rejected
+Tomcat -> JwtFilter : filter chain
+JwtFilter -> UserDetails : carga usuario desde user :: api
+UserDetails --> JwtFilter : UserDetails
+JwtFilter -> JwtFilter : validate token\nset SecurityContext
+JwtFilter -> AccessFilter : continue chain
+AccessFilter -> AccessFilter : owner-level access checks\nwhere applicable
+AccessFilter -> Controller : route to controller
+Controller -> Service : call port/use case
+Service -> Domain : aplica invariantes
+Service -> Repo : load/save through port
+Repo -> Db : Spring Data JPA
+Db --> Repo : datos de entidad
+Repo --> Service : domain model
+Service --> Controller : result DTO source
+Controller --> Client : respuesta JSON
+
+note bottom
+Evidencia: AuthenticationConfig, JwtAuthFilter, UserAccessFilter,
+controladores, servicios, adaptadores de repositorio y application.properties.
+Los endpoints publicos /api/user/register, /auth/login y /ws estan marcados como permitAll.
+end note
+
+@enduml
