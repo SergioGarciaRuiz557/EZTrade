@@ -11,7 +11,7 @@ import { formatCurrency, cn } from "@/lib/utils"
 import { Search, Loader2, TrendingUp, Building2, Globe, DollarSign, BarChart3, Store } from "lucide-react"
 import Link from "next/link"
 
-function InstrumentDetails({ symbol, onClose }: { symbol: string; onClose: () => void }) {
+function InstrumentDetails({ symbol }: { symbol: string }) {
   // Carga detalle y precio del instrumento seleccionado dentro del dialogo.
   const [overview, setOverview] = useState<InstrumentOverview | null>(null)
   const [price, setPrice] = useState<MarketPrice | null>(null)
@@ -22,23 +22,36 @@ function InstrumentDetails({ symbol, onClose }: { symbol: string; onClose: () =>
     let cancelled = false
 
     const fetchData = async () => {
-      try {
-        const [overviewData, priceData] = await Promise.all([
-          marketApi.getOverview(symbol),
-          marketApi.getPrice(symbol),
-        ])
-        if (!cancelled) {
-          setOverview(overviewData)
-          setPrice(priceData)
+      const [overviewResult, priceResult] = await Promise.allSettled([
+        marketApi.getOverview(symbol),
+        marketApi.getPrice(symbol),
+      ])
+
+      if (!cancelled) {
+        if (overviewResult.status === "fulfilled") {
+          setOverview(overviewResult.value)
+        } else if (priceResult.status === "fulfilled") {
+          setOverview({
+            symbol,
+            name: symbol,
+            sector: "",
+            industry: "",
+            marketCap: 0,
+            peRatio: 0,
+          })
         }
-      } catch {
-        // Handle error silently
-      } finally {
-        if (!cancelled) setLoading(false)
+
+        if (priceResult.status === "fulfilled") {
+          setPrice(priceResult.value)
+        }
+
+        setLoading(false)
       }
     }
 
     setLoading(true)
+    setOverview(null)
+    setPrice(null)
     fetchData()
 
     return () => {
@@ -266,13 +279,18 @@ export default function MarketPage() {
       )}
 
       {/* Detail Dialog */}
-      <Dialog open={!!selectedSymbol} onOpenChange={() => setSelectedSymbol(null)}>
+      <Dialog
+        open={!!selectedSymbol}
+        onOpenChange={(open) => {
+          if (!open) setSelectedSymbol(null)
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Detalle del instrumento</DialogTitle>
           </DialogHeader>
           {selectedSymbol && (
-            <InstrumentDetails symbol={selectedSymbol} onClose={() => setSelectedSymbol(null)} />
+            <InstrumentDetails symbol={selectedSymbol} />
           )}
         </DialogContent>
       </Dialog>
