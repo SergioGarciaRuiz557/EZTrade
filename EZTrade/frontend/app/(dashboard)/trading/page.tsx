@@ -46,7 +46,7 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-// Refresca caches relacionadas tras ejecutar acciones de trading.
+// Refresca caches relacionadas tras crear, ejecutar o cancelar acciones de trading.
 function refreshTradingData() {
   mutate("orders")
   mutate("portfolio")
@@ -54,7 +54,7 @@ function refreshTradingData() {
 }
 
 // Formulario para crear ordenes de compra usando el precio actual del mercado.
-function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
+function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string; onOrderCreated: () => void }) {
   const [symbol, setSymbol] = useState("")
   const [quantity, setQuantity] = useState("")
   const [marketPrice, setMarketPrice] = useState<MarketPrice | null>(null)
@@ -117,7 +117,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
     }
   }
 
-  // Crea la orden BUY tras validar simbolo y cantidad.
+  // Crea una orden BUY pendiente tras validar simbolo y cantidad.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     const nextSymbol = normalizeSymbol(symbol)
@@ -128,21 +128,24 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
     try {
       const price = marketPrice ?? await marketApi.getPrice(nextSymbol)
       setMarketPrice(price)
-      await tradingApi.buyFromMarket({
+      await tradingApi.placeOrder({
         symbol: nextSymbol,
+        side: "BUY",
         quantity: nextQuantity,
+        price: price.price,
       })
       setQuantity("")
       refreshTradingData()
       toast({
-        title: "Compra enviada",
-        description: `${nextSymbol} se compro al precio validado por el servidor`,
+        title: "Orden creada",
+        description: `${nextSymbol} queda pendiente con fondos reservados. Ejecutala o cancelala desde Ordenes.`,
         variant: "success",
       })
+      onOrderCreated()
     } catch (error) {
       toast({
-        title: "No se pudo comprar",
-        description: getErrorMessage(error, "El backend rechazo la compra"),
+        title: "No se pudo crear la orden",
+        description: getErrorMessage(error, "El backend rechazo la orden"),
         variant: "destructive",
       })
     } finally {
@@ -162,7 +165,7 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
           <ShoppingCart className="h-5 w-5 text-success" />
           Preparar compra
         </CardTitle>
-        <CardDescription>Compra al mercado con precio calculado por el servidor</CardDescription>
+        <CardDescription>Crea una orden pendiente usando el precio actual</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -219,10 +222,10 @@ function BuyOrderForm({ initialSymbol }: { initialSymbol: string }) {
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Procesando...
+                Creando...
               </>
             ) : (
-              `Comprar ${normalizeSymbol(symbol) || "..."}`
+              `Crear orden ${normalizeSymbol(symbol) || "..."}`
             )}
           </Button>
         </form>
@@ -455,7 +458,7 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
 }
 
 // Lista y compra ofertas de venta publicadas por otros usuarios.
-function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
+function MarketplaceOffers({ initialSymbol, onOrderCreated }: { initialSymbol: string; onOrderCreated: () => void }) {
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState("")
   const [actionLoading, setActionLoading] = useState<number | null>(null)
@@ -469,7 +472,7 @@ function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
   }, [initialSymbol])
 
   // La key incluye el filtro para que SWR cachee resultados por simbolo.
-  const { data: offers, isLoading, mutate: refreshOffers } = useSWR<TradeOrder[]>(
+  const { data: offers, isLoading } = useSWR<TradeOrder[]>(
     ["sell-offers", filter],
     () => tradingApi.getSellOffers(filter || undefined)
   )
@@ -480,22 +483,27 @@ function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
     setFilter(normalizeSymbol(query))
   }
 
-  // Compra una oferta concreta y refresca wallet, portfolio, ordenes y marketplace.
+  // Crea una orden BUY pendiente al precio de la oferta seleccionada.
   const handleBuyOffer = async (offer: TradeOrder) => {
     setActionLoading(offer.id)
     try {
-      await tradingApi.buySellOffer(offer.id)
-      refreshOffers()
+      await tradingApi.placeOrder({
+        symbol: offer.symbol,
+        side: "BUY",
+        quantity: offer.quantity,
+        price: offer.price,
+      })
       refreshTradingData()
       toast({
-        title: "Oferta comprada",
-        description: `${offer.symbol} se compro correctamente`,
+        title: "Orden creada",
+        description: `${offer.symbol} queda pendiente con fondos reservados. Ejecutala o cancelala desde Ordenes.`,
         variant: "success",
       })
+      onOrderCreated()
     } catch (error) {
       toast({
-        title: "No se pudo comprar la oferta",
-        description: getErrorMessage(error, "El backend rechazo la operacion"),
+        title: "No se pudo crear la orden",
+        description: getErrorMessage(error, "El backend rechazo la orden"),
         variant: "destructive",
       })
     } finally {
@@ -582,7 +590,7 @@ function MarketplaceOffers({ initialSymbol }: { initialSymbol: string }) {
                     ) : (
                       <>
                         <ShoppingCart className="mr-2 h-4 w-4" />
-                        Comprar
+                        Crear orden
                       </>
                     )}
                   </Button>
@@ -830,7 +838,7 @@ export default function TradingPage() {
 
         <TabsContent value="buy">
           <div className="max-w-2xl">
-            <BuyOrderForm initialSymbol={initialSymbol} />
+            <BuyOrderForm initialSymbol={initialSymbol} onOrderCreated={() => setActiveTab("orders")} />
           </div>
         </TabsContent>
 
@@ -841,7 +849,7 @@ export default function TradingPage() {
         </TabsContent>
 
         <TabsContent value="marketplace">
-          <MarketplaceOffers initialSymbol={initialSymbol} />
+          <MarketplaceOffers initialSymbol={initialSymbol} onOrderCreated={() => setActiveTab("orders")} />
         </TabsContent>
 
         <TabsContent value="orders">

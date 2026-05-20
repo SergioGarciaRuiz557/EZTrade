@@ -435,7 +435,7 @@ export default function HomePage() {
     setBuyQuantity("1")
   }
 
-  // Valida y envia una orden de compra desde la portada sin pasar por la pantalla Trading.
+  // Valida y crea una orden de compra pendiente desde la portada sin pasar por la pantalla Trading.
   const handleBuyFromHome = async () => {
     if (!selectedAsset) return
 
@@ -448,22 +448,24 @@ export default function HomePage() {
 
     setIsBuying(true)
     try {
-      await tradingApi.buyFromMarket({
+      await tradingApi.placeOrder({
         symbol: selectedAsset.symbol,
+        side: "BUY",
         quantity: parsedQuantity,
+        price: selectedAsset.price,
       })
 
       toast({
-        title: "Compra enviada",
-        description: `${selectedAsset.symbol} se compro al precio validado por el servidor`,
+        title: "Orden creada",
+        description: `${selectedAsset.symbol} queda pendiente con fondos reservados. Ejecutala o cancelala desde Ordenes.`,
         variant: "success",
       })
       setSelectedAsset(null)
-      router.push("/dashboard")
+      router.push("/trading?tab=orders")
     } catch (error) {
       toast({
-        title: "No se pudo comprar",
-        description: getErrorMessage(error, "El backend rechazo la compra"),
+        title: "No se pudo crear la orden",
+        description: getErrorMessage(error, "El backend rechazo la orden"),
         variant: "destructive",
       })
     } finally {
@@ -830,10 +832,10 @@ export default function HomePage() {
               {isBuying ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Comprando...
+                  Creando...
                 </>
               ) : (
-                "Comprar y ver dashboard"
+                "Crear orden y ver ordenes"
               )}
             </Button>
           </DialogFooter>
