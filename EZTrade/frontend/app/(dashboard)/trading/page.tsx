@@ -268,7 +268,7 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
         setMarketPrice(data)
         setPrice((current) => current || data.price.toString())
       })
-      .catch(() => {
+      .catch((error) => {
         if (!cancelled) {
           setMarketPrice(null)
           toast({
