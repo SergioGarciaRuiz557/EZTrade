@@ -485,7 +485,9 @@ export default function HomePage() {
       <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-40">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <BarChart3 className="w-8 h-8 text-primary" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+              <TrendingUp className="h-5 w-5 text-primary-foreground" />
+            </div>
             <span className="text-xl font-bold">EZTrade</span>
           </div>
           <nav className="flex items-center gap-4">
