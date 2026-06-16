@@ -22,9 +22,31 @@ import {
 } from "@/components/ui/select"
 import { toast } from "@/components/ui/toaster"
 import { formatCurrency, formatNumber, formatDate, cn } from "@/lib/utils"
-import { DollarSign, LineChart, Loader2, Play, Search, ShoppingCart, Store, Tags, X } from "lucide-react"
+import {
+  AlertTriangle,
+  DollarSign,
+  LineChart,
+  Loader2,
+  Play,
+  Search,
+  ShoppingCart,
+  Store,
+  Tags,
+  X,
+} from "lucide-react"
 
 type TradingTab = "buy" | "sell" | "marketplace" | "orders"
+
+interface PositionAccumulator {
+  symbol: string
+  quantity: number
+  averageCost: number
+  realizedPnl: number
+  updatedAt: string
+}
+
+const MARKET_DATA_UNAVAILABLE_MESSAGE =
+  "Alpha Vantage no esta disponible. No se puede consultar el precio real de mercado ahora mismo."
 
 // Normaliza simbolos para que busquedas y ordenes usen el formato esperado por el backend.
 function normalizeSymbol(value: string) {
@@ -37,13 +59,113 @@ function parsePositiveNumber(value: string) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
 }
 
-// Extrae mensajes de errores lanzados por la capa API y usa un texto seguro si no hay detalle.
-function getErrorMessage(error: unknown, fallback: string) {
+function toFiniteNumber(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0
+}
+
+function getOrderTimestamp(order: TradeOrder) {
+  const timestamp = new Date(order.executedAt || order.createdAt).getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+function buildPortfolioFromOrders(orders: TradeOrder[] | undefined): Portfolio | null {
+  if (!orders) return null
+
+  const positionsBySymbol = new Map<string, PositionAccumulator>()
+  const executedOrders = orders
+    .filter((order) => order.status === "EXECUTED")
+    .slice()
+    .sort((a, b) => getOrderTimestamp(a) - getOrderTimestamp(b))
+
+  executedOrders.forEach((order) => {
+    const symbol = normalizeSymbol(order.symbol)
+    const quantity = toFiniteNumber(order.quantity)
+    const price = toFiniteNumber(order.price)
+    if (!symbol || quantity <= 0 || price <= 0) return
+
+    const current = positionsBySymbol.get(symbol) || {
+      symbol,
+      quantity: 0,
+      averageCost: 0,
+      realizedPnl: 0,
+      updatedAt: order.executedAt || order.createdAt,
+    }
+
+    if (order.side === "BUY") {
+      const nextQuantity = current.quantity + quantity
+      const nextCost = current.quantity * current.averageCost + quantity * price
+      current.quantity = nextQuantity
+      current.averageCost = nextQuantity > 0 ? nextCost / nextQuantity : 0
+    } else {
+      const soldQuantity = Math.min(quantity, current.quantity)
+      current.realizedPnl += (price - current.averageCost) * soldQuantity
+      current.quantity = Math.max(0, current.quantity - soldQuantity)
+      if (current.quantity === 0) current.averageCost = 0
+    }
+
+    current.updatedAt = order.executedAt || order.createdAt
+    positionsBySymbol.set(symbol, current)
+  })
+
+  const positionStates = Array.from(positionsBySymbol.values())
+  const positions = positionStates
+    .filter((position) => position.quantity > 0)
+    .map((position) => ({
+      symbol: position.symbol,
+      quantity: position.quantity,
+      averageCost: position.averageCost,
+      realizedPnl: position.realizedPnl,
+      updatedAt: position.updatedAt,
+    }))
+    .sort((a, b) => a.symbol.localeCompare(b.symbol))
+
+  return {
+    owner: orders[0]?.owner || "",
+    cashAvailable: 0,
+    totalCostBasis: positions.reduce((total, position) => total + position.quantity * position.averageCost, 0),
+    totalRealizedPnl: positionStates.reduce((total, position) => total + position.realizedPnl, 0),
+    positions,
+  }
+}
+
+function getErrorText(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: unknown }).message
-    if (typeof message === "string" && message.trim()) return message
+    if (typeof message === "string") return message
   }
+  return ""
+}
+
+function isMarketDataError(error: unknown) {
+  const message = getErrorText(error).toLowerCase()
+  return (
+    message.includes("alpha vantage") ||
+    message.includes("alphavantage") ||
+    message.includes("api key") ||
+    message.includes("api call frequency") ||
+    message.includes("demo") ||
+    message.includes("premium") ||
+    (message.includes("no se puede validar") && message.includes("precio actual")) ||
+    (message.includes("no se pudo consultar") && message.includes("precio"))
+  )
+}
+
+// Extrae mensajes de errores lanzados por la capa API y usa un texto seguro si no hay detalle.
+function getErrorMessage(error: unknown, fallback: string) {
+  if (isMarketDataError(error)) return MARKET_DATA_UNAVAILABLE_MESSAGE
+
+  const message = getErrorText(error)
+  if (message.trim()) return message
   return fallback
+}
+
+function MarketDataNotice({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex items-start gap-3 rounded-md border border-warning/40 bg-warning/10 p-3 text-sm text-muted-foreground">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+      <p>{children}</p>
+    </div>
+  )
 }
 
 // Refresca caches relacionadas tras crear, ejecutar o cancelar acciones de trading.
@@ -58,6 +180,7 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
   const [symbol, setSymbol] = useState("")
   const [quantity, setQuantity] = useState("")
   const [marketPrice, setMarketPrice] = useState<MarketPrice | null>(null)
+  const [marketNotice, setMarketNotice] = useState("")
   const [isPriceLoading, setIsPriceLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -68,22 +191,22 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
 
     setSymbol(nextSymbol)
     setMarketPrice(null)
+    setMarketNotice("")
 
     let cancelled = false
     setIsPriceLoading(true)
     marketApi
       .getPrice(nextSymbol)
       .then((data) => {
-        if (!cancelled) setMarketPrice(data)
+        if (!cancelled) {
+          setMarketPrice(data)
+          setMarketNotice("")
+        }
       })
       .catch((error) => {
         if (!cancelled) {
           setMarketPrice(null)
-          toast({
-            title: "Precio no disponible",
-            description: "No se pudo precargar el precio actual",
-            variant: "destructive",
-          })
+          setMarketNotice(getErrorMessage(error, MARKET_DATA_UNAVAILABLE_MESSAGE))
         }
       })
       .finally(() => {
@@ -101,17 +224,15 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
     if (!nextSymbol) return
 
     setSymbol(nextSymbol)
+    setMarketNotice("")
     setIsPriceLoading(true)
     try {
       const price = await marketApi.getPrice(nextSymbol)
       setMarketPrice(price)
+      setMarketNotice("")
     } catch (error) {
       setMarketPrice(null)
-      toast({
-        title: "Precio no disponible",
-        description: getErrorMessage(error, "No se pudo consultar el precio actual"),
-        variant: "destructive",
-      })
+      setMarketNotice(getErrorMessage(error, MARKET_DATA_UNAVAILABLE_MESSAGE))
     } finally {
       setIsPriceLoading(false)
     }
@@ -125,9 +246,12 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
     if (!nextSymbol || nextQuantity <= 0) return
 
     setIsSubmitting(true)
+    let priceResolved = Boolean(marketPrice)
     try {
       const price = marketPrice ?? await marketApi.getPrice(nextSymbol)
+      priceResolved = true
       setMarketPrice(price)
+      setMarketNotice("")
       await tradingApi.placeOrder({
         symbol: nextSymbol,
         side: "BUY",
@@ -143,10 +267,15 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
       })
       onOrderCreated()
     } catch (error) {
+      const marketDataFailure = !priceResolved || isMarketDataError(error)
+      const description = marketDataFailure
+        ? MARKET_DATA_UNAVAILABLE_MESSAGE
+        : getErrorMessage(error, "El backend rechazo la orden")
+      if (marketDataFailure) setMarketNotice(description)
       toast({
-        title: "No se pudo crear la orden",
-        description: getErrorMessage(error, "El backend rechazo la orden"),
-        variant: "destructive",
+        title: marketDataFailure ? "Precio no disponible" : "No se pudo crear la orden",
+        description,
+        variant: marketDataFailure ? "warning" : "destructive",
       })
     } finally {
       setIsSubmitting(false)
@@ -179,6 +308,7 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
                 onChange={(event) => {
                   setSymbol(event.target.value.toUpperCase())
                   setMarketPrice(null)
+                  setMarketNotice("")
                 }}
                 required
               />
@@ -187,6 +317,8 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
               </Button>
             </div>
           </div>
+
+          {marketNotice && <MarketDataNotice>{marketNotice}</MarketDataNotice>}
 
           <div className="space-y-2">
             <Label htmlFor="buy-quantity">Cantidad</Label>
@@ -236,17 +368,30 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
 
 // Formulario para publicar ofertas de venta desde posiciones existentes del portfolio.
 function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
-  const { data: portfolio, isLoading } = useSWR<Portfolio>("portfolio", () => portfolioApi.getPortfolio())
+  const {
+    data: portfolio,
+    error: portfolioError,
+    isLoading: portfolioLoading,
+  } = useSWR<Portfolio>("portfolio", () => portfolioApi.getPortfolio(), {
+    shouldRetryOnError: false,
+  })
+  const { data: orders, isLoading: ordersLoading } = useSWR<TradeOrder[]>("orders", () => tradingApi.getOrders())
   const [selectedSymbol, setSelectedSymbol] = useState("")
   const [quantity, setQuantity] = useState("")
   const [price, setPrice] = useState("")
   const [marketPrice, setMarketPrice] = useState<MarketPrice | null>(null)
+  const [marketNotice, setMarketNotice] = useState("")
   const [isPriceLoading, setIsPriceLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Solo se pueden vender posiciones con cantidad disponible.
-  const positions = portfolio?.positions?.filter((position) => position.quantity > 0) || []
+  const localPortfolio = buildPortfolioFromOrders(orders)
+  const displayedPortfolio = portfolio || localPortfolio
+  const usingLocalPortfolio = !portfolio && Boolean(localPortfolio)
+  const positions = displayedPortfolio?.positions?.filter((position) => position.quantity > 0) || []
   const selectedPosition = positions.find((position) => position.symbol === selectedSymbol)
+  const positionsLoading = !displayedPortfolio && (portfolioLoading || ordersLoading)
+  const portfolioMarketUnavailable = Boolean(portfolioError) || (portfolioLoading && usingLocalPortfolio)
 
   useEffect(() => {
     // Preselecciona el simbolo si la navegacion lo trae por query string.
@@ -258,27 +403,26 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
     // Al elegir posicion se consulta el precio de mercado para limitar el precio de la oferta.
     if (!selectedSymbol) {
       setMarketPrice(null)
+      setMarketNotice("")
       return
     }
 
     let cancelled = false
     setIsPriceLoading(true)
     setMarketPrice(null)
+    setMarketNotice("")
     marketApi
       .getPrice(selectedSymbol)
       .then((data) => {
         if (cancelled) return
         setMarketPrice(data)
+        setMarketNotice("")
         setPrice((current) => current || data.price.toString())
       })
       .catch((error) => {
         if (!cancelled) {
           setMarketPrice(null)
-          toast({
-            title: "Precio no disponible",
-            description: getErrorMessage(error, "No se pudo consultar el precio maximo para vender"),
-            variant: "destructive",
-          })
+          setMarketNotice(getErrorMessage(error, MARKET_DATA_UNAVAILABLE_MESSAGE))
         }
       })
       .finally(() => {
@@ -314,10 +458,12 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
         variant: "success",
       })
     } catch (error) {
+      const description = getErrorMessage(error, "El backend rechazo la venta")
+      if (isMarketDataError(error)) setMarketNotice(description)
       toast({
-        title: "No se pudo publicar la oferta",
-        description: getErrorMessage(error, "El backend rechazo la venta"),
-        variant: "destructive",
+        title: isMarketDataError(error) ? "Precio no disponible" : "No se pudo publicar la oferta",
+        description,
+        variant: isMarketDataError(error) ? "warning" : "destructive",
       })
     } finally {
       setIsSubmitting(false)
@@ -330,7 +476,13 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   const maxPrice = marketPrice?.price
   const exceedsPosition = Boolean(selectedPosition && quantityValue > selectedPosition.quantity)
   const exceedsMarket = Boolean(maxPrice && priceValue > maxPrice)
-  const canSubmit = Boolean(selectedPosition) && quantityValue > 0 && priceValue > 0 && !exceedsPosition && !exceedsMarket
+  const canSubmit =
+    Boolean(selectedPosition) &&
+    Boolean(marketPrice) &&
+    quantityValue > 0 &&
+    priceValue > 0 &&
+    !exceedsPosition &&
+    !exceedsMarket
 
   return (
     <Card>
@@ -342,12 +494,20 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
         <CardDescription>Ofrece acciones de tu portfolio a otros usuarios</CardDescription>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {positionsLoading ? (
           <div className="flex h-64 items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : positions.length > 0 ? (
           <form onSubmit={handleSubmit} className="space-y-6">
+            {portfolioMarketUnavailable && (
+              <MarketDataNotice>
+                Alpha Vantage no esta disponible. Se muestran tus posiciones guardadas, pero la publicacion de ventas
+                necesita validar el precio real de mercado.
+              </MarketDataNotice>
+            )}
+            {marketNotice && <MarketDataNotice>{marketNotice}</MarketDataNotice>}
+
             <div className="space-y-2">
               <Label htmlFor="sell-symbol">Posicion</Label>
               <Select
@@ -400,6 +560,7 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
                   placeholder="0.00"
                   value={price}
                   onChange={(event) => setPrice(event.target.value)}
+                  disabled={!selectedPosition || isPriceLoading || !marketPrice}
                   required
                 />
               </div>
@@ -429,6 +590,11 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
             )}
             {exceedsMarket && (
               <p className="text-sm text-destructive">El precio no puede superar el precio actual de mercado.</p>
+            )}
+            {selectedPosition && !isPriceLoading && !marketPrice && (
+              <p className="text-sm text-muted-foreground">
+                No se puede publicar la venta hasta recuperar el precio real de mercado.
+              </p>
             )}
 
             <Button
