@@ -10,25 +10,24 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 /**
- * Manejador global de excepciones para el contexto web.
+ * Global exception handler for the web context.
  * <p>
- * Intercepta las excepciones específicas de la capa de dominio y
- * las transforma en respuestas HTTP estandarizadas utilizando
- * {@link ProblemDetail}.
+ * Intercepts domain-specific exceptions and turns them into standardized HTTP
+ * responses using {@link ProblemDetail}.
  */
 @ControllerAdvice
 public class ExceptionHandlingAdvice {
 
     /**
-     * Maneja la excepción {@link UserExistsException} cuando se intenta registrar
-     * un usuario que ya existe en el sistema.
+     * Handles {@link UserExistsException} when attempting to register a user
+     * that already exists in the system.
      * <p>
-     * Devuelve una respuesta HTTP con estado <strong>409 CONFLICT</strong> y un cuerpo
-     * de tipo {@link ProblemDetail} que contiene un título descriptivo y
-     * el mensaje de la excepción como detalle.
+     * Returns an HTTP response with <strong>409 CONFLICT</strong> status and a
+     * {@link ProblemDetail} body containing a descriptive title and the exception
+     * message as the detail.
      *
-     * @param ex excepción lanzada cuando ya existe un usuario con los mismos datos
-     * @return objeto {@link ProblemDetail} con la información del error
+     * @param ex exception thrown when a user with the same data already exists
+     * @return {@link ProblemDetail} object with the error information
      */
     @ExceptionHandler(UserExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
@@ -41,15 +40,15 @@ public class ExceptionHandlingAdvice {
     }
 
     /**
-     * Maneja la excepción {@link UserNotFoundException} cuando se intenta acceder
-     * a un usuario que no existe en el sistema.
+     * Handles {@link UserNotFoundException} when trying to access a user that
+     * does not exist in the system.
      * <p>
-     * Devuelve una respuesta HTTP con estado <strong>404 NOT FOUND</strong> y un cuerpo
-     * de tipo {@link ProblemDetail} que contiene un título descriptivo y
-     * el mensaje de la excepción como detalle.
+     * Returns an HTTP response with <strong>404 NOT FOUND</strong> status and a
+     * {@link ProblemDetail} body containing a descriptive title and the exception
+     * message as the detail.
      *
-     * @param ex excepción lanzada cuando no se encuentra un usuario con los datos proporcionados
-     * @return objeto {@link ProblemDetail} con la información del error
+     * @param ex exception thrown when no user is found with the provided data
+     * @return {@link ProblemDetail} object with the error information
      */
     @ExceptionHandler(UserNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)

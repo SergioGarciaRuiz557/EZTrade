@@ -12,41 +12,41 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repositorio Spring Data JPA para la entidad {@link TradeOrderJpaEntity}.
+ * Spring Data JPA repository for {@link TradeOrderJpaEntity}.
  */
 public interface SpringDataTradeOrderRepository extends JpaRepository<TradeOrderJpaEntity, Long> {
 
     /**
-     * Recupera todas las ordenes cuyo propietario coincide con el valor indicado.
+     * Retrieves every order whose owner matches the provided value.
      *
-     * @param owner propietario de las ordenes
-     * @return lista de entidades de orden
+     * @param owner order owner
+     * @return order entity list
      */
     List<TradeOrderJpaEntity> findByOwner(String owner);
 
     /**
-     * Carga una orden con bloqueo pesimista de escritura.
+     * Loads an order with a pessimistic write lock.
      * <p>
-     * Se usa al comprar una oferta SELL para evitar que dos compradores ejecuten
-     * la misma oferta pendiente al mismo tiempo.
+     * Used when buying a SELL offer to prevent two buyers from executing the
+     * same pending offer at the same time.
      *
-     * @param id id de la orden que se quiere bloquear
-     * @return orden encontrada, si existe
+     * @param id id of the order to lock
+     * @return found order, when it exists
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from TradeOrderJpaEntity o where o.id = :id")
     Optional<TradeOrderJpaEntity> findByIdForUpdate(@Param("id") Long id);
 
     /**
-     * Busca todas las ofertas SELL pendientes que no pertenecen al comprador.
+     * Finds all pending SELL offers that do not belong to the buyer.
      * <p>
-     * Se usa para listar el marketplace sin filtro de simbolo.
+     * Used to list the marketplace without a symbol filter.
      */
     List<TradeOrderJpaEntity> findBySideAndStatusAndOwnerNot(OrderSide side, OrderStatus status, String owner);
 
     /**
-     * Busca ofertas SELL pendientes de un simbolo concreto excluyendo al propio
-     * comprador.
+     * Finds pending SELL offers for a concrete symbol, excluding the buyer's own
+     * offers.
      */
     List<TradeOrderJpaEntity> findBySideAndStatusAndSymbolAndOwnerNot(
             OrderSide side,
@@ -56,9 +56,9 @@ public interface SpringDataTradeOrderRepository extends JpaRepository<TradeOrder
     );
 
     /**
-     * Busca ofertas SELL pendientes de un vendedor para un simbolo.
+     * Finds a seller's pending SELL offers for a symbol.
      * <p>
-     * Sirve para calcular cuantas acciones tiene ya comprometidas en ofertas.
+     * Used to calculate how many shares are already committed in offers.
      */
     List<TradeOrderJpaEntity> findBySideAndStatusAndOwnerAndSymbol(
             OrderSide side,
@@ -68,10 +68,10 @@ public interface SpringDataTradeOrderRepository extends JpaRepository<TradeOrder
     );
 
     /**
-     * Recupera las ordenes ejecutadas de un usuario para un simbolo.
+     * Retrieves a user's executed orders for a symbol.
      * <p>
-     * Trading las usa para calcular la posicion neta sin depender directamente
-     * del modulo portfolio.
+     * Trading uses them to calculate the net position without depending
+     * directly on the portfolio module.
      */
     List<TradeOrderJpaEntity> findByStatusAndOwnerAndSymbol(OrderStatus status, String owner, String symbol);
 }

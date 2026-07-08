@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador email basico. Punto de extension para SMTP/proveedor externo.
+ * Basic email adapter. Extension point for SMTP/external provider integration.
  */
 @Component
 public class LoggingEmailNotificationAdapter implements EmailNotificationPort {

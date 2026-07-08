@@ -1,7 +1,7 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Backend - Diagrama de clases del dominio principal
+title EZTrade Backend - Main Domain Class Diagram
 
 class User {
   - Long id
@@ -171,9 +171,9 @@ NotificationMessage --> NotificationType
 MarketPrice *-- Symbol
 
 note bottom
-El modelo no es deliberadamente un diagrama de clases JPA.
-Muestra las clases de dominio usadas por servicios y mappers.
-Las entidades de persistencia se documentan en los diagramas de base de datos.
+The model is deliberately not a JPA class diagram.
+It shows the domain classes used by services and mappers.
+Persistence entities are documented in the database diagrams.
 end note
 
 @enduml

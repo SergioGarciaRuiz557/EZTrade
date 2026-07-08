@@ -1,57 +1,57 @@
-# Diagramas de secuencia
+# Sequence Diagrams
 
-Las secuencias recogen operaciones end-to-end que atraviesan frontend, controladores, servicios, eventos, persistencia y notificaciones. Se han derivado de clientes API en `frontend/features`, controladores REST, servicios de aplicacion, listeners de eventos y adaptadores de salida.
+The sequences capture end-to-end operations that cross frontend, controllers, services, events, persistence, and notifications. They were derived from API clients in `frontend/features`, REST controllers, application services, event listeners, and output adapters.
 
-## Secuencia de login JWT
+## JWT Login Sequence
 
-[![Secuencia de login JWT](./rendered/auth-login-sequence.png)](./rendered/auth-login-sequence.svg)
+[![JWT login sequence](./rendered/auth-login-sequence.png)](./rendered/auth-login-sequence.svg)
 
-**Proposito.** Mostrar login JWT y restauracion de datos de usuario.
+**Purpose.** Show JWT login and user-data restoration.
 
-**Como leerlo.** El frontend obtiene un JWT, lo guarda, decodifica el payload solo para UX y carga el usuario completo mediante `/api/user`.
+**How to read it.** The frontend obtains a JWT, stores it, decodes the payload only for UX, and loads the complete user through `/api/user`.
 
-**Valor.** Explica autenticacion, persistencia local de sesion y separacion entre validacion backend y experiencia frontend.
+**Value.** Explains authentication, local session persistence, and separation between backend validation and frontend experience.
 
-## Secuencia de compra directa al mercado
+## Direct Market Buy Sequence
 
-[![Secuencia de compra directa al mercado](./rendered/buy-from-market-sequence.png)](./rendered/buy-from-market-sequence.svg)
+[![Direct market buy sequence](./rendered/buy-from-market-sequence.png)](./rendered/buy-from-market-sequence.svg)
 
-**Proposito.** Modelar la compra directa al mercado.
+**Purpose.** Model the direct market buy.
 
-**Como leerlo.** Trading consulta precio, crea orden BUY, wallet reserva y liquida fondos, portfolio actualiza posicion/cash y notifications informa al usuario.
+**How to read it.** Trading queries price, creates a BUY order, wallet reserves and settles funds, portfolio updates position/cash, and notifications informs the user.
 
-**Valor.** Es el caso critico mas completo para explicar colaboracion de modulos y eventos.
+**Value.** This is the most complete critical case for explaining module collaboration and events.
 
-## Secuencia de compra de oferta en marketplace
+## Marketplace Offer Purchase Sequence
 
-[![Secuencia de compra de oferta en marketplace](./rendered/marketplace-offer-purchase-sequence.png)](./rendered/marketplace-offer-purchase-sequence.svg)
+[![Marketplace offer purchase sequence](./rendered/marketplace-offer-purchase-sequence.png)](./rendered/marketplace-offer-purchase-sequence.svg)
 
-**Proposito.** Representar la compra de una oferta SELL entre usuarios.
+**Purpose.** Represent the purchase of a SELL offer between users.
 
-**Como leerlo.** El servicio bloquea la oferta con `findByIdForUpdate`, valida estado/precio/cobertura, crea BUY del comprador y ejecuta BUY + SELL para propagar efectos en wallet y portfolio.
+**How to read it.** The service locks the offer with `findByIdForUpdate`, validates status/price/coverage, creates the buyer BUY, and executes BUY + SELL to propagate effects to wallet and portfolio.
 
-**Valor.** Documenta concurrencia, consistencia y reglas de marketplace.
+**Value.** Documents concurrency, consistency, and marketplace rules.
 
-## Secuencia de transferencia de wallet
+## Wallet Transfer Sequence
 
-[![Secuencia de transferencia de wallet](./rendered/wallet-transfer-sequence.png)](./rendered/wallet-transfer-sequence.svg)
+[![Wallet transfer sequence](./rendered/wallet-transfer-sequence.png)](./rendered/wallet-transfer-sequence.svg)
 
-**Proposito.** Mostrar transferencia de efectivo entre usuarios.
+**Purpose.** Show cash transfer between users.
 
-**Como leerlo.** El controlador resuelve destinatario, `WalletService` bloquea cuentas en orden estable, persiste saldos y ledger, y publica eventos de cash disponible.
+**How to read it.** The controller resolves the recipient, `WalletService` locks accounts in stable order, persists balances and ledger, and publishes available-cash events.
 
-**Valor.** Explica atomicidad, idempotencia y actualizacion de proyecciones.
+**Value.** Explains atomicity, idempotency, and projection updates.
 
-## Secuencia de notificacion WebSocket
+## WebSocket Notification Sequence
 
-[![Secuencia de notificacion WebSocket](./rendered/notification-websocket-sequence.png)](./rendered/notification-websocket-sequence.svg)
+[![WebSocket notification sequence](./rendered/notification-websocket-sequence.png)](./rendered/notification-websocket-sequence.svg)
 
-**Proposito.** Mostrar como un evento de dominio acaba como toast en el frontend.
+**Purpose.** Show how a domain event ends as a frontend toast.
 
-**Como leerlo.** `DomainEventsListener` procesa despues de commit y en asincrono; `NotificationService` hace fan-out a email/push con logging, WebSocket e inbox.
+**How to read it.** `DomainEventsListener` processes after commit and asynchronously; `NotificationService` fans out to email/push with logging, WebSocket, and inbox.
 
-**Valor.** Conecta consistencia transaccional, mensajeria interna y experiencia near real-time.
+**Value.** Connects transactional consistency, internal messaging, and near real-time experience.
 
 ## Conclusion
 
-Las secuencias prueban que los flujos importantes no viven en una sola clase: se coordinan mediante puertos, repositorios, eventos y adaptadores. Esto facilita explicar trazabilidad funcional y riesgos de consistencia.
+The sequences prove that important flows do not live in a single class: they are coordinated through ports, repositories, events, and adapters. This makes it easier to explain functional traceability and consistency risks.

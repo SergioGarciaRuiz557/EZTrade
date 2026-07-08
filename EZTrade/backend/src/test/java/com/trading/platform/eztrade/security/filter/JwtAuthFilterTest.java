@@ -86,7 +86,7 @@ class JwtAuthFilterTest {
 
         jwtAuthFilter.doFilterInternal(request, response, filterChain);
 
-        // Verificamos la interacción con los colaboradores clave
+        // Verify the interaction with the key collaborators
         verify(jwtService).extractUsername(token);
         verify(userDetailsService).loadUserByUsername(email);
         verify(jwtService).isTokenValid(token, userDetails);

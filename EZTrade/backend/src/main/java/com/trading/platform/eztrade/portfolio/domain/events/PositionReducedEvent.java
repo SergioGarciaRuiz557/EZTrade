@@ -4,15 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento publicado cuando una SELL reduce una posicion sin cerrarla por
- * completo.
+ * Event published when a SELL reduces a position without fully closing it.
  *
- * @param owner usuario propietario
- * @param symbol simbolo reducido
- * @param quantity cantidad restante tras la venta
- * @param realizedPnlDelta PnL realizado por esta venta concreta
- * @param totalRealizedPnl PnL realizado acumulado de la posicion
- * @param occurredAt momento de publicacion del evento
+ * @param owner owning user
+ * @param symbol reduced symbol
+ * @param quantity remaining quantity after the sale
+ * @param realizedPnlDelta realized PnL for this specific sale
+ * @param totalRealizedPnl accumulated realized PnL for the position
+ * @param occurredAt event publication timestamp
  */
 public record PositionReducedEvent(
         String owner,

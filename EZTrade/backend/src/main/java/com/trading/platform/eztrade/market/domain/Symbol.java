@@ -3,17 +3,17 @@ package com.trading.platform.eztrade.market.domain;
 import java.util.Locale;
 
 /**
- * Value object que representa el símbolo (ticker) de un instrumento financiero.
+ * Value object that represents a financial instrument symbol (ticker).
  * <p>
- * Se valida que el ticker no sea vacío y que cumpla un formato sencillo:
- * letras/números con soporte de '.', '-' y '_' con una longitud máxima de 20 caracteres.
+ * Validates that the ticker is not blank and matches a simple format:
+ * letters/numbers with support for '.', '-' and '_' up to 20 characters.
  */
 public record Symbol(String value) {
 
     /**
-     * Constructor compacto que aplica validaciones de dominio sobre el valor del símbolo.
+     * Compact constructor that applies domain validations to the symbol value.
      *
-     * @throws InvalidSymbolException si el ticker es nulo, vacío o no cumple el patrón esperado.
+     * @throws InvalidSymbolException if the ticker is null, blank, or does not match the expected pattern
      */
     public Symbol {
         if (value == null || value.trim().isEmpty()) {
@@ -28,7 +28,7 @@ public record Symbol(String value) {
     }
 
     /**
-     * Fábrica estática para crear un nuevo {@link Symbol} a partir de un valor de texto.
+     * Static factory for creating a new {@link Symbol} from a text value.
      */
     public static Symbol of(String value) {
         return new Symbol(value);

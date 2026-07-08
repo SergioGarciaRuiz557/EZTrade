@@ -5,34 +5,33 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 /**
- * Proveedor de autenticación basado en JWT.
+ * JWT-based authentication provider.
  * <p>
- * Encapsula el acceso al puerto de carga de usuarios para integrarlo
- * con la infraestructura de seguridad de Spring.
+ * Encapsulates access to the user-loading port so it can be integrated with
+ * Spring Security infrastructure.
  */
 @Component
 public class JwtAuthenticationProvider {
 
     /**
-     * Puerto de aplicación encargado de cargar los datos de usuario
-     * necesarios para la autenticación.
+     * Application port responsible for loading the user data required for authentication.
      */
     private final LoadUserForSecurityPort userPort;
 
     /**
-     * Crea una nueva instancia del proveedor de autenticación JWT.
+     * Creates a new JWT authentication provider instance.
      *
-     * @param userPort puerto usado para obtener los detalles del usuario
+     * @param userPort port used to obtain the user's details
      */
     public JwtAuthenticationProvider(LoadUserForSecurityPort userPort) {
         this.userPort = userPort;
     }
 
     /**
-     * Carga los detalles de un usuario a partir de su nombre de usuario.
+     * Loads a user's details from its username.
      *
-     * @param username identificador del usuario (por ejemplo, email)
-     * @return detalles del usuario necesarios para la autenticación
+     * @param username user identifier (for example, email)
+     * @return user details required for authentication
      */
     public UserDetails loadByUsername(String username) {
         return userPort.loadByUsername(username);

@@ -12,11 +12,11 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
- * Adaptador de entrada del modulo notifications basado en eventos Spring.
+ * Notifications module input adapter based on Spring events.
  * <p>
- * Su unica responsabilidad es traducir eventos publicados dentro del proceso
- * a invocaciones del caso de uso de aplicacion, manteniendo separado el transporte
- * (Spring Events) de la logica de negocio de notificaciones.
+ * Its only responsibility is to translate events published inside the process
+ * into application use case invocations, keeping the transport (Spring Events)
+ * separate from notification business logic.
  */
 @Component
 public class DomainEventsListener {
@@ -28,9 +28,9 @@ public class DomainEventsListener {
     }
 
     /**
-     * Reacciona cuando una orden se registra y delega su procesamiento.
+     * Reacts when an order is placed and delegates its processing.
      *
-     * @param event evento emitido por trading al crear una orden
+     * @param event event emitted by trading when creating an order
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -39,9 +39,9 @@ public class DomainEventsListener {
     }
 
     /**
-     * Reacciona cuando una orden se ejecuta y delega su procesamiento.
+     * Reacts when an order is executed and delegates its processing.
      *
-     * @param event evento emitido por trading al ejecutar una orden
+     * @param event event emitted by trading when executing an order
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -50,9 +50,9 @@ public class DomainEventsListener {
     }
 
     /**
-     * Reacciona cuando una orden se cancela y delega su procesamiento.
+     * Reacts when an order is canceled and delegates its processing.
      *
-     * @param event evento emitido por trading al cancelar una orden
+     * @param event event emitted by trading when canceling an order
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -61,9 +61,9 @@ public class DomainEventsListener {
     }
 
     /**
-     * Reacciona cuando wallet reporta fondos insuficientes.
+     * Reacts when wallet reports insufficient funds.
      *
-     * @param event evento de fondos insuficientes
+     * @param event insufficient-funds event
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
@@ -72,9 +72,9 @@ public class DomainEventsListener {
     }
 
     /**
-     * Reacciona cuando portfolio publica una nueva valoracion agregada.
+     * Reacts when portfolio publishes a new aggregate valuation.
      *
-     * @param event evento de portfolio con datos de cash/coste/pnl
+     * @param event portfolio event with cash/cost/pnl data
      */
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)

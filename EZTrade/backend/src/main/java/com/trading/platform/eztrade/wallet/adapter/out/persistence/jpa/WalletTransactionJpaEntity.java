@@ -17,14 +17,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entidad JPA para una transacción del wallet (entrada del histórico de movimientos).
+ * JPA entity for a wallet transaction (movement-history entry).
  * <p>
- * Se ha renombrado desde "LedgerEntry" para mejorar la claridad del dominio. A nivel de base de datos se conserva el
- * nombre de tabla/índices para evitar una migración obligatoria.
+ * Renamed from "LedgerEntry" to improve domain clarity. At the database level,
+ * the table/index names are preserved to avoid a mandatory migration.
  */
 @Entity
 @Table(
-        // Mantenemos el nombre de tabla existente para no romper la base de datos sin migración.
+        // Keep the existing table name to avoid breaking the database without a migration.
         name = "wallet_ledger_entry",
         indexes = {
                 @Index(name = "idx_wallet_ledger_owner_occurred", columnList = "owner, occurredAt")

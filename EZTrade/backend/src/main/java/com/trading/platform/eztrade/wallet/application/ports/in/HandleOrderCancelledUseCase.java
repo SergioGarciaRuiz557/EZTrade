@@ -3,16 +3,16 @@ package com.trading.platform.eztrade.wallet.application.ports.in;
 import com.trading.platform.eztrade.trading.domain.events.OrderCancelledEvent;
 
 /**
- * Puerto de entrada (caso de uso) para reaccionar cuando una orden se cancela.
+ * Input port (use case) for reacting when an order is cancelled.
  * <p>
- * En el wallet se utiliza para liberar los fondos reservados asociados a esa orden.
+ * In the wallet, it is used to release the reserved funds associated with that order.
  */
 public interface HandleOrderCancelledUseCase {
 
     /**
-     * Maneja el evento de cancelación de orden.
+     * Handles the order-cancelled event.
      *
-     * @param event evento publicado por el módulo de trading.
+     * @param event event published by the trading module
      */
     void handle(OrderCancelledEvent event);
 }

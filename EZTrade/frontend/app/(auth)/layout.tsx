@@ -8,14 +8,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   const { token, isLoading } = useAuth()
   const router = useRouter()
 
-  // Las paginas de login/registro solo son visibles para usuarios sin sesion activa.
+  // Login/register pages are only visible to users without an active session.
   useEffect(() => {
     if (!isLoading && token) {
       router.push("/")
     }
   }, [token, isLoading, router])
 
-  // Mientras se restaura la sesion se muestra un indicador para evitar parpadeos de la pagina auth.
+  // While the session is restored, show an indicator to avoid auth page flicker.
   if (isLoading && token) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -24,7 +24,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     )
   }
 
-  // Si ya hay token, el efecto redirige y este layout no pinta el formulario.
+  // If a token already exists, the effect redirects and this layout does not render the form.
   if (token) {
     return null
   }

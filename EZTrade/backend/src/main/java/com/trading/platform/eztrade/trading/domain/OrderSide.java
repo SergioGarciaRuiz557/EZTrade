@@ -1,16 +1,15 @@
 package com.trading.platform.eztrade.trading.domain;
 
 /**
- * Tipo de orden dentro del dominio de trading.
+ * Order type within the trading domain.
  * <p>
- * Define la direccion economica de la operacion:
- * compra ({@link #BUY}) o venta ({@link #SELL}).
+ * Defines the economic direction of the operation: buy ({@link #BUY}) or sell ({@link #SELL}).
  */
 public enum OrderSide {
 
-    /** Orden de compra de un activo. */
+    /** Asset buy order. */
     BUY,
 
-    /** Orden de venta de un activo. */
+    /** Asset sell order. */
     SELL
 }

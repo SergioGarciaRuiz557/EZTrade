@@ -6,7 +6,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador de entrada que sincroniza el cash proyectado de portfolio con eventos del modulo wallet.
+ * Input adapter that synchronizes portfolio projected cash with wallet module events.
  */
 @Component
 public class WalletEventsListener {

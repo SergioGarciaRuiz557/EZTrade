@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/toaster"
 import { TrendingUp, Loader2 } from "lucide-react"
 
 export default function RegisterPage() {
-  // Formulario unico para mantener juntos los campos que se envian al backend.
+  // Single form object to keep together the fields sent to the backend.
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -25,12 +25,12 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const router = useRouter()
 
-  // Actualiza cualquier campo usando su atributo name, evitando handlers repetidos.
+  // Updates any field using its name attribute, avoiding repeated handlers.
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  // Valida datos minimos en cliente antes de crear la cuenta en el backend.
+  // Validates minimal client-side data before creating the account in the backend.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 

@@ -1,14 +1,14 @@
 package com.trading.platform.eztrade.wallet.application.ports.out;
 
 /**
- * Puerto de salida para publicar eventos de dominio.
+ * Output port for publishing domain events.
  * <p>
- * Se modela como interfaz para desacoplar la aplicación del mecanismo concreto de publicación (Spring events,
- * mensajería, etc.).
+ * Modeled as an interface to decouple the application from the concrete
+ * publication mechanism (Spring events, messaging, etc.).
  */
 public interface DomainEventPublisherPort {
 
-    /** Publica un evento (normalmente un record) para que otros componentes lo consuman. */
+    /** Publishes an event (usually a record) so other components can consume it. */
     void publish(Object event);
 }
 

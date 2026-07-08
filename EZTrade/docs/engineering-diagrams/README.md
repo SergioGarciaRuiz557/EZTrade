@@ -1,8 +1,8 @@
-# Diagramas de ingenieria de EZTrade
+# EZTrade Engineering Diagrams
 
-Esta carpeta contiene una documentacion visual de ingenieria inversa del proyecto EZTrade. Los diagramas se han derivado del codigo fuente, configuracion, pruebas y flujo de trabajo CI existentes; cuando no hay evidencia suficiente, la documentacion lo indica de forma explicita.
+This folder contains visual reverse-engineering documentation for the EZTrade project. The diagrams were derived from the existing source code, configuration, tests, and CI workflow; when there is not enough evidence, the documentation states it explicitly.
 
-## Estructura
+## Structure
 
 ```text
 docs/engineering-diagrams/
@@ -44,50 +44,50 @@ docs/engineering-diagrams/
     render-diagrams.ps1
 ```
 
-## Punto de entrada recomendado
+## Recommended Entry Point
 
-1. [Inventario tecnico](./00-inventory/REPOSITORY-REVERSE-ENGINEERING-INVENTORY.md)
-2. [Roadmap de diagramas](./00-inventory/DIAGRAM-ROADMAP.md)
-3. [Arquitectura](./01-architecture/ARCHITECTURE-DIAGRAMS.md)
+1. [Technical inventory](./00-inventory/REPOSITORY-REVERSE-ENGINEERING-INVENTORY.md)
+2. [Diagram roadmap](./00-inventory/DIAGRAM-ROADMAP.md)
+3. [Architecture](./01-architecture/ARCHITECTURE-DIAGRAMS.md)
 4. [Backend](./02-backend/BACKEND-DIAGRAMS.md)
 5. [Frontend](./03-frontend/FRONTEND-DIAGRAMS.md)
-6. [Base de datos](./04-database/DATABASE-DIAGRAMS.md)
-7. [Secuencias](./05-sequence/SEQUENCE-DIAGRAMS.md)
-8. [DevOps e infraestructura](./06-devops-infrastructure/DEVOPS-INFRASTRUCTURE-DIAGRAMS.md)
-9. [Calidad y operacion](./07-quality-operations/QUALITY-OPERATIONS-DIAGRAMS.md)
+6. [Database](./04-database/DATABASE-DIAGRAMS.md)
+7. [Sequences](./05-sequence/SEQUENCE-DIAGRAMS.md)
+8. [DevOps and infrastructure](./06-devops-infrastructure/DEVOPS-INFRASTRUCTURE-DIAGRAMS.md)
+9. [Quality and operations](./07-quality-operations/QUALITY-OPERATIONS-DIAGRAMS.md)
 
-## Regenerar diagramas
+## Regenerating Diagrams
 
-Los diagramas se renderizan con Docker usando la imagen `plantuml/plantuml:latest`. No se requiere una instalacion local de PlantUML.
+The diagrams are rendered with Docker using the `plantuml/plantuml:latest` image when a Docker daemon is available. If Docker is not running, the scripts can also use a local PlantUML jar through the `PLANTUML_JAR` environment variable, or a temporary `plantuml.jar` stored in the system temp directory.
 
-Desde la raiz del proyecto:
+From the project root:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File docs\engineering-diagrams\scripts\render-diagrams.ps1
 ```
 
-En Bash:
+In Bash:
 
 ```bash
 ./docs/engineering-diagrams/scripts/render-diagrams.sh
 ```
 
-La convencion del script es simple: cada carpeta `plantuml/` se renderiza hacia su carpeta hermana `rendered/`, generando un PNG y un SVG por cada `.puml`.
+The script convention is simple: each `plantuml/` folder is rendered into its sibling `rendered/` folder, generating one PNG and one SVG for each `.puml` file.
 
-## Convencion PNG -> SVG
+## PNG -> SVG Convention
 
-Los documentos Markdown usan esta forma:
+Markdown documents use this form:
 
 ```markdown
-[![Nombre del diagrama](./rendered/nombre-diagrama.png)](./rendered/nombre-diagrama.svg)
+[![Diagram name](./rendered/diagram-name.png)](./rendered/diagram-name.svg)
 ```
 
-En GitHub se ve el PNG incrustado y, al hacer clic, se abre el SVG para inspeccion con mayor calidad.
+On GitHub, the PNG is embedded and clicking it opens the SVG for higher-quality inspection.
 
-## Notas de evidencia
+## Evidence Notes
 
-- La arquitectura backend se basa en `backend/src/main/java`, `backend/pom.xml`, `application.properties` y los `package-info.java` de Spring Modulith.
-- La arquitectura frontend se basa en `frontend/app`, `frontend/features`, `frontend/components` y `frontend/lib`.
-- La base de datos se infiere desde entidades JPA; no hay migraciones Flyway/Liquibase.
-- La parte DevOps se basa en `../.github/workflows/maven.yml`, `.env.example` y la busqueda explicita de artefactos Docker/IaC/proxy.
-- No se han inventado Dockerfiles, entornos de produccion, reverse proxies ni FKs fisicas no presentes en el repositorio.
+- Backend architecture is based on `backend/src/main/java`, `backend/pom.xml`, `application.properties`, and the Spring Modulith `package-info.java` files.
+- Frontend architecture is based on `frontend/app`, `frontend/features`, `frontend/components`, and `frontend/lib`.
+- The database is inferred from JPA entities; there are no Flyway/Liquibase migrations.
+- The DevOps section is based on `../.github/workflows/maven.yml`, `.env.example`, `docker-compose.yml`, Dockerfiles, and explicit searches for IaC/proxy artifacts.
+- Production environments, reverse proxies, and physical FKs not present in the repository were not invented.

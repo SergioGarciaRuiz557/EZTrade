@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Controlador REST para consultar informacion de mercado.
+ * REST controller for querying market information.
  */
 @RestController
 @RequestMapping("/api/v1/market")

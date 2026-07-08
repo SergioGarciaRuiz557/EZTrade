@@ -1,75 +1,75 @@
-# Diagramas DevOps e infraestructura
+# DevOps and Infrastructure Diagrams
 
-Esta seccion documenta automatizacion, tiempo de ejecucion local, configuracion, observabilidad y limites de infraestructura. La evidencia procede de `../.github/workflows/maven.yml`, `.env.example`, `application.properties`, `backend/pom.xml` y la busqueda de artefactos Docker/IaC/proxy.
+This section documents automation, local runtime, configuration, observability, and infrastructure limits. The evidence comes from `../.github/workflows/maven.yml`, `.env.example`, `docker-compose.yml`, Dockerfiles, `application.properties`, `backend/pom.xml`, and the search for IaC/proxy artifacts.
 
-## Vista general del pipeline CI/CD
+## CI/CD Pipeline Overview
 
-[![Vista general del pipeline CI/CD](./rendered/cicd-pipeline-overview.png)](./rendered/cicd-pipeline-overview.svg)
+[![CI/CD pipeline overview](./rendered/cicd-pipeline-overview.png)](./rendered/cicd-pipeline-overview.svg)
 
-**Proposito.** Representar el flujo de trabajo real de GitHub Actions.
+**Purpose.** Represent the real GitHub Actions workflow.
 
-**Como leerlo.** El pipeline se activa en `push` y `pull_request` contra `main`, prepara JDK 23 Oracle con cache Maven y ejecuta `mvn -B clean verify` en `EZTrade/backend`.
+**How to read it.** The pipeline is triggered on `push` and `pull_request` against `main`, prepares Oracle JDK 23 with Maven cache, and runs `mvn -B clean verify` in `EZTrade/backend`.
 
-**Valor.** Da trazabilidad de la automatizacion existente sin exagerar su alcance.
+**Value.** Gives traceability for existing automation without exaggerating its scope.
 
-**Limitacion.** No hay compilacion/lint/pruebas de frontend, construccion Docker, publicacion de imagen ni despliegue.
+**Limitation.** There is no frontend build/lint/tests, CI Docker build, image publication, or deployment.
 
-## Flujo de compilacion, pruebas y empaquetado
+## Build, Test, and Package Flow
 
-[![Flujo de compilacion, pruebas y empaquetado](./rendered/build-test-package-flow.png)](./rendered/build-test-package-flow.svg)
+[![Build, test, and package flow](./rendered/build-test-package-flow.png)](./rendered/build-test-package-flow.svg)
 
-**Proposito.** Descomponer el flujo Maven verificado por CI.
+**Purpose.** Break down the Maven flow verified by CI.
 
-**Como leerlo.** `clean verify` compila, ejecuta pruebas y verifica arquitectura. El plugin de Spring Boot esta presente, pero no hay fase de publicacion o despliegue.
+**How to read it.** `clean verify` compiles, runs tests, and verifies architecture. The Spring Boot plugin is present, but there is no publication or deployment phase.
 
-**Valor.** Explica el nivel real de garantia automatizada en backend.
+**Value.** Explains the real level of automated backend assurance.
 
-## Topologia local en tiempo de ejecucion
+## Local Runtime Topology
 
-[![Topologia local en tiempo de ejecucion](./rendered/runtime-topology-local.png)](./rendered/runtime-topology-local.svg)
+[![Local runtime topology](./rendered/runtime-topology-local.png)](./rendered/runtime-topology-local.svg)
 
-**Proposito.** Mostrar la topologia local inferida desde configuracion.
+**Purpose.** Show the local topology defined by Docker Compose and completed by application configuration.
 
-**Como leerlo.** Next.js consume Spring Boot en `localhost:8088`; Spring Boot usa MySQL local, Alpha Vantage, cache Caffeine y access logs.
+**How to read it.** Compose starts `frontend`, `backend`, and `db`; the browser consumes Spring Boot at `localhost:8088`; Spring Boot uses the MySQL service `db`, Alpha Vantage, Caffeine cache, and access logs.
 
-**Valor.** Es util para memoria y onboarding porque explica como se comunican los procesos en desarrollo.
+**Value.** Useful for the report and onboarding because it explains how local development containers communicate.
 
-**Limitacion.** No hay Compose ni manifiestos; la topologia no representa contenedores de aplicacion.
+**Limitation.** The topology represents local development containers, not production infrastructure.
 
-## Evidencia de contenedorizacion Docker
+## Docker Containerization Evidence
 
-[![Evidencia de contenedorizacion Docker](./rendered/docker-containerization-evidence.png)](./rendered/docker-containerization-evidence.svg)
+[![Docker containerization evidence](./rendered/docker-containerization-evidence.png)](./rendered/docker-containerization-evidence.svg)
 
-**Proposito.** Distinguir entre Docker como herramienta documental y Docker como tiempo de ejecucion de aplicacion.
+**Purpose.** Document local application containerization and distinguish it from production deployment.
 
-**Como leerlo.** La parte izquierda marca artefactos no encontrados; la derecha muestra los scripts creados para renderizar PlantUML con Docker.
+**How to read it.** The diagram shows `docker-compose.yml`, backend/frontend Dockerfiles, the services they start, and the production/registry artifacts that are still not declared.
 
-**Valor.** Es una pieza honesta de arquitectura DevOps: evita presentar una contenedorizacion que el repositorio no tiene.
+**Value.** This is an honest DevOps architecture element: it recognizes local containerization without presenting it as production infrastructure.
 
-## Gestion de configuracion y secretos
+## Configuration and Secrets Management
 
-[![Gestion de configuracion y secretos](./rendered/configuration-secrets-management.png)](./rendered/configuration-secrets-management.svg)
+[![Configuration and secrets management](./rendered/configuration-secrets-management.png)](./rendered/configuration-secrets-management.svg)
 
-**Proposito.** Representar variables de entorno, defaults y consumidores.
+**Purpose.** Represent environment variables, defaults, and consumers.
 
-**Como leerlo.** `.env.example` documenta variables; `application.properties` define placeholders/defaults; frontend lee `NEXT_PUBLIC_*`.
+**How to read it.** `.env.example` documents variables; `application.properties` defines placeholders/defaults; frontend reads `NEXT_PUBLIC_*`.
 
-**Valor.** Ayuda a discutir seguridad de configuracion y preparacion para entornos.
+**Value.** Helps discuss configuration security and environment readiness.
 
-**Limitacion.** No hay vault, secretos de entorno CI documentados ni gestion declarativa de secretos productivos.
+**Limitation.** There is no vault, documented CI environment secrets, or declarative production secret management.
 
-## Observabilidad y logging
+## Observability and Logging
 
-[![Observabilidad y logging](./rendered/observability-logging.png)](./rendered/observability-logging.svg)
+[![Observability and logging](./rendered/observability-logging.png)](./rendered/observability-logging.svg)
 
-**Proposito.** Mostrar senales operativas presentes.
+**Purpose.** Show present operational signals.
 
-**Como leerlo.** Hay logs de acceso de Tomcat, registro de peticiones con payload/query, SLF4J y dependencias Actuator/Modulith observability.
+**How to read it.** There are Tomcat access logs, request logging with payload/query, SLF4J, and Actuator/Modulith observability dependencies.
 
-**Valor.** Permite explicar que existe una base de observabilidad local, pero no una plataforma completa.
+**Value.** Explains that there is a local observability base, but not a complete platform.
 
-**Limitacion.** No se ha encontrado Prometheus, trazas distribuidas, envio centralizado de logs, paneles ni alertas.
+**Limitation.** No Prometheus, distributed traces, centralized log shipping, dashboards, or alerts were found.
 
 ## Conclusion
 
-La dimension DevOps actual es real pero inicial: CI backend solido, configuracion local documentada y logs basicos; falta contenedorizacion de aplicacion, despliegue, frontend CI y observabilidad productiva. Esta lectura es valiosa porque convierte los huecos en trabajo tecnico pendiente y justificable.
+The current DevOps dimension is real but initial: solid backend CI, documented local Docker runtime, local configuration, and basic logs; deployment, frontend CI, CI image publication, and production observability are still missing. This reading is valuable because it turns gaps into justified technical follow-up work.

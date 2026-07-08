@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 /**
- * Adaptador websocket para notificaciones near real-time al usuario autenticado.
+ * Websocket adapter for near-real-time notifications to the authenticated user.
  */
 @Component
 public class WebSocketNotificationAdapter implements WebSocketNotificationPort {

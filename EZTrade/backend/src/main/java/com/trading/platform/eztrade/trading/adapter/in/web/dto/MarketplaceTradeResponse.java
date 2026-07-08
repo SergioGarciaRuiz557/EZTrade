@@ -3,13 +3,13 @@ package com.trading.platform.eztrade.trading.adapter.in.web.dto;
 import com.trading.platform.eztrade.trading.application.ports.in.BuySellOfferUseCase;
 
 /**
- * DTO de salida para una compra entre usuarios.
+ * Output DTO for a user-to-user purchase.
  * <p>
- * Devuelve las dos ordenes que representan la operacion completa:
- * la BUY del comprador y la SELL del vendedor.
+ * Returns the two orders that represent the complete operation: the buyer's BUY
+ * and the seller's SELL.
  *
- * @param buyerOrder orden creada y ejecutada para el comprador
- * @param sellerOrder oferta SELL ejecutada para el vendedor
+ * @param buyerOrder order created and executed for the buyer
+ * @param sellerOrder SELL offer executed for the seller
  */
 public record MarketplaceTradeResponse(
         TradeOrderResponse buyerOrder,
@@ -17,10 +17,10 @@ public record MarketplaceTradeResponse(
 ) {
 
     /**
-     * Convierte el resultado del caso de uso a una respuesta REST.
+     * Converts the use case result into a REST response.
      *
-     * @param result resultado de dominio/aplicacion de la compraventa
-     * @return DTO serializable para el cliente
+     * @param result domain/application result of the trade
+     * @return client-serializable DTO
      */
     public static MarketplaceTradeResponse from(BuySellOfferUseCase.MarketplaceTradeResult result) {
         return new MarketplaceTradeResponse(

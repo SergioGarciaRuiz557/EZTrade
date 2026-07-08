@@ -1,7 +1,7 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Backend - Flujo de eventos de dominio
+title EZTrade Backend - Domain Event Flow
 
 component "TradingService" as Trading EZ_BACKEND
 component "trading SpringDomainEventPublisher" as TradingPublisher
@@ -26,19 +26,19 @@ PortfolioTradingListener --> Portfolio : update positions
 PortfolioWalletListener --> Portfolio : update cash projection
 
 Portfolio --> PortfolioPublisher : PortfolioValuationUpdatedEvent\nPositionOpened/Closed/Changed
-TradingPublisher ..> NotificationsListener : eventos de orden
+TradingPublisher ..> NotificationsListener : order events
 WalletPublisher ..> NotificationsListener : InsufficientFundsEvent
 PortfolioPublisher ..> NotificationsListener : PortfolioValuationUpdatedEvent
-NotificationsListener --> Notifications : construye y envia mensaje
+NotificationsListener --> Notifications : builds and sends message
 
 note right of WalletListener
-OrderPlacedEvent se gestiona de forma sincronica en wallet:
+OrderPlacedEvent is handled synchronously in wallet:
 if BUY funds cannot be reserved, trading aborts.
 end note
 
 note bottom of NotificationsListener
-Las notificaciones se gestionan despues del commit con fallbackExecution=true
-y @Async. Esta evidencia procede de DomainEventsListener.java.
+Notifications are handled after commit with fallbackExecution=true
+and @Async. This evidence comes from DomainEventsListener.java.
 end note
 
 @enduml

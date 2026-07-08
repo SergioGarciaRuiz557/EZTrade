@@ -3,16 +3,16 @@ package com.trading.platform.eztrade.notifications.domain;
 import java.time.LocalDateTime;
 
 /**
- * Mensaje de notificacion normalizado para todos los canales.
+ * Normalized notification message for all channels.
  * <p>
- * Sirve como DTO interno del modulo para que email/push/websocket/inbox
- * consuman la misma estructura, independientemente del evento origen.
+ * Acts as the module's internal DTO so email, push, websocket, and inbox
+ * consume the same structure regardless of the source event.
  *
- * @param recipient identificador del destinatario (usuario/email)
- * @param type tipo funcional de la notificacion
- * @param title titulo breve orientado a UI/canal
- * @param body contenido descriptivo del evento
- * @param occurredAt instante en el que ocurrio el evento origen
+ * @param recipient recipient identifier (user/email)
+ * @param type functional notification type
+ * @param title short UI/channel-oriented title
+ * @param body descriptive event content
+ * @param occurredAt instant when the source event occurred
  */
 public record NotificationMessage(
         String recipient,

@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * DTO de salida para exponer la vista de portfolio de un usuario.
+ * Output DTO for exposing a user's portfolio view.
  */
 public record PortfolioResponse(
         String owner,

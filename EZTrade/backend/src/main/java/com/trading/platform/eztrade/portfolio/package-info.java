@@ -1,18 +1,18 @@
 /**
- * Modulo Portfolio (Cartera/Posiciones).
+ * Portfolio module (Holdings/Positions).
  * <p>
- * Responsabilidades principales:
+ * Main responsibilities:
  * <ul>
- *   <li>Mantener posiciones por usuario y simbolo (cantidad, coste medio y PnL realizado).</li>
- *   <li>Mantener una proyeccion local del cash disponible a partir de eventos de wallet.</li>
- *   <li>Reaccionar a eventos de ejecucion de ordenes emitidos por trading.</li>
- *   <li>Publicar eventos de cambios de posicion y valoracion de cartera.</li>
+ *   <li>Maintain positions by user and symbol (quantity, average cost, and realized PnL).</li>
+ *   <li>Maintain a local available-cash projection from wallet events.</li>
+ *   <li>React to order execution events emitted by trading.</li>
+ *   <li>Publish position change and portfolio valuation events.</li>
  * </ul>
  * <p>
- * Limites:
+ * Boundaries:
  * <ul>
- *   <li>No ejecuta ordenes (eso pertenece al modulo trading).</li>
- *   <li>Consulta precios de mercado solo a traves de la API publica del modulo market.</li>
+ *   <li>It does not execute orders (that belongs to the trading module).</li>
+ *   <li>It queries market prices only through the market module public API.</li>
  * </ul>
  */
 @ApplicationModule(

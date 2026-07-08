@@ -7,18 +7,18 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * DTO de salida para exponer una orden en la API REST.
+ * Output DTO for exposing an order through the REST API.
  *
- * @param id id de la orden
- * @param owner propietario
- * @param symbol simbolo del activo
- * @param side tipo de orden en texto
- * @param quantity cantidad
- * @param price precio unitario
- * @param total importe total (precio x cantidad)
- * @param status estado actual
- * @param createdAt fecha de creacion
- * @param executedAt fecha de ejecucion (si aplica)
+ * @param id order id
+ * @param owner owner
+ * @param symbol asset symbol
+ * @param side order side as text
+ * @param quantity quantity
+ * @param price unit price
+ * @param total total amount (price x quantity)
+ * @param status current status
+ * @param createdAt creation timestamp
+ * @param executedAt execution timestamp, when applicable
  */
 public record TradeOrderResponse(
         Long id,
@@ -34,10 +34,10 @@ public record TradeOrderResponse(
 ) {
 
     /**
-     * Convierte una entidad de dominio en DTO de salida.
+     * Converts a domain entity into an output DTO.
      *
-     * @param order agregado de dominio
-     * @return representacion serializable para API
+     * @param order domain aggregate
+     * @return API-serializable representation
      */
     public static TradeOrderResponse from(TradeOrder order) {
         return new TradeOrderResponse(

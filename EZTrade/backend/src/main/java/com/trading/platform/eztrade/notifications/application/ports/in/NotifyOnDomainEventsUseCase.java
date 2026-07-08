@@ -7,46 +7,46 @@ import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 import com.trading.platform.eztrade.wallet.domain.events.InsufficientFundsEvent;
 
 /**
- * Puerto de entrada de notifications para procesar eventos de dominio.
+ * Notifications input port for processing domain events.
  * <p>
- * Este contrato define que eventos externos pueden disparar notificaciones.
- * Las implementaciones deben limitarse a construir y despachar mensajes,
- * sin introducir logica de negocio de los modulos emisores.
+ * This contract defines which external events can trigger notifications.
+ * Implementations must be limited to building and dispatching messages without
+ * introducing business logic from the emitting modules.
  */
 public interface NotifyOnDomainEventsUseCase {
 
     /**
-     * Procesa el alta de una orden y genera la notificacion correspondiente.
+     * Processes order placement and generates the corresponding notification.
      *
-     * @param event evento de orden registrada
+     * @param event order placed event
      */
     void handle(OrderPlacedEvent event);
 
     /**
-     * Procesa la ejecucion de una orden y genera la notificacion correspondiente.
+     * Processes order execution and generates the corresponding notification.
      *
-     * @param event evento de orden ejecutada
+     * @param event order executed event
      */
     void handle(OrderExecutedEvent event);
 
     /**
-     * Procesa la cancelacion de una orden y genera la notificacion correspondiente.
+     * Processes order cancellation and generates the corresponding notification.
      *
-     * @param event evento de orden cancelada
+     * @param event order canceled event
      */
     void handle(OrderCancelledEvent event);
 
     /**
-     * Procesa un evento de fondos insuficientes del wallet.
+     * Processes an insufficient-funds event from wallet.
      *
-     * @param event evento del wallet con detalle de fondos insuficientes
+     * @param event wallet event with insufficient-funds details
      */
     void handle(InsufficientFundsEvent event);
 
     /**
-     * Procesa una actualizacion de valoracion de cartera.
+     * Processes a portfolio valuation update.
      *
-     * @param event evento de portfolio con metricas agregadas
+     * @param event portfolio event with aggregate metrics
      */
     void handle(PortfolioValuationUpdatedEvent event);
 }

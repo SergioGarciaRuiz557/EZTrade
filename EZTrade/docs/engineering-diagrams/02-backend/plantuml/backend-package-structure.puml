@@ -1,7 +1,7 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Backend - Estructura de paquetes y modulos
+title EZTrade Backend - Package and Module Structure
 
 package "com.trading.platform.eztrade" {
   component "EzTradeApplication\n@SpringBootApplication" as App EZ_BACKEND
@@ -32,29 +32,29 @@ package "com.trading.platform.eztrade" {
   }
 
   package "trading" {
-    component "domain\nTradeOrder, Money,\nQuantity, eventos" as TradingDomain EZ_DOMAIN
+    component "domain\nTradeOrder, Money,\nQuantity, events" as TradingDomain EZ_DOMAIN
     component "application\nTradingService + ports" as TradingApp
     component "adapter/in/web\nTradingController,\nMarketplaceController" as TradingIn
     component "adapter/out/persistence\nJPA repositories" as TradingPersistence
-    component "adapter/out/events\npublicador Spring" as TradingEvents
+    component "adapter/out/events\nSpring publisher" as TradingEvents
   }
 
   package "wallet" {
-    component "domain\nWalletAccount,\nWalletTransaction, eventos" as WalletDomain EZ_DOMAIN
+    component "domain\nWalletAccount,\nWalletTransaction, events" as WalletDomain EZ_DOMAIN
     component "application\nWalletService + ports" as WalletApp
     component "adapter/in/web\nWalletController" as WalletWeb
     component "adapter/in/events\nTradingEventsListener" as WalletEventIn
     component "adapter/out/persistence\nJPA repositories" as WalletPersistence
-    component "adapter/out/events\npublicador Spring" as WalletEvents
+    component "adapter/out/events\nSpring publisher" as WalletEvents
   }
 
   package "portfolio" {
-    component "domain\nPosition, CashProjection,\nPortfolioSnapshot, eventos" as PortfolioDomain EZ_DOMAIN
+    component "domain\nPosition, CashProjection,\nPortfolioSnapshot, events" as PortfolioDomain EZ_DOMAIN
     component "application\nPortfolioService + ports" as PortfolioApp
     component "adapter/in/web\nPortfolioController" as PortfolioWeb
     component "adapter/in/events\nTrading/Wallet listeners" as PortfolioEventIn
     component "adapter/out/persistence\nJPA repositories" as PortfolioPersistence
-    component "adapter/out/events\npublicador Spring" as PortfolioEvents
+    component "adapter/out/events\nSpring publisher" as PortfolioEvents
   }
 
   package "notifications" {
@@ -74,8 +74,8 @@ App --> PortfolioDomain
 App --> NotificationsDomain
 
 note bottom
-Evidencia: backend/src/main/java package tree, package-info.java module declarations,
-controladores, servicios de aplicacion, puertos, adaptadores y carpetas JPA.
+Evidence: backend/src/main/java package tree, package-info.java module declarations,
+controllers, application services, ports, adapters, and JPA folders.
 end note
 
 @enduml

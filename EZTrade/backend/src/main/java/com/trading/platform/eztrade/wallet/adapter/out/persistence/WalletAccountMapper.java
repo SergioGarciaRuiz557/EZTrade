@@ -4,10 +4,10 @@ import com.trading.platform.eztrade.wallet.adapter.out.persistence.jpa.WalletAcc
 import com.trading.platform.eztrade.wallet.domain.WalletAccount;
 
 /**
- * Mapper (paquete-privado) para traducir entre el modelo de dominio {@link WalletAccount} y la entidad JPA
- * {@link WalletAccountJpaEntity}.
+ * Package-private mapper for translating between the {@link WalletAccount}
+ * domain model and the {@link WalletAccountJpaEntity} JPA entity.
  * <p>
- * Se mantiene con visibilidad por defecto para que solo los adaptadores de persistencia lo usen.
+ * Kept with default visibility so only persistence adapters use it.
  */
 final class WalletAccountMapper {
 

@@ -33,28 +33,28 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Servicio de aplicación que implementa los casos de uso del módulo Wallet.
+ * Application service that implements the Wallet module use cases.
  * <p>
- * Responsabilidades:
+ * Responsibilities:
  * <ul>
- *   <li><strong>Reaccionar a eventos de trading</strong>:
+ *   <li><strong>React to trading events</strong>:
  *     <ul>
- *       <li>{@link #handle(OrderPlacedEvent)}: reservar fondos para BUY.</li>
- *       <li>{@link #handle(OrderCancelledEvent)}: liberar fondos reservados.</li>
- *       <li>{@link #handle(OrderExecutionRequestEvent)}: liquidar BUY/SELL.</li>
+ *       <li>{@link #handle(OrderPlacedEvent)}: reserve funds for BUY.</li>
+ *       <li>{@link #handle(OrderCancelledEvent)}: release reserved funds.</li>
+ *       <li>{@link #handle(OrderExecutionRequestEvent)}: settle BUY/SELL.</li>
  *     </ul>
  *   </li>
- *   <li><strong>Ajustes manuales</strong> (depósito/retiro/comisión) vía {@link AdjustWalletFundsUseCase}.</li>
- *   <li><strong>Auditoría</strong>: por cada cambio persiste una {@link WalletTransaction} con deltas y balances finales.</li>
- *   <li><strong>Publicación de eventos de dominio</strong> tras operaciones relevantes (reservado/liberado/liquidado o fondos insuficientes).</li>
+ *   <li><strong>Manual adjustments</strong> (deposit/withdrawal/fee) through {@link AdjustWalletFundsUseCase}.</li>
+ *   <li><strong>Auditing</strong>: every change persists a {@link WalletTransaction} with deltas and final balances.</li>
+ *   <li><strong>Domain event publishing</strong> after relevant operations (reserved/released/settled or insufficient funds).</li>
  * </ul>
  * <p>
- * <strong>Consistencia e idempotencia</strong>:
+ * <strong>Consistency and idempotency</strong>:
  * <ul>
- *   <li>Se ejecuta dentro de una transacción ({@link Transactional}) para que actualización de cuenta + ledger sea atómica.</li>
- *   <li>Intenta ser idempotente comprobando si ya existe una entrada de ledger con (owner, referenceId, movementType).
- *   Esto protege ante eventos duplicados o reintentos.</li>
- *   <li>La carga de cuenta usa un método "for update" para mitigar carreras cuando hay concurrencia sobre el mismo owner.</li>
+ *   <li>Runs inside a transaction ({@link Transactional}) so account update + ledger are atomic.</li>
+ *   <li>Attempts to be idempotent by checking whether a ledger entry already exists with (owner, referenceId, movementType).
+ *   This protects against duplicate events or retries.</li>
+ *   <li>Account loading uses a "for update" method to mitigate races when there is concurrency on the same owner.</li>
  * </ul>
  */
 @Service
@@ -84,7 +84,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
 
     @Override
     public void handle(OrderPlacedEvent event) {
-        // Solo las BUY requieren reservar efectivo. Las SELL no consumen efectivo en este módulo.
+        // Only BUY orders require cash reservation. SELL orders do not consume cash in this module.
         if (!"BUY".equalsIgnoreCase(event.side())) {
             return;
         }
@@ -93,22 +93,22 @@ public class WalletService implements HandleOrderPlacedUseCase,
         String orderRef = String.valueOf(event.orderId());
         BigDecimal amount = orderAmount(event.quantity(), event.price());
 
-        // Idempotencia: si ya existe una reserva para esa orden, no repetir.
+        // Idempotency: if a reservation already exists for this order, do not repeat it.
         if (ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.RESERVE)) {
             return;
         }
 
-        // Cargamos con bloqueo para evitar modificaciones concurrentes del mismo wallet.
+        // Load with a lock to avoid concurrent modifications of the same wallet.
         WalletAccount account = lockOrOpenAccount(owner);
         if (account.availableBalance().compareTo(amount) < 0) {
             publishInsufficientFunds(orderRef, owner, amount, account, "Available balance is not enough to reserve funds");
             throw new WalletDomainException("Insufficient wallet funds to reserve buy order " + orderRef);
         }
 
-        // Aplicamos el cambio de dominio y persistimos.
+        // Apply the domain change and persist it.
         WalletAccount updated = walletAccountRepository.save(account.reserve(amount));
 
-        // Registramos en el ledger con deltas explícitos para auditoría.
+        // Record explicit deltas in the ledger for auditing.
         ledgerEntryRepository.save(WalletTransaction.newEntry(
                 owner,
                 MovementType.RESERVE,
@@ -123,7 +123,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 now(event.occurredAt())
         ));
 
-        // Publicamos evento de dominio para que otros módulos reaccionen.
+        // Publish a domain event so other modules can react.
         eventPublisher.publish(new FundsReservedEvent(
                 orderRef,
                 owner,
@@ -140,7 +140,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
         String owner = validateOwner(event.owner());
         String orderRef = String.valueOf(event.orderId());
 
-        // Idempotencia: si ya se liberó anteriormente, salir.
+        // Idempotency: if it was already released earlier, exit.
         if (ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.RELEASE)) {
             return;
         }
@@ -149,12 +149,12 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 .findByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.RESERVE)
                 .orElse(null);
 
-        // Si no hay reserva registrada, no hay nada que liberar.
+        // If there is no recorded reservation, there is nothing to release.
         if (reserveEntry == null) {
             return;
         }
 
-        // Si ya se liquidó (BUY) no debemos liberar, porque los fondos ya se consumieron.
+        // If it was already settled (BUY), do not release it because the funds were already consumed.
         if (ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.SETTLEMENT_DEBIT)) {
             return;
         }
@@ -190,7 +190,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
 
     @Override
     public void handle(OrderExecutionRequestEvent event) {
-        // Normalizamos el side a enum y delegamos en el flujo correspondiente.
+        // Normalize side to an enum and delegate to the corresponding flow.
         Side side = parseSide(event.side());
         switch (side) {
             case BUY -> settleBuy(event);
@@ -215,7 +215,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
 
     @Override
     public void deposit(AdjustCommand command) {
-        // Ajuste manual: se registra en ledger y es idempotente por referenceId + MovementType.
+        // Manual adjustment: recorded in the ledger and idempotent by referenceId + MovementType.
         processManualCommand(command, MovementType.DEPOSIT, "Manual deposit", account -> account.deposit(command.amount()));
     }
 
@@ -324,7 +324,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
         String orderRef = String.valueOf(event.orderId());
         BigDecimal amount = orderAmount(event.quantity(), event.price());
 
-        // Idempotencia: si esta liquidación ya se aplicó, no repetir.
+        // Idempotency: if this settlement was already applied, do not repeat it.
         if (ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.SETTLEMENT_DEBIT)) {
             return;
         }
@@ -333,7 +333,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
                 .findByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.RESERVE)
                 .orElse(null);
 
-        // Validación adicional: debe existir una reserva previa y cubrir el importe ejecutado.
+        // Additional validation: a previous reservation must exist and cover the executed amount.
         if (reserveEntry == null || reserveEntry.amount().compareTo(amount) < 0) {
             WalletAccount account = lockOrOpenAccount(owner);
             publishInsufficientFunds(orderRef, owner, amount, account, "Reserved funds are not enough to settle buy order");
@@ -342,8 +342,8 @@ public class WalletService implements HandleOrderPlacedUseCase,
 
         WalletAccount workingAccount = lockOrOpenAccount(owner);
 
-        // En ocasiones la ejecución real puede ser inferior a lo estimado al reservar (p. ej. precio final menor).
-        // Esa diferencia se libera de nuevo al disponible.
+        // Sometimes the actual execution can be lower than the amount estimated at reservation time (for example, lower final price).
+        // That difference is released back to available balance.
         BigDecimal releaseDelta = reserveEntry.amount().subtract(amount);
         if (releaseDelta.compareTo(BigDecimal.ZERO) > 0
                 && !ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.RELEASE)) {
@@ -403,7 +403,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
         String orderRef = String.valueOf(event.orderId());
         BigDecimal amount = orderAmount(event.quantity(), event.price());
 
-        // Idempotencia: no abonar dos veces una misma venta.
+        // Idempotency: do not credit the same sale twice.
         if (ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(owner, orderRef, MovementType.SETTLEMENT_CREDIT)) {
             return;
         }
@@ -444,18 +444,18 @@ public class WalletService implements HandleOrderPlacedUseCase,
         BigDecimal amount = positive(command.amount(), "Amount");
         String referenceId = validateReference(command.referenceId());
 
-        // Guard clause para idempotencia ante reintentos.
+        // Guard clause for idempotency on retries.
         if (ledgerEntryRepository.existsByOwnerAndReferenceIdAndMovementType(owner, referenceId, movementType)) {
             return;
         }
 
-        // Bloqueo del wallet durante el ajuste.
+        // Lock the wallet during the adjustment.
         WalletAccount account = lockOrOpenAccount(owner);
-        // Aplicación de la regla de negocio (deposit/withdraw/fee) en el dominio.
+        // Apply the business rule (deposit/withdraw/fee) in the domain.
         WalletAccount updated = operator.apply(account);
         WalletAccount persisted = walletAccountRepository.save(updated);
 
-        // Deltas calculados desde estado anterior -> posterior para registrar en el ledger.
+        // Deltas calculated from previous -> next state for ledger recording.
         BigDecimal availableDelta = persisted.availableBalance().subtract(account.availableBalance());
         BigDecimal reservedDelta = persisted.reservedBalance().subtract(account.reservedBalance());
 
@@ -477,7 +477,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
     }
 
     private WalletAccount lockOrOpenAccount(String owner) {
-        // Si no existe aún en la base de datos, abrimos una cuenta nueva.
+        // If it does not exist in the database yet, open a new account.
         return walletAccountRepository.findByOwnerForUpdate(owner).orElseGet(() -> WalletAccount.open(owner));
     }
 
@@ -506,7 +506,7 @@ public class WalletService implements HandleOrderPlacedUseCase,
                                           BigDecimal requestedAmount,
                                           WalletAccount account,
                                           String reason) {
-        // Publicamos un evento en lugar de lanzar excepción para que el sistema pueda reaccionar (p. ej. rechazar orden).
+        // Publish an event instead of only throwing an exception so the system can react (for example, reject the order).
         eventPublisher.publish(new InsufficientFundsEvent(
                 orderRef,
                 owner,

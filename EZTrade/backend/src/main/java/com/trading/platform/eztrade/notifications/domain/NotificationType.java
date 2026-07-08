@@ -1,20 +1,20 @@
 package com.trading.platform.eztrade.notifications.domain;
 
 /**
- * Tipos funcionales de notificacion para clasificacion y trazabilidad.
+ * Functional notification types for classification and traceability.
  * <p>
- * Se usa para etiquetar el mensaje en todos los canales y facilitar filtrado,
- * metricas, auditoria y futuras preferencias de usuario por tipo.
+ * Used to label the message across all channels and support filtering, metrics,
+ * auditability, and future per-type user preferences.
  */
 public enum NotificationType {
-    /** Notificacion emitida cuando una orden se registra. */
+    /** Notification emitted when an order is placed. */
     ORDER_PLACED,
-    /** Notificacion emitida cuando una orden se ejecuta. */
+    /** Notification emitted when an order is executed. */
     ORDER_EXECUTED,
-    /** Notificacion emitida cuando una orden se cancela. */
+    /** Notification emitted when an order is canceled. */
     ORDER_CANCELLED,
-    /** Notificacion emitida cuando el wallet no puede cubrir una operacion. */
+    /** Notification emitted when wallet cannot cover an operation. */
     INSUFFICIENT_FUNDS,
-    /** Notificacion emitida cuando portfolio recalcula su valoracion agregada. */
+    /** Notification emitted when portfolio recalculates its aggregate valuation. */
     PORTFOLIO_VALUATION_UPDATED
 }

@@ -1,12 +1,12 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 
-// Une clases condicionales y resuelve conflictos de Tailwind, por ejemplo varios paddings.
+// Merges conditional classes and resolves Tailwind conflicts, such as multiple paddings.
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-// Formatea importes monetarios en el locale espanol usado por la interfaz.
+// Formats monetary amounts using the Spanish locale currently used by the interface.
 export function formatCurrency(value: number, currency = "USD"): string {
   return new Intl.NumberFormat("es-ES", {
     style: "currency",
@@ -16,7 +16,7 @@ export function formatCurrency(value: number, currency = "USD"): string {
   }).format(value)
 }
 
-// Formatea cantidades de acciones u otros valores numericos con dos decimales.
+// Formats share quantities or other numeric values with two decimals.
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("es-ES", {
     minimumFractionDigits: 2,
@@ -24,7 +24,7 @@ export function formatNumber(value: number): string {
   }).format(value)
 }
 
-// Convierte un numero porcentual, por ejemplo 12.5, a una cadena localizada.
+// Converts a percentage number, for example 12.5, into a localized string.
 export function formatPercentage(value: number): string {
   return new Intl.NumberFormat("es-ES", {
     style: "percent",
@@ -33,7 +33,7 @@ export function formatPercentage(value: number): string {
   }).format(value / 100)
 }
 
-// Presenta fechas del backend en formato corto con hora para listados y movimientos.
+// Presents backend dates in a short date-time format for lists and movements.
 export function formatDate(date: string | Date): string {
   return new Intl.DateTimeFormat("es-ES", {
     dateStyle: "short",

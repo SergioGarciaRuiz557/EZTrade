@@ -1,69 +1,69 @@
-# Diagramas backend
+# Backend Diagrams
 
-La familia backend documenta la arquitectura Spring Boot desde varios niveles: paquetes, patron hexagonal, flujo de peticion, clases de dominio, mapa controller-service-repository y eventos intermodulo. La evidencia principal esta en `backend/src/main/java/com/trading/platform/eztrade`, `backend/pom.xml`, `application.properties` y `backend/src/test/java`.
+The backend family documents the Spring Boot architecture from several levels: packages, hexagonal pattern, request flow, domain classes, controller-service-repository map, and inter-module events. The main evidence is in `backend/src/main/java/com/trading/platform/eztrade`, `backend/pom.xml`, `application.properties`, and `backend/src/test/java`.
 
-## Estructura de paquetes backend
+## Backend Package Structure
 
-[![Estructura de paquetes backend](./rendered/backend-package-structure.png)](./rendered/backend-package-structure.svg)
+[![Backend package structure](./rendered/backend-package-structure.png)](./rendered/backend-package-structure.svg)
 
-**Proposito.** Mostrar la organizacion real de paquetes y capas por modulo.
+**Purpose.** Show the real package organization and layers per module.
 
-**Como leerlo.** Cada paquete principal (`user`, `security`, `market`, `trading`, `wallet`, `portfolio`, `notifications`) aparece con dominio, aplicacion y adaptadores cuando existen.
+**How to read it.** Each main package (`user`, `security`, `market`, `trading`, `wallet`, `portfolio`, `notifications`) appears with domain, application, and adapters where they exist.
 
-**Valor.** Permite defender la separacion por bounded contexts y localizar rapidamente responsabilidades tecnicas.
+**Value.** Supports the bounded-context separation and helps quickly locate technical responsibilities.
 
-## Componentes hexagonales backend
+## Backend Hexagonal Components
 
-[![Componentes hexagonales backend](./rendered/backend-hexagonal-components.png)](./rendered/backend-hexagonal-components.svg)
+[![Backend hexagonal components](./rendered/backend-hexagonal-components.png)](./rendered/backend-hexagonal-components.svg)
 
-**Proposito.** Explicar el patron de puertos y adaptadores aplicado en los modulos.
+**Purpose.** Explain the ports-and-adapters pattern applied across modules.
 
-**Como leerlo.** Las entradas REST/eventos invocan puertos de entrada; los servicios orquestan dominio y puertos de salida; los adaptadores implementan persistencia, eventos, Alpha Vantage y canales de notificacion.
+**How to read it.** REST/event inputs invoke input ports; services orchestrate domain and output ports; adapters implement persistence, events, Alpha Vantage, and notification channels.
 
-**Valor.** Conecta el codigo con arquitectura hexagonal de forma academica y verificable.
+**Value.** Connects the code with hexagonal architecture in an academic and verifiable way.
 
-## Flujo de peticion HTTP backend
+## Backend HTTP Request Flow
 
-[![Flujo de peticion HTTP backend](./rendered/backend-request-flow.png)](./rendered/backend-request-flow.svg)
+[![Backend HTTP request flow](./rendered/backend-request-flow.png)](./rendered/backend-request-flow.svg)
 
-**Proposito.** Describir el recorrido de una peticion HTTP autenticada por el backend.
+**Purpose.** Describe the path of an authenticated HTTP request through the backend.
 
-**Como leerlo.** El flujo atraviesa CORS, `JwtAuthFilter`, carga de usuario, `UserAccessFilter`, controlador, caso de uso, dominio y repositorio JPA.
+**How to read it.** The flow crosses CORS, `JwtAuthFilter`, user loading, `UserAccessFilter`, controller, use case, domain, and JPA repository.
 
-**Valor.** Hace visible la seguridad operacional de las APIs y donde se aplican autenticacion, autorizacion y reglas de negocio.
+**Value.** Makes API operational security visible and shows where authentication, authorization, and business rules are applied.
 
-## Diagrama de clases de dominio
+## Domain Class Diagram
 
-[![Diagrama de clases de dominio](./rendered/domain-class-diagram.png)](./rendered/domain-class-diagram.svg)
+[![Domain class diagram](./rendered/domain-class-diagram.png)](./rendered/domain-class-diagram.svg)
 
-**Proposito.** Sintetizar agregados, value objects, enums y records de dominio.
+**Purpose.** Summarize aggregates, value objects, enums, and domain records.
 
-**Como leerlo.** `TradeOrder`, `WalletAccount`, `Position` y `User` son los elementos centrales. `WalletTransaction` representa el ledger auditable y `PortfolioSnapshot` la vista agregada de cartera.
+**How to read it.** `TradeOrder`, `WalletAccount`, `Position`, and `User` are the central elements. `WalletTransaction` represents the auditable ledger, and `PortfolioSnapshot` represents the aggregate portfolio view.
 
-**Valor.** Sirve para explicar invariantes, ciclo de vida de ordenes, balances, posiciones y notificaciones sin mezclar detalles JPA.
+**Value.** Useful for explaining invariants, order lifecycle, balances, positions, and notifications without mixing JPA details.
 
-**Limitacion.** No pretende ser el modelo fisico de datos; ese detalle esta en los diagramas de base de datos.
+**Limitation.** It is not intended to be the physical data model; that detail is in the database diagrams.
 
-## Mapa de servicios, controladores y repositorios
+## Service, Controller, and Repository Map
 
-[![Mapa de servicios, controladores y repositorios](./rendered/service-controller-repository-map.png)](./rendered/service-controller-repository-map.svg)
+[![Service, controller, and repository map](./rendered/service-controller-repository-map.png)](./rendered/service-controller-repository-map.svg)
 
-**Proposito.** Relacionar endpoints, servicios de aplicacion y adaptadores de persistencia/proveedor.
+**Purpose.** Relate endpoints, application services, and persistence/provider adapters.
 
-**Como leerlo.** Las flechas desde controladores indican delegacion a servicios; las flechas desde servicios indican puertos/adaptadores usados.
+**How to read it.** Arrows from controllers indicate delegation to services; arrows from services indicate ports/adapters used.
 
-**Valor.** Es una guia de mantenimiento: ayuda a saber que clases se tocan al cambiar una funcionalidad.
+**Value.** This is a maintenance guide: it helps identify which classes are touched when a feature changes.
 
-## Flujo de eventos backend
+## Backend Event Flow
 
-[![Flujo de eventos backend](./rendered/backend-event-flow.png)](./rendered/backend-event-flow.svg)
+[![Backend event flow](./rendered/backend-event-flow.png)](./rendered/backend-event-flow.svg)
 
-**Proposito.** Mostrar la comunicacion por eventos entre `trading`, `wallet`, `portfolio` y `notifications`.
+**Purpose.** Show event communication between `trading`, `wallet`, `portfolio`, and `notifications`.
 
-**Como leerlo.** `wallet` escucha algunos eventos de trading de forma sincrona para poder abortar si no hay fondos. `notifications` usa listeners despues de commit y asincronos.
+**How to read it.** `wallet` listens to some trading events synchronously so it can abort when funds are insufficient. `notifications` uses after-commit and asynchronous listeners.
 
-**Valor.** Explica desacoplamiento, consistencia transaccional y consistencia eventual dentro del monolito modular.
+**Value.** Explains decoupling, transactional consistency, and eventual consistency inside the modular monolith.
 
 ## Conclusion
 
-El backend no es un CRUD plano: combina Spring Modulith, arquitectura hexagonal, dominio rico, eventos y adaptadores. Esta estructura favorece mantenibilidad, pruebas por modulo y evolucion independiente de los contextos de negocio.
+The backend is not a flat CRUD application: it combines Spring Modulith, hexagonal architecture, rich domain, events, and adapters. This structure favors maintainability, module-level tests, and independent evolution of business contexts.

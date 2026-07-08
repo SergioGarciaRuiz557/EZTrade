@@ -1,8 +1,8 @@
 import type { NextConfig } from "next"
 
-// Configuracion principal de Next.js para el frontend.
+// Main Next.js configuration for the frontend.
 const nextConfig: NextConfig = {
-  // React Strict Mode ayuda a detectar efectos secundarios inseguros durante desarrollo.
+  // React Strict Mode helps detect unsafe side effects during development.
   reactStrictMode: true,
 }
 

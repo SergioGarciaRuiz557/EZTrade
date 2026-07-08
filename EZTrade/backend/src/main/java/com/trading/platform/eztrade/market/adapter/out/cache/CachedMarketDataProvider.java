@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Decorador de infraestructura que cachea consultas al proveedor externo.
+ * Infrastructure decorator that caches queries to the external provider.
  * <p>
- * La capa de aplicacion sigue hablando contra puertos puros; las anotaciones
- * de cache quedan confinadas al adaptador de salida.
+ * The application layer still talks to pure ports; cache annotations remain
+ * confined to the output adapter.
  */
 @Primary
 @Component

@@ -4,15 +4,15 @@ import com.trading.platform.eztrade.trading.domain.OrderId;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
 
 /**
- * Puerto de entrada para ejecutar una orden existente.
+ * Input port for executing an existing order.
  */
 public interface ExecuteOrderUseCase {
 
     /**
-     * Ejecuta una orden pendiente.
+     * Executes a pending order.
      *
-     * @param orderId identificador de la orden
-     * @return orden ejecutada
+     * @param orderId order identifier
+     * @return executed order
      */
     TradeOrder execute(OrderId orderId);
 }

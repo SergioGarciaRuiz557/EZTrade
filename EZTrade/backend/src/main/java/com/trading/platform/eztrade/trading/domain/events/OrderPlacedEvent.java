@@ -4,18 +4,18 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento de dominio emitido cuando se registra una nueva orden.
+ * Domain event emitted when a new order is registered.
  * <p>
- * Sirve para comunicar a otros modulos (sin acoplamiento directo) que existe
- * una orden pendiente susceptible de procesos posteriores.
+ * Communicates to other modules (without direct coupling) that there is a
+ * pending order eligible for subsequent processing.
  *
- * @param orderId identificador de la orden creada
- * @param owner propietario de la orden
- * @param symbol simbolo del activo
- * @param side tipo de orden (BUY/SELL)
- * @param quantity cantidad solicitada
- * @param price precio unitario
- * @param occurredAt fecha y hora de emision del evento
+ * @param orderId created order identifier
+ * @param owner order owner
+ * @param symbol asset symbol
+ * @param side order side (BUY/SELL)
+ * @param quantity requested quantity
+ * @param price unit price
+ * @param occurredAt event emission date and time
  */
 public record OrderPlacedEvent(
         Long orderId,

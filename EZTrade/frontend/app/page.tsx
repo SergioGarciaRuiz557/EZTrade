@@ -26,22 +26,22 @@ import {
   RefreshCw
 } from "lucide-react"
 
-// Simbolos populares para mostrar en la pagina principal
+// Popular symbols to display on the home page.
 const POPULAR_SYMBOLS = ["AAPL", "GOOGL", "MSFT", "AMZN", "NVDA", "TSLA"]
 
-// Simbolos para indices (ETFs que replican indices)
+// Symbols for indexes (ETFs that track indexes).
 const INDEX_SYMBOLS = [
   { symbol: "SPY", name: "S&P 500" },
   { symbol: "QQQ", name: "NASDAQ" },
   { symbol: "DIA", name: "DOW JONES" },
 ]
 
-// Pausa corta entre llamadas para evitar rafagas al backend/API externa.
+// Short pause between calls to avoid bursts against the backend/external API.
 const MARKET_REQUEST_DELAY_MS = 700
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
-// Crea una cola secuencial para espaciar peticiones y reducir errores por limite de la API externa.
+// Creates a sequential queue to space requests and reduce external API rate-limit errors.
 function createMarketRequestQueue(delayMs: number) {
   let queue = Promise.resolve()
 
@@ -56,7 +56,7 @@ function createMarketRequestQueue(delayMs: number) {
   }
 }
 
-// Datos de ejemplo para usuarios no logueados
+// Sample data for unauthenticated users.
 const MOCK_STOCKS = [
   { symbol: "AAPL", name: "Apple Inc.", price: 178.52, sector: "Technology" },
   { symbol: "GOOGL", name: "Alphabet Inc.", price: 141.80, sector: "Technology" },
@@ -99,7 +99,7 @@ interface StockData {
   sector?: string
 }
 
-// Activo elegido desde la portada para abrir el modal de compra.
+// Asset selected from the home page to open the buy modal.
 interface SelectedAsset {
   symbol: string
   name: string
@@ -108,7 +108,7 @@ interface SelectedAsset {
   type: "accion" | "indice"
 }
 
-// Punto adaptado para Recharts: conserva datos OHLC y anade una etiqueta legible en el eje X.
+// Point adapted for Recharts: keeps OHLC data and adds a readable X-axis label.
 interface CandleChartPoint {
   time: string
   label: string
@@ -119,7 +119,7 @@ interface CandleChartPoint {
   volume: number
 }
 
-// Componente de grafico de barras para sectores
+// Bar chart component for sectors.
 function SectorBarChart({ data, blurred }: { data: { name: string; count: number }[]; blurred?: boolean }) {
   if (data.length === 0) {
     return (
@@ -129,7 +129,7 @@ function SectorBarChart({ data, blurred }: { data: { name: string; count: number
     )
   }
 
-  // La barra mas grande ocupa el 100% y el resto se calcula proporcionalmente.
+  // The largest bar occupies 100%, and the rest are calculated proportionally.
   const maxValue = Math.max(...data.map(d => d.count), 1)
   
   return (
@@ -152,9 +152,9 @@ function SectorBarChart({ data, blurred }: { data: { name: string; count: number
   )
 }
 
-// Grafico compacto de cierres diarios con resumen de cierre y variacion del periodo.
+// Compact daily-close chart with closing summary and period variation.
 function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean }) {
-  // Se limita a las ultimas 30 velas para mantener la grafica legible en tarjetas pequenas.
+  // Limited to the latest 30 candles to keep the chart readable in small cards.
   const chartData: CandleChartPoint[] = data
     .slice(-30)
     .map((candle) => {
@@ -173,7 +173,7 @@ function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean
     return <p className="text-sm text-muted-foreground">No hay velas diarias disponibles para este simbolo.</p>
   }
 
-  // Calcula variacion desde la apertura inicial hasta el ultimo cierre visible.
+  // Calculates variation from the initial open to the latest visible close.
   const latest = chartData[chartData.length - 1]
   const first = chartData[0]
   const change = latest.close - first.open
@@ -233,7 +233,7 @@ function DailyCandleChart({ data, blurred }: { data: Candle[]; blurred?: boolean
   )
 }
 
-// Elimina una sesion local posiblemente caducada antes de enviar al usuario al login.
+// Removes a possibly expired local session before sending the user to login.
 function clearCachedAuthSession() {
   localStorage.removeItem("token")
   localStorage.removeItem("user")
@@ -248,7 +248,7 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-// Overlay para datos borrosos
+// Overlay for blurred data.
 function BlurOverlay() {
   return (
     <Link
@@ -285,10 +285,10 @@ export default function HomePage() {
   const [candlesLoading, setCandlesLoading] = useState(false)
   const [candlesError, setCandlesError] = useState<string | null>(null)
 
-  // La portada cambia entre datos reales y datos demo segun exista token.
+  // The home page switches between real and demo data depending on token presence.
   const isLoggedIn = !!token
 
-  // Carga acciones, indices y sectores reales cuando el usuario esta autenticado.
+  // Loads real stocks, indexes, and sectors when the user is authenticated.
   const loadMarketData = async (signal?: AbortSignal) => {
     if (!token) return
     
@@ -298,7 +298,7 @@ export default function HomePage() {
     try {
       const queueMarketRequest = createMarketRequestQueue(MARKET_REQUEST_DELAY_MS)
 
-      // Cargar precios de acciones populares
+      // Load popular stock prices.
       const stockPromises = POPULAR_SYMBOLS.map(async (symbol) => {
         try {
           const priceData = await queueMarketRequest(() => marketApi.getPrice(symbol, { signal }))
@@ -317,7 +317,7 @@ export default function HomePage() {
         }
       })
 
-      // Cargar precios de indices
+      // Load index prices.
       const indexPromises = INDEX_SYMBOLS.map(async (index) => {
         try {
           const priceData = await queueMarketRequest(() => marketApi.getPrice(index.symbol, { signal }))
@@ -333,7 +333,7 @@ export default function HomePage() {
         }
       })
 
-      // Las peticiones internas van en paralelo, pero cada llamada real pasa por la cola espaciada.
+      // Internal requests run in parallel, but each real call passes through the spaced queue.
       const [stockResults, indexResults] = await Promise.all([
         Promise.all(stockPromises),
         Promise.all(indexPromises)
@@ -347,7 +347,7 @@ export default function HomePage() {
       setStocks(validStocks)
       setIndices(validIndices)
 
-      // Calcular distribucion por sector
+      // Calculate sector distribution.
       const sectorMap = new Map<string, number>()
       validStocks.forEach(stock => {
         if (stock.sector) {
@@ -375,7 +375,7 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    // La carga inicial solo se dispara una vez por sesion y se cancela al desmontar.
+    // Initial loading only fires once per session and is cancelled on unmount.
     if (token && !dataLoaded) {
       const controller = new AbortController()
       loadMarketData(controller.signal)
@@ -387,7 +387,7 @@ export default function HomePage() {
   }, [token, dataLoaded])
 
   useEffect(() => {
-    // Las velas se cachean por simbolo para no repetir llamadas al cambiar entre botones.
+    // Candles are cached by symbol to avoid repeated calls when switching buttons.
     if (!isLoggedIn) return
     if (candlesBySymbol[selectedChartSymbol]) return
 
@@ -421,7 +421,7 @@ export default function HomePage() {
     }
   }, [isLoggedIn, selectedChartSymbol, candlesBySymbol])
 
-  // Cualquier interaccion bloqueada en modo invitado redirige al login.
+  // Any blocked interaction in guest mode redirects to login.
   const handleInteraction = () => {
     if (!token) {
       clearCachedAuthSession()
@@ -429,13 +429,13 @@ export default function HomePage() {
     }
   }
 
-  // Prepara el modal con el activo elegido y precarga el precio limite.
+  // Prepares the modal with the selected asset and preloads the limit price.
   const openAssetDialog = (asset: SelectedAsset) => {
     setSelectedAsset(asset)
     setBuyQuantity("1")
   }
 
-  // Valida y crea una orden de compra pendiente desde la portada sin pasar por la pantalla Trading.
+  // Validates and creates a pending buy order from the home page without going through Trading.
   const handleBuyFromHome = async () => {
     if (!selectedAsset) return
 
@@ -473,7 +473,7 @@ export default function HomePage() {
     }
   }
 
-  // Datos a mostrar (reales si logueado, mock si no)
+  // Data to display: real when logged in, mock otherwise.
   const displayStocks = isLoggedIn && dataLoaded ? stocks : MOCK_STOCKS
   const displayIndices = isLoggedIn && dataLoaded ? indices : MOCK_INDICES
   const displaySectors = isLoggedIn && dataLoaded ? sectors : MOCK_SECTORS
@@ -529,7 +529,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Loading state solo si esta logueado y cargando */}
+        {/* Loading state only when logged in and loading. */}
         {isLoggedIn && loading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -547,7 +547,7 @@ export default function HomePage() {
           </Card>
         ) : (
           <>
-            {/* Indices */}
+            {/* Indexes */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               {displayIndices.map((index) => (
                 <Card 

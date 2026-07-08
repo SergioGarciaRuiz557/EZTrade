@@ -1,28 +1,31 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Operations - Evidencia de ramas y publicaciones
+title EZTrade Operations - Branching and Release Evidence
 
-actor "Desarrollador/a" as Developer
-component "Rama Git main" as Main EZ_DEVOPS
+actor "Developer" as Developer
+component "Git branch main" as Main EZ_DEVOPS
 component "GitHub Actions\npush to main" as PushCi EZ_DEVOPS
 component "GitHub Actions\npull_request to main" as PrCi EZ_DEVOPS
 component "Backend Maven verify" as Verify EZ_BACKEND
-component "Job de despliegue/release\nno encontrado" as DeployMissing EZ_RISK
-component "Estrategia de release versionado\nno documentada en el repo" as ReleaseMissing EZ_RISK
+component "Local Docker Compose\nmanual runtime" as LocalCompose EZ_DEVOPS
+component "Deployment/release job\nnot found" as DeployMissing EZ_RISK
+component "Versioned release strategy\nnot documented in repo" as ReleaseMissing EZ_RISK
 
 Developer --> Main : push
-Developer --> PrCi : abre PR hacia main
+Developer --> PrCi : opens PR to main
+Developer --> LocalCompose : docker compose up --build
 Main --> PushCi
 PushCi --> Verify
 PrCi --> Verify
-Verify ..> DeployMissing : sin paso posterior de despliegue
-Verify ..> ReleaseMissing : sin flujo declarado de artefacto de release
+Verify ..> DeployMissing : no later deployment step
+Verify ..> ReleaseMissing : no declared release artifact flow
+LocalCompose ..> DeployMissing : local only, not production release
 
 note bottom
-Evidencia: ../.github/workflows/maven.yml.
-Solo se pueden inferir triggers sobre la rama main. No hay entornos staging/prod,
-flujo de release por tag ni documento de politica de ramas.
+Evidence: ../.github/workflows/maven.yml and docker-compose.yml.
+Only triggers on main can be inferred. There are no staging/prod environments,
+tag-based release flow, or branch policy document.
 end note
 
 @enduml

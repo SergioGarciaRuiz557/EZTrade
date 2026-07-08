@@ -1,82 +1,82 @@
 # EZTrade Backend
 
-Backend de EZTrade construido con Spring Boot, Spring Security, Spring Data JPA y Spring Modulith. El proyecto se organiza por modulos de negocio y cada modulo sigue arquitectura hexagonal: dominio, aplicacion, puertos y adaptadores.
+EZTrade backend built with Spring Boot, Spring Security, Spring Data JPA, and Spring Modulith. The project is organized by business modules, and each module follows a hexagonal architecture: domain, application, ports, and adapters.
 
-## Arquitectura
+## Architecture
 
-Cada modulo mantiene esta separacion:
+Each module keeps this separation:
 
-- `domain`: entidades, value objects, eventos y excepciones de negocio. No depende de Spring ni JPA.
-- `application`: casos de uso y puertos. Orquesta el dominio y define que necesita de fuera.
-- `adapter/in`: entradas al modulo, como controladores REST o listeners de eventos.
-- `adapter/out`: infraestructura, como repositorios JPA, publicadores Spring Events o clientes externos.
-- `package-info.java`: declaracion Spring Modulith y dependencias permitidas.
+- `domain`: entities, value objects, events, and business exceptions. It does not depend on Spring or JPA.
+- `application`: use cases and ports. It orchestrates the domain and defines what it needs from the outside.
+- `adapter/in`: module entry points, such as REST controllers or event listeners.
+- `adapter/out`: infrastructure, such as JPA repositories, Spring Events publishers, or external clients.
+- `package-info.java`: Spring Modulith declaration and allowed dependencies.
 
-## Modulos
+## Modules
 
 ### User
 
-Gestiona usuarios, roles basicos y alta de cuentas.
+Manages users, basic roles, and account registration.
 
 - API: `POST /api/user/register`, `GET /api/user?email=...`
-- Dominio: `User`, `Role`
-- Puertos publicos para otros modulos: `user :: api`
-- Persistencia: `UserJpaEntity`, `JpaUserRepository`, `UserJpaMapper`
+- Domain: `User`, `Role`
+- Public ports for other modules: `user :: api`
+- Persistence: `UserJpaEntity`, `JpaUserRepository`, `UserJpaMapper`
 
 ### Security
 
-Gestiona login, JWT, filtros HTTP y autorizacion.
+Manages login, JWT, HTTP filters, and authorization.
 
-- API publica: `POST /auth/login`
-- Filtros: `JwtAuthFilter`, `UserAccessFilter`, `StompAuthChannelInterceptor`
-- Configuracion: `AuthenticationConfig`, `BeansConfig`, `WebSocketConfig`
-- Depende del modulo user mediante `LoadUserForSecurityPort`.
+- Public API: `POST /auth/login`
+- Filters: `JwtAuthFilter`, `UserAccessFilter`, `StompAuthChannelInterceptor`
+- Configuration: `AuthenticationConfig`, `BeansConfig`, `WebSocketConfig`
+- Depends on the user module through `LoadUserForSecurityPort`.
 
 ### Market
 
-Consulta informacion de mercado desde AlphaVantage y la expone por REST y por una API interna para otros modulos.
+Retrieves market information from Alpha Vantage and exposes it through REST and through an internal API for other modules.
 
-- API REST: `GET /api/v1/market/get-price`, `/search`, `/get-overview`, `/get-daily-candles`
-- API interna: `MarketPriceLookupPort`
-- Adaptadores: `AlphaVantageAPI`, `CachedMarketDataProvider`
-- Dominio: `Symbol`, `MarketPrice`, `Instrument`, `InstrumentOverview`, `Candle`
+- REST API: `GET /api/v1/market/get-price`, `/search`, `/get-overview`, `/get-daily-candles`
+- Internal API: `MarketPriceLookupPort`
+- Adapters: `AlphaVantageAPI`, `CachedMarketDataProvider`
+- Domain: `Symbol`, `MarketPrice`, `Instrument`, `InstrumentOverview`, `Candle`
 
 ### Trading
 
-Gestiona ordenes, ejecucion y marketplace entre usuarios.
+Manages orders, execution, and the user-to-user marketplace.
 
-- Ordenes: `POST /api/v1/trading/orders`, `POST /api/v1/trading/orders/{orderId}/execute`, `POST /api/v1/trading/orders/{orderId}/cancel`, `GET /api/v1/trading/orders`
+- Orders: `POST /api/v1/trading/orders`, `POST /api/v1/trading/orders/{orderId}/execute`, `POST /api/v1/trading/orders/{orderId}/cancel`, `GET /api/v1/trading/orders`
 - Marketplace: `POST /api/v1/trading/market/buy`, `POST /api/v1/trading/offers`, `GET /api/v1/trading/offers`, `POST /api/v1/trading/offers/{offerId}/buy`
-- Depende de `market :: api` para validar precios actuales.
-- Publica `OrderPlacedEvent`, `OrderExecutionRequestEvent` y `OrderCancelledEvent`.
+- Depends on `market :: api` to validate current prices.
+- Publishes `OrderPlacedEvent`, `OrderExecutionRequestEvent`, and `OrderCancelledEvent`.
 
 ### Wallet
 
-Es la fuente de verdad del efectivo. Mantiene saldo disponible, saldo reservado y ledger.
+The source of truth for cash. It maintains available balance, reserved balance, and the ledger.
 
-- API REST: `POST /api/v1/wallet/deposit`, `/withdraw`, `/transfer`, `GET /balance`, `GET /transactions`
-- Reacciona a eventos de trading para reservar, liberar y liquidar fondos.
-- Publica eventos de wallet como `FundsReservedEvent`, `FundsSettledEvent`, `FundsReleasedEvent`, `InsufficientFundsEvent` y `AvailableCashUpdatedEvent`.
-- Usa bloqueo pesimista al modificar cuentas.
+- REST API: `POST /api/v1/wallet/deposit`, `/withdraw`, `/transfer`, `GET /balance`, `GET /transactions`
+- Reacts to trading events to reserve, release, and settle funds.
+- Publishes wallet events such as `FundsReservedEvent`, `FundsSettledEvent`, `FundsReleasedEvent`, `InsufficientFundsEvent`, and `AvailableCashUpdatedEvent`.
+- Uses pessimistic locking when modifying accounts.
 
 ### Portfolio
 
-Mantiene posiciones por usuario y simbolo, PnL realizado, cash proyectado y valoraciones de mercado.
+Maintains positions by user and symbol, realized PnL, projected cash, and market valuations.
 
-- API REST: `GET /api/portfolio`
-- Reacciona a `OrderExecutedEvent` para abrir, aumentar, reducir o cerrar posiciones.
-- Reacciona a `AvailableCashUpdatedEvent` para sincronizar cash disponible.
-- Depende de `market :: api` para calcular valoracion actual en consultas.
+- REST API: `GET /api/portfolio`
+- Reacts to `OrderExecutedEvent` to open, increase, reduce, or close positions.
+- Reacts to `AvailableCashUpdatedEvent` to synchronize available cash.
+- Depends on `market :: api` to calculate current valuation in queries.
 
 ### Notifications
 
-Transforma eventos de negocio en mensajes de usuario y los distribuye por varios canales.
+Transforms business events into user messages and distributes them through several channels.
 
-- Canales: email/log, push/log, WebSocket STOMP e inbox persistido.
-- Escucha eventos de trading, wallet y portfolio.
-- Modelo comun: `NotificationMessage` y `NotificationType`.
+- Channels: email/log, push/log, WebSocket STOMP, and persisted inbox.
+- Listens to trading, wallet, and portfolio events.
+- Common model: `NotificationMessage` and `NotificationType`.
 
-## Flujo principal de compra al mercado
+## Main Market Buy Flow
 
 ```mermaid
 sequenceDiagram
@@ -88,38 +88,38 @@ sequenceDiagram
     participant Portfolio
     participant Notifications
 
-    Client->>Security: JWT en Authorization
+    Client->>Security: JWT in Authorization
     Client->>Trading: POST /api/v1/trading/market/buy
     Trading->>Market: MarketPriceLookupPort.currentPrice(symbol)
-    Trading-->>Trading: Crea BUY pendiente
+    Trading-->>Trading: Creates pending BUY
     Trading--)Wallet: OrderPlacedEvent
-    Wallet-->>Wallet: Reserva fondos
+    Wallet-->>Wallet: Reserves funds
     Trading--)Wallet: OrderExecutionRequestEvent
-    Wallet-->>Wallet: Liquida fondos
+    Wallet-->>Wallet: Settles funds
     Wallet--)Portfolio: OrderExecutedEvent
-    Portfolio-->>Portfolio: Actualiza posicion
+    Portfolio-->>Portfolio: Updates position
     Wallet-)Portfolio: AvailableCashUpdatedEvent
     Portfolio-)Notifications: PortfolioValuationUpdatedEvent
-    Trading-->>Client: Orden ejecutada
+    Trading-->>Client: Order executed
 ```
 
-## Comandos
+## Commands
 
 ```bash
 ./mvnw test
 ./mvnw spring-boot:run
 ```
 
-En Windows:
+On Windows:
 
 ```powershell
 .\mvnw.cmd test
 .\mvnw.cmd spring-boot:run
 ```
 
-## Documentacion por modulo
+## Module Documentation
 
-Cada modulo contiene su propio `.md` junto al codigo:
+Each module contains its own `.md` file next to the code:
 
 - `src/main/java/com/trading/platform/eztrade/user/user.md`
 - `src/main/java/com/trading/platform/eztrade/security/security.md`

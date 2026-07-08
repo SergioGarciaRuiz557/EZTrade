@@ -1,23 +1,23 @@
 /**
- * Módulo <strong>Wallet</strong> (Cash/Ledger).
+ * <strong>Wallet</strong> module (Cash/Ledger).
  * <p>
- * Este módulo implementa la lógica de <em>tesorería</em> de la plataforma: mantiene el efectivo disponible y el efectivo
- * reservado de cada usuario, y además persiste un <em>ledger</em> (libro mayor) inmutable/auditable con todos los
- * movimientos.
+ * This module implements the platform treasury logic: it keeps each user's
+ * available and reserved cash, and persists an immutable/auditable
+ * <em>ledger</em> with every movement.
  * <p>
- * <strong>Responsabilidades principales</strong>:
+ * <strong>Main responsibilities</strong>:
  * <ul>
- *   <li><strong>Saldo</strong>: mantener {@code availableBalance} (saldo disponible) y {@code reservedBalance} (saldo reservado) por usuario.</li>
- *   <li><strong>Ledger</strong>: registrar cada operación en una entrada inmutable con motivo, referencia y balances post-operación.</li>
- *   <li><strong>Integración con trading</strong>: retener, liberar y liquidar fondos reaccionando a eventos de órdenes (placed/cancelled/executed).</li>
- *   <li><strong>Idempotencia</strong>: evitar aplicar dos veces el mismo movimiento detectándolo por (owner, referenceId, movementType).</li>
+ *   <li><strong>Balance</strong>: keep {@code availableBalance} and {@code reservedBalance} per user.</li>
+ *   <li><strong>Ledger</strong>: record each operation as an immutable entry with reason, reference, and post-operation balances.</li>
+ *   <li><strong>Trading integration</strong>: reserve, release, and settle funds in reaction to order events (placed/cancelled/executed).</li>
+ *   <li><strong>Idempotency</strong>: prevent applying the same movement twice by detecting it through (owner, referenceId, movementType).</li>
  * </ul>
  * <p>
- * <strong>Arquitectura</strong>:
+ * <strong>Architecture</strong>:
  * <ul>
- *   <li>La capa de aplicación expone <em>puertos de entrada</em> (casos de uso) y depende de <em>puertos de salida</em> (repositorios y publicación de eventos).</li>
- *   <li>Las dependencias hacia infraestructura se implementan en adaptadores (persistencia JPA y publicación de eventos Spring).</li>
- *   <li>Para consistencia en concurrencia se usa bloqueo pesimista al cargar la cuenta ({@code findByOwnerForUpdate}).</li>
+ *   <li>The application layer exposes <em>input ports</em> (use cases) and depends on <em>output ports</em> (repositories and event publishing).</li>
+ *   <li>Infrastructure dependencies are implemented through adapters (JPA persistence and Spring event publishing).</li>
+ *   <li>Pessimistic locking is used when loading the account ({@code findByOwnerForUpdate}) to preserve consistency under concurrency.</li>
  * </ul>
  */
 @ApplicationModule(

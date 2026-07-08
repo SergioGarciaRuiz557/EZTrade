@@ -1,7 +1,7 @@
 package com.trading.platform.eztrade.portfolio.domain;
 
 /**
- * Excepcion de dominio para reglas de negocio del modulo portfolio.
+ * Domain exception for portfolio module business rules.
  */
 public class PortfolioDomainException extends RuntimeException {
 

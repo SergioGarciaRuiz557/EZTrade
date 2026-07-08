@@ -1,69 +1,69 @@
-# Modulo Security
+# Security Module
 
-## Proposito
+## Purpose
 
-`security` protege el backend con Spring Security y JWT. Es responsable de autenticar usuarios, generar tokens, validar peticiones HTTP y preparar seguridad para WebSocket/STOMP.
+`security` protects the backend with Spring Security and JWT. It is responsible for authenticating users, generating tokens, validating HTTP requests, and preparing security for WebSocket/STOMP.
 
-## Componentes principales
+## Main Components
 
-### Controller y DTOs
+### Controller and DTOs
 
-- `AuthController`: expone `POST /auth/login`.
-- `LoginRequest`: credenciales de entrada. Acepta email o username junto a password.
-- `JwtResponse`: token y tipo `Bearer`.
+- `AuthController`: exposes `POST /auth/login`.
+- `LoginRequest`: input credentials. Accepts email or username together with password.
+- `JwtResponse`: token and `Bearer` type.
 
-### Servicio
+### Service
 
-`AuthService` orquesta login:
+`AuthService` orchestrates login:
 
-1. Construye un `UsernamePasswordAuthenticationToken`.
-2. Delega validacion en `AuthenticationManager`.
-3. Genera JWT con `JwtService`.
-4. Devuelve el token al controlador.
+1. Builds a `UsernamePasswordAuthenticationToken`.
+2. Delegates validation to `AuthenticationManager`.
+3. Generates a JWT with `JwtService`.
+4. Returns the token to the controller.
 
 ### JWT
 
-- `JwtService`: genera tokens, extrae claims, valida firma y expiracion.
-- `JwtAuthenticationProvider`: puente hacia el modulo user para cargar `UserDetails`.
+- `JwtService`: generates tokens, extracts claims, validates signature and expiration.
+- `JwtAuthenticationProvider`: bridge to the user module for loading `UserDetails`.
 
-### Filtros
+### Filters
 
-- `JwtAuthFilter`: lee `Authorization: Bearer <token>`, valida JWT y rellena `SecurityContextHolder`.
-- `UserAccessFilter`: aplica reglas adicionales para acceso a recursos de usuario.
-- `StompAuthChannelInterceptor`: valida autenticacion en mensajes STOMP.
+- `JwtAuthFilter`: reads `Authorization: Bearer <token>`, validates the JWT, and fills `SecurityContextHolder`.
+- `UserAccessFilter`: applies additional rules for access to user resources.
+- `StompAuthChannelInterceptor`: validates authentication in STOMP messages.
 
-### Configuracion
+### Configuration
 
-- `AuthenticationConfig`: configura stateless sessions, rutas publicas y filtros.
-- `BeansConfig`: declara password encoder, authentication manager, provider y evaluator.
-- `WebSocketConfig`: configura broker STOMP y endpoints WebSocket.
-- `SecuredEndpoint` y `SecurityPolicy`: modelan politicas semanticas de acceso.
-- `HttpObservabilityConfig`: personaliza observabilidad HTTP.
+- `AuthenticationConfig`: configures stateless sessions, public routes, and filters.
+- `BeansConfig`: declares password encoder, authentication manager, provider, and evaluator.
+- `WebSocketConfig`: configures the STOMP broker and WebSocket endpoints.
+- `SecuredEndpoint` and `SecurityPolicy`: model semantic access policies.
+- `HttpObservabilityConfig`: customizes HTTP observability.
 
 ## Endpoints
 
-Publicos:
+Public:
 
 - `POST /api/user/register`
 - `POST /auth/login`
 
-Protegidos:
+Protected:
 
-- resto de endpoints REST salvo configuracion explicita.
+- all other REST endpoints unless explicitly configured otherwise.
 
-## Flujo de login
+## Login Flow
 
-1. Cliente envia credenciales a `/auth/login`.
-2. `AuthController` delega en `AuthService`.
-3. Spring Security carga usuario mediante user.
-4. Se valida password.
-5. `JwtService` genera token.
-6. Cliente recibe `JwtResponse`.
+1. The client sends credentials to `/auth/login`.
+2. `AuthController` delegates to `AuthService`.
+3. Spring Security loads the user through user.
+4. The password is validated.
+5. `JwtService` generates the token.
+6. The client receives `JwtResponse`.
 
-## Flujo de peticion protegida
+## Protected Request Flow
 
-1. Cliente envia `Authorization: Bearer <jwt>`.
-2. `JwtAuthFilter` extrae y valida el token.
-3. Se crea autenticacion en `SecurityContextHolder`.
-4. Spring Security evalua reglas de URL.
-5. El controlador recibe `Authentication` con el nombre del usuario.
+1. The client sends `Authorization: Bearer <jwt>`.
+2. `JwtAuthFilter` extracts and validates the token.
+3. Authentication is created in `SecurityContextHolder`.
+4. Spring Security evaluates URL rules.
+5. The controller receives `Authentication` with the user name.

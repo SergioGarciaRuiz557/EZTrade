@@ -5,10 +5,10 @@ import com.trading.platform.eztrade.market.domain.Candle;
 import java.time.LocalDateTime;
 
 /**
- * DTO REST para una vela historica diaria.
+ * REST DTO for a historical daily candle.
  * <p>
- * Mantiene la estructura OHLCV que consume el frontend: apertura, maximo,
- * minimo, cierre y volumen para un instante temporal.
+ * Keeps the OHLCV structure consumed by the frontend: open, high, low, close,
+ * and volume for a time instant.
  */
 public record CandleResponse(
         LocalDateTime time,
@@ -18,7 +18,7 @@ public record CandleResponse(
         double close,
         long volume
 ) {
-    /** Transforma la vela de dominio en el contrato HTTP. */
+    /** Transforms the domain candle into the HTTP contract. */
     public static CandleResponse from(Candle candle) {
         return new CandleResponse(
                 candle.time(),

@@ -12,10 +12,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entidad JPA con la ultima proyeccion de cash disponible conocida por portfolio.
+ * JPA entity with the latest available-cash projection known by portfolio.
  * <p>
- * El valor procede de {@code AvailableCashUpdatedEvent}; wallet sigue siendo la
- * fuente de verdad del dinero.
+ * The value comes from {@code AvailableCashUpdatedEvent}; wallet remains the
+ * source of truth for money.
  */
 @Entity
 @Table(

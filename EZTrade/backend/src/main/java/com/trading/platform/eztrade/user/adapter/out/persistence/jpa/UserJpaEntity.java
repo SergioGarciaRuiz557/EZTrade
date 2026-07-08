@@ -11,10 +11,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
- * Entidad JPA del modulo user.
+ * JPA entity for the user module.
  * <p>
- * Representa la tabla {@code user}. El dominio {@code User} se mantiene como
- * POJO separado para no acoplar reglas de usuario a anotaciones de persistencia.
+ * Represents the {@code user} table. The {@code User} domain object remains a
+ * separate POJO so user rules are not coupled to persistence annotations.
  */
 @Entity
 @Table(name = "user")
@@ -38,7 +38,7 @@ public class UserJpaEntity {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    /** Constructor requerido por JPA. */
+    /** Constructor required by JPA. */
     protected UserJpaEntity() {
     }
 

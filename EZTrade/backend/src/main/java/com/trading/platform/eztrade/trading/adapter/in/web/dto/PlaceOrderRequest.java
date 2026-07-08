@@ -8,12 +8,12 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
- * DTO de entrada para crear una orden desde la API REST.
+ * Input DTO for creating an order from the REST API.
  *
- * @param symbol simbolo del activo (ticker)
- * @param side tipo de orden (BUY/SELL)
- * @param quantity cantidad solicitada
- * @param price precio unitario ofertado
+ * @param symbol asset symbol (ticker)
+ * @param side order side (BUY/SELL)
+ * @param quantity requested quantity
+ * @param price offered unit price
  */
 public record PlaceOrderRequest(
         @NotBlank(message = "Symbol is required")

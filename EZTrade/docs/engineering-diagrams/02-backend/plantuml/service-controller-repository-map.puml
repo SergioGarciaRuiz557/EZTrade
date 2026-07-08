@@ -1,9 +1,9 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Backend - Controladores, servicios y repositorios
+title EZTrade Backend - Controllers, Services, and Repositories
 
-package "Controladores REST" as Controllers EZ_FRONTEND {
+package "REST controllers" as Controllers EZ_FRONTEND {
   component "AuthController\n/auth/login" as AuthController
   component "UserController\n/api/user" as UserController
   component "MarketController\n/api/v1/market" as MarketController
@@ -13,18 +13,18 @@ package "Controladores REST" as Controllers EZ_FRONTEND {
   component "PortfolioController\n/api/portfolio" as PortfolioController
 }
 
-package "Servicios de aplicacion" as Services EZ_BACKEND {
+package "Application services" as Services EZ_BACKEND {
   component "AuthService" as AuthService
   component "UserService" as UserService
-  component "Servicios GetPrice/Search/Overview/Candles" as MarketServices
+  component "GetPrice/Search/Overview/Candles services" as MarketServices
   component "TradingService" as TradingService
   component "WalletService" as WalletService
   component "PortfolioService" as PortfolioService
   component "NotificationService" as NotificationService
 }
 
-package "Adaptadores de repositorio/proveedor" as Adapters EZ_DB {
-  component "UserAdaptador de repositorio\nJpaUserRepository" as UserRepo
+package "Repository/provider adapters" as Adapters EZ_DB {
+  component "UserRepositoryAdapter\nJpaUserRepository" as UserRepo
   component "TradeOrderRepositoryAdapter\nSpringDataTradeOrderRepository" as TradingRepo
   component "WalletAccountRepositoryAdapter\nWalletTransactionRepositoryAdapter" as WalletRepo
   component "PositionRepositoryAdapter\nCashProjectionRepositoryAdapter" as PortfolioRepo
@@ -51,8 +51,8 @@ PortfolioService --> MarketProvider : valuation
 NotificationService --> InboxRepo
 
 note bottom
-Evidencia: controller constructors, service constructors, ports in/out,
-adaptadores de repositorio e interfaces de repositorio Spring Data.
+Evidence: controller constructors, service constructors, in/out ports,
+repository adapters, and Spring Data repository interfaces.
 end note
 
 @enduml

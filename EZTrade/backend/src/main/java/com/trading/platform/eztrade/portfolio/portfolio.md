@@ -1,22 +1,22 @@
-# Modulo Portfolio
+# Portfolio Module
 
-## Proposito
+## Purpose
 
-`portfolio` mantiene la cartera de cada usuario:
+`portfolio` maintains each user's portfolio:
 
-- posiciones abiertas por simbolo,
-- coste medio ponderado,
-- PnL realizado,
-- cash disponible proyectado desde wallet,
-- valoraciones actuales de mercado para consultas REST.
+- open positions by symbol,
+- weighted average cost,
+- realized PnL,
+- available cash projected from wallet,
+- current market valuations for REST queries.
 
-El modulo esta declarado con dependencias permitidas hacia `trading :: events`, `wallet :: events` y `market :: api`.
+The module is declared with allowed dependencies on `trading :: events`, `wallet :: events`, and `market :: api`.
 
-## Limites
+## Boundaries
 
-Portfolio no ejecuta ordenes y no mueve dinero real. Trading decide el ciclo de vida de ordenes y wallet es la fuente de verdad del efectivo. Portfolio consume eventos para mantener una vista de lectura coherente.
+Portfolio does not execute orders and does not move real money. Trading decides the order lifecycle, and wallet is the source of truth for cash. Portfolio consumes events to maintain a consistent read view.
 
-## Estructura
+## Structure
 
 ```text
 portfolio/
@@ -40,45 +40,45 @@ portfolio/
       persistence/, events/
 ```
 
-## Dominio
+## Domain
 
-`Position` representa una posicion por `(owner, symbol)`.
+`Position` represents a position for `(owner, symbol)`.
 
-- `open(...)`: abre una posicion nueva.
-- `increase(...)`: aumenta cantidad y recalcula coste medio ponderado.
-- `reduce(...)`: vende parcial o totalmente y calcula PnL realizado.
-- `investedAmount()`: devuelve `quantity * averageCost`.
-- `isClosed()`: indica si la cantidad abierta es cero.
+- `open(...)`: opens a new position.
+- `increase(...)`: increases quantity and recalculates weighted average cost.
+- `reduce(...)`: sells partially or fully and calculates realized PnL.
+- `investedAmount()`: returns `quantity * averageCost`.
+- `isClosed()`: indicates whether the open quantity is zero.
 
-Las posiciones cerradas se guardan con cantidad cero para conservar el PnL realizado historico.
+Closed positions are saved with zero quantity to preserve historical realized PnL.
 
-`CashProjection` guarda la ultima foto de cash disponible recibida desde wallet.
+`CashProjection` stores the latest available-cash snapshot received from wallet.
 
-`PortfolioSnapshot` compone la respuesta agregada: cash, coste base, PnL realizado, posiciones abiertas y valoraciones de mercado.
+`PortfolioSnapshot` composes the aggregate response: cash, cost basis, realized PnL, open positions, and market valuations.
 
-## Servicio de aplicacion
+## Application Service
 
-`PortfolioService` implementa tres flujos:
+`PortfolioService` implements three flows:
 
-1. `handle(OrderExecutedEvent)`: actualiza posiciones tras una ejecucion confirmada.
-2. `handle(AvailableCashUpdatedEvent)`: guarda la proyeccion de cash disponible.
-3. `getByOwner(owner)`: construye el snapshot consultado por REST e incluye precios actuales mediante `MarketPriceLookupPort`.
+1. `handle(OrderExecutedEvent)`: updates positions after confirmed execution.
+2. `handle(AvailableCashUpdatedEvent)`: saves the available-cash projection.
+3. `getByOwner(owner)`: builds the snapshot queried by REST and includes current prices through `MarketPriceLookupPort`.
 
-## API REST
+## REST API
 
 ```http
 GET /api/portfolio
 Authorization: Bearer <jwt>
 ```
 
-Devuelve el portfolio del usuario autenticado.
+Returns the authenticated user's portfolio.
 
-## Eventos consumidos
+## Events Consumed
 
-- `OrderExecutedEvent`: procede de wallet/trading cuando una orden se liquido correctamente.
-- `AvailableCashUpdatedEvent`: procede de wallet cada vez que cambia el disponible.
+- `OrderExecutedEvent`: comes from wallet/trading when an order was settled successfully.
+- `AvailableCashUpdatedEvent`: comes from wallet every time available balance changes.
 
-## Eventos publicados
+## Events Published
 
 - `PositionOpenedEvent`
 - `PositionIncreasedEvent`
@@ -86,19 +86,19 @@ Devuelve el portfolio del usuario autenticado.
 - `PositionClosedEvent`
 - `PortfolioValuationUpdatedEvent`
 
-## Flujo BUY
+## BUY Flow
 
-1. Portfolio recibe `OrderExecutedEvent` con `side = BUY`.
-2. Si no hay posicion, crea `Position.open(...)`.
-3. Si ya existe, usa `Position.increase(...)`.
-4. Publica evento de posicion abierta o incrementada.
-5. Publica `PortfolioValuationUpdatedEvent`.
+1. Portfolio receives `OrderExecutedEvent` with `side = BUY`.
+2. If there is no position, it creates `Position.open(...)`.
+3. If one already exists, it uses `Position.increase(...)`.
+4. It publishes a position opened or increased event.
+5. It publishes `PortfolioValuationUpdatedEvent`.
 
-## Flujo SELL
+## SELL Flow
 
-1. Portfolio recibe `OrderExecutedEvent` con `side = SELL`.
-2. Busca posicion existente.
-3. Aplica `Position.reduce(...)`.
-4. Si queda cantidad cero, guarda posicion cerrada y publica `PositionClosedEvent`.
-5. Si queda cantidad abierta, publica `PositionReducedEvent`.
-6. Publica `PortfolioValuationUpdatedEvent`.
+1. Portfolio receives `OrderExecutedEvent` with `side = SELL`.
+2. It looks for an existing position.
+3. It applies `Position.reduce(...)`.
+4. If quantity reaches zero, it saves the closed position and publishes `PositionClosedEvent`.
+5. If quantity remains open, it publishes `PositionReducedEvent`.
+6. It publishes `PortfolioValuationUpdatedEvent`.

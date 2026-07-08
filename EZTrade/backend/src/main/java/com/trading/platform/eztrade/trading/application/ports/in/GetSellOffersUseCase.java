@@ -5,20 +5,20 @@ import com.trading.platform.eztrade.trading.domain.TradeOrder;
 import java.util.List;
 
 /**
- * Caso de uso para listar ofertas SELL pendientes que puede comprar un usuario.
+ * Use case for listing pending SELL offers that a user can buy.
  * <p>
- * La lista excluye las ofertas del propio comprador para impedir que se compre
- * a si mismo y, si se filtra por simbolo, valida que el precio no supere el
- * precio actual de mercado.
+ * The list excludes the buyer's own offers to prevent self-purchase and, when
+ * filtered by symbol, validates that the price does not exceed the current
+ * market price.
  */
 public interface GetSellOffersUseCase {
 
     /**
-     * Obtiene ofertas de venta disponibles.
+     * Gets available sell offers.
      *
-     * @param buyer usuario que consulta el marketplace
-     * @param symbol simbolo opcional para filtrar ofertas
-     * @return ordenes SELL pendientes disponibles para ese comprador
+     * @param buyer user querying the marketplace
+     * @param symbol optional symbol used to filter offers
+     * @return pending SELL orders available to that buyer
      */
     List<TradeOrder> getAvailableSellOffers(String buyer, String symbol);
 }

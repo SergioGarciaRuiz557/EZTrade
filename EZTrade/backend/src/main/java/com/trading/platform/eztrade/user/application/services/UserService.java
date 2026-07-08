@@ -11,11 +11,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio de aplicacion del modulo user.
+ * Application service for the user module.
  * <p>
- * Implementa los casos de uso de registro y consulta. Coordina el repositorio
- * de usuarios, codifica la password antes de persistir y aplica reglas basicas
- * como unicidad de email/username y rol por defecto.
+ * Implements the registration and query use cases. Coordinates the user
+ * repository, encodes the password before persistence, and applies basic rules
+ * such as email/username uniqueness and the default role.
  */
 @Service
 public class UserService implements RegisterUserUserCase, GetUserUserCase {
@@ -23,10 +23,10 @@ public class UserService implements RegisterUserUserCase, GetUserUserCase {
     private final PasswordEncoder passwordEncoder;
 
     /**
-     * Crea el servicio con sus dependencias de aplicacion e infraestructura.
+     * Creates the service with its application and infrastructure dependencies.
      *
-     * @param userRepository puerto de salida para persistencia y busqueda
-     * @param passwordEncoder componente de seguridad para codificar passwords
+     * @param userRepository output port for persistence and lookup
+     * @param passwordEncoder security component for encoding passwords
      */
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
@@ -34,12 +34,12 @@ public class UserService implements RegisterUserUserCase, GetUserUserCase {
     }
 
     /**
-     * Registra un usuario nuevo.
+     * Registers a new user.
      * <p>
-     * Valida que email y username no existan, codifica la password recibida y
-     * asigna el rol funcional por defecto {@link Role#USER}.
+     * Validates that email and username are not already in use, encodes the
+     * received password, and assigns the default functional role {@link Role#USER}.
      *
-     * @throws UserExistsException si email o username ya estan ocupados
+     * @throws UserExistsException if the email or username is already taken
      */
     @Override
     public User registerUser(User user) throws UserExistsException {
@@ -57,11 +57,11 @@ public class UserService implements RegisterUserUserCase, GetUserUserCase {
     }
 
     /**
-     * Busca un usuario por email o username.
+     * Finds a user by email or username.
      *
-     * @param username identificador escrito por el usuario en login/consulta
-     * @return usuario de dominio encontrado
-     * @throws UserNotFoundException si no existe ningun usuario con ese email o username
+     * @param username identifier entered by the user during login/query
+     * @return found domain user
+     * @throws UserNotFoundException if no user exists with that email or username
      */
     @Override
     public User getUser(String username) throws UserNotFoundException {

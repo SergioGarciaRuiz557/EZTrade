@@ -6,20 +6,20 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repositorio Spring Data para la tabla de posiciones de portfolio.
+ * Spring Data repository for the portfolio positions table.
  * <p>
- * Se mantiene en infraestructura; la aplicacion lo consume a traves de
+ * It stays in infrastructure; the application consumes it through
  * {@code PositionRepositoryPort}.
  */
 public interface SpringDataPositionRepository extends JpaRepository<PositionJpaEntity, Long> {
 
-    /** Localiza la posicion unica de un owner para un simbolo. */
+    /** Locates the single owner position for a symbol. */
     Optional<PositionJpaEntity> findByOwnerAndSymbol(String owner, String symbol);
 
-    /** Devuelve todas las posiciones registradas para un owner. */
+    /** Returns all positions registered for an owner. */
     List<PositionJpaEntity> findByOwner(String owner);
 
-    /** Borra la fila de una posicion concreta por clave de negocio. */
+    /** Deletes a concrete position row by business key. */
     void deleteByOwnerAndSymbol(String owner, String symbol);
 }
 

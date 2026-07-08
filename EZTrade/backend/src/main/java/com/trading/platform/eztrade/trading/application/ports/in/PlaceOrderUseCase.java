@@ -6,28 +6,28 @@ import com.trading.platform.eztrade.trading.domain.TradeOrder;
 import java.math.BigDecimal;
 
 /**
- * Puerto de entrada para registrar una nueva orden de trading.
+ * Input port for registering a new trading order.
  * <p>
- * Define el contrato que consumen los adaptadores de entrada (REST, mensajeria, etc.).
+ * Defines the contract consumed by input adapters (REST, messaging, etc.).
  */
 public interface PlaceOrderUseCase {
 
     /**
-     * Crea una orden pendiente en el dominio.
+     * Creates a pending order in the domain.
      *
-     * @param command datos de entrada para la orden
-     * @return orden creada y persistida
+     * @param command input data for the order
+     * @return created and persisted order
      */
     TradeOrder place(PlaceOrderCommand command);
 
     /**
-     * Comando inmutable con los datos necesarios para crear una orden.
+     * Immutable command with the data required to create an order.
      *
-     * @param owner propietario de la orden
-     * @param symbol simbolo del activo
-     * @param side tipo de orden
-     * @param quantity cantidad solicitada
-     * @param price precio unitario
+     * @param owner order owner
+     * @param symbol asset symbol
+     * @param side order side
+     * @param quantity requested quantity
+     * @param price unit price
      */
     record PlaceOrderCommand(
             String owner,

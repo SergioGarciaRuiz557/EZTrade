@@ -5,23 +5,25 @@ import com.trading.platform.eztrade.wallet.domain.WalletAccount;
 import java.util.Optional;
 
 /**
- * Puerto de salida para persistir y recuperar {@link WalletAccount}.
+ * Output port for persisting and retrieving {@link WalletAccount}.
  * <p>
- * Se define como interfaz para desacoplar la aplicación del mecanismo de persistencia (JPA u otro).
+ * Defined as an interface to decouple the application from the persistence
+ * mechanism (JPA or another implementation).
  */
 public interface WalletAccountRepositoryPort {
 
-    /** Devuelve la cuenta del owner si existe (sin bloquear). */
+    /** Returns the owner's account if it exists (without locking). */
     Optional<WalletAccount> findByOwner(String owner);
 
     /**
-     * Devuelve la cuenta del owner aplicando un mecanismo de exclusión mutua (bloqueo) si el adaptador lo soporta.
+     * Returns the owner's account while applying a mutual-exclusion mechanism
+     * (lock) if the adapter supports it.
      * <p>
-     * Se usa cuando vamos a modificar balances para evitar condiciones de carrera.
+     * Used when balances are about to be modified to avoid race conditions.
      */
     Optional<WalletAccount> findByOwnerForUpdate(String owner);
 
-    /** Guarda la cuenta (insert/update) y devuelve el estado persistido. */
+    /** Saves the account (insert/update) and returns the persisted state. */
     WalletAccount save(WalletAccount walletAccount);
 }
 

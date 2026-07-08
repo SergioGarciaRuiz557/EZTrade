@@ -1,32 +1,32 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Backend - Patron de componentes hexagonales
+title EZTrade Backend - Hexagonal Component Pattern
 
-package "Adaptadores de entrada" as InLayer {
-  component "Controladores REST\nAuth/User/Market/Trading/\nWallet/Portfolio" as RestIn EZ_FRONTEND
-  component "Listeners de eventos Spring\nwallet, portfolio, notifications" as EventIn EZ_FRONTEND
-  component "Autenticacion STOMP de entrada\nStompAuthChannelInterceptor" as StompIn EZ_FRONTEND
+package "Input adapters" as InLayer {
+  component "REST controllers\nAuth/User/Market/Trading/\nWallet/Portfolio" as RestIn EZ_FRONTEND
+  component "Spring event listeners\nwallet, portfolio, notifications" as EventIn EZ_FRONTEND
+  component "STOMP input authentication\nStompAuthChannelInterceptor" as StompIn EZ_FRONTEND
 }
 
-package "Capa de aplicacion" as AppLayer EZ_BACKEND {
-  component "Puertos de entrada\ninterfaces de casos de uso" as PortsIn
-  component "Servicios de aplicacion\nAuthService, UserService,\nGetPriceService, TradingService,\nWalletService, PortfolioService,\nNotificationService" as AppServices
-  component "Puertos de salida\nrepositorios, publicador de eventos,\nproveedor de mercado, canales de notificacion" as PortsOut
+package "Application layer" as AppLayer EZ_BACKEND {
+  component "Input ports\nuse case interfaces" as PortsIn
+  component "Application services\nAuthService, UserService,\nGetPriceService, TradingService,\nWalletService, PortfolioService,\nNotificationService" as AppServices
+  component "Output ports\nrepositories, event publisher,\nmarket provider, notification channels" as PortsOut
 }
 
-package "Capa de dominio" as DomainLayer EZ_DOMAIN {
-  component "Agregados\nTradeOrder, WalletAccount,\nPosition, User" as Aggregates
-  component "Value objects y records\nMoney, Quantity, Symbol,\nWalletTransaction, eventos" as ValueObjects
-  component "Excepciones de dominio\nTrading/Wallet/Portfolio/Market/User" as Exceptions
+package "Domain layer" as DomainLayer EZ_DOMAIN {
+  component "Aggregates\nTradeOrder, WalletAccount,\nPosition, User" as Aggregates
+  component "Value objects and records\nMoney, Quantity, Symbol,\nWalletTransaction, events" as ValueObjects
+  component "Domain exceptions\nTrading/Wallet/Portfolio/Market/User" as Exceptions
 }
 
-package "Adaptadores de salida" as OutLayer {
-  database "Spring Data JPA\nadaptadores de repositorio + entidades" as Jpa EZ_DB
-  component "AlphaVantageAPI\nadaptador RestClient" as AlphaAdapter EZ_EXTERNAL
-  component "Proveedor cacheado con Caffeine\ndecorador @Primary" as CacheAdapter
-  component "Publicadores Eventos Spring\nApplicationEventPublisher" as SpringPublisher
-  component "Canales de notificacion\nWebSocket, inbox,\nemail/push con logging" as NotificationAdapters
+package "Output adapters" as OutLayer {
+  database "Spring Data JPA\nrepository adapters + entities" as Jpa EZ_DB
+  component "AlphaVantageAPI\nRestClient adapter" as AlphaAdapter EZ_EXTERNAL
+  component "Cached provider with Caffeine\n@Primary decorator" as CacheAdapter
+  component "Spring Event publishers\nApplicationEventPublisher" as SpringPublisher
+  component "Notification channels\nWebSocket, inbox,\nlogging email/push" as NotificationAdapters
 }
 
 RestIn --> PortsIn
@@ -46,7 +46,7 @@ CacheAdapter --> AlphaAdapter
 
 note right of AppServices
 Each business module follows this shape,
-aunque security y notifications son mas
+although security and notifications are more
 cross-cutting than pure domain modules.
 end note
 

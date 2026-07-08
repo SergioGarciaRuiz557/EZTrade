@@ -5,27 +5,27 @@ import com.trading.platform.eztrade.trading.domain.TradeOrder;
 import java.math.BigDecimal;
 
 /**
- * Caso de uso para comprar acciones directamente al mercado.
+ * Use case for buying shares directly from the market.
  * <p>
- * La implementacion no recibe precio desde el cliente: lo obtiene desde market
- * para ejecutar la compra al precio actual de AlphaVantage.
+ * The implementation does not receive the price from the client: it obtains it
+ * from market to execute the purchase at the current Alpha Vantage price.
  */
 public interface BuyFromMarketUseCase {
 
     /**
-     * Crea y ejecuta una orden BUY al precio actual de mercado.
+     * Creates and executes a BUY order at the current market price.
      *
-     * @param command usuario, simbolo y cantidad a comprar
-     * @return orden de compra ya ejecutada
+     * @param command user, symbol, and quantity to buy
+     * @return already executed buy order
      */
     TradeOrder buy(BuyFromMarketCommand command);
 
     /**
-     * Datos minimos para comprar al mercado.
+     * Minimum data required to buy from the market.
      *
-     * @param owner usuario comprador
-     * @param symbol ticker de la accion
-     * @param quantity numero de acciones a comprar
+     * @param owner buying user
+     * @param symbol stock ticker
+     * @param quantity number of shares to buy
      */
     record BuyFromMarketCommand(String owner, String symbol, BigDecimal quantity) {
     }

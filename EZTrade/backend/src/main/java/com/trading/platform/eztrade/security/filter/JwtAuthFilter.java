@@ -18,37 +18,35 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import java.io.IOException;
 
 /**
- * Filtro de seguridad encargado de procesar y validar el token JWT en cada petición.
+ * Security filter responsible for processing and validating the JWT token in each request.
  * <p>
- * Extrae el token de la cabecera <strong>Authorization</strong>, valida su estado,
- * renueva el token cuando procede y, en caso de ser válido, establece
- * la autenticación en el <strong>SecurityContext</strong>.
+ * Extracts the token from the <strong>Authorization</strong> header, validates
+ * its state, renews it when appropriate, and sets the authentication in the
+ * <strong>SecurityContext</strong> when it is valid.
  */
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     /**
-     * Servicio responsable de la generación, validación y renovación de tokens JWT.
+     * Service responsible for generating, validating, and renewing JWT tokens.
      */
     private final JwtService jwtService;
 
     /**
-     * Servicio usado para cargar los detalles del usuario asociado al token.
+     * Service used to load the user details associated with the token.
      */
     private final UserDetailsService userDetailsService;
 
     /**
-     * Resolver centralizado de excepciones para delegar el manejo de errores
-     * producidos durante el filtrado.
+     * Centralized exception resolver used to delegate errors produced during filtering.
      */
     private final HandlerExceptionResolver handlerExceptionResolver;
 
     /**
-     * Crea una nueva instancia del filtro JWT.
+     * Creates a new JWT filter instance.
      *
-     * @param jwtService            servicio de gestión de tokens JWT (extracción y validación)
-     * @param userDetailsService    servicio para cargar los detalles del usuario asociado al token
-     * @param handlerExceptionResolver componente usado para resolver excepciones
-     *                                 durante la ejecución del filtro
+     * @param jwtService            JWT token management service (extraction and validation)
+     * @param userDetailsService    service used to load the user details associated with the token
+     * @param handlerExceptionResolver component used to resolve exceptions during filter execution
      */
     @Autowired
     public JwtAuthFilter(JwtService jwtService,
@@ -60,22 +58,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Aplica la lógica de filtrado para autenticar peticiones basadas en JWT.
+     * Applies filtering logic to authenticate JWT-based requests.
      * <p>
-     * Pasos principales:
+     * Main steps:
      * <ul>
-     *   <li>Extraer la cabecera {@code Authorization}.</li>
-     *   <li>Obtener el token JWT y el email de usuario.</li>
-     *   <li>Validar el token y, si está caducado pero puede renovarse, generar uno nuevo.</li>
-     *   <li>Establecer la autenticación en el contexto de seguridad cuando el token es válido.</li>
-     *   <li>Delegar el manejo de excepciones en el {@code HandlerExceptionResolver}.</li>
+     *   <li>Extract the {@code Authorization} header.</li>
+     *   <li>Obtain the JWT token and user email.</li>
+     *   <li>Validate the token and, if it is expired but renewable, generate a new one.</li>
+     *   <li>Set authentication in the security context when the token is valid.</li>
+     *   <li>Delegate exception handling to the {@code HandlerExceptionResolver}.</li>
      * </ul>
      *
-     * @param request     petición HTTP entrante
-     * @param response    respuesta HTTP saliente
-     * @param filterChain cadena de filtros de Spring Security
-     * @throws ServletException si ocurre un error a nivel de servlet
-     * @throws IOException      si se produce un error de E/S durante el filtrado
+     * @param request     incoming HTTP request
+     * @param response    outgoing HTTP response
+     * @param filterChain Spring Security filter chain
+     * @throws ServletException if a servlet-level error occurs
+     * @throws IOException      if an I/O error occurs during filtering
      */
     @Override
     protected void doFilterInternal(

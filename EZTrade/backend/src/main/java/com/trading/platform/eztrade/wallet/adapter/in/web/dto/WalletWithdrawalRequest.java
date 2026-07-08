@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 /**
- * DTO de entrada para retirar fondos del wallet del usuario autenticado.
+ * Input DTO for withdrawing funds from the authenticated user's wallet.
  */
 public record WalletWithdrawalRequest(
         @NotNull(message = "Amount is required")

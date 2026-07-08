@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Adaptador REST para consultar el portfolio del usuario autenticado.
+ * REST adapter for querying the authenticated user's portfolio.
  */
 @RestController
 @RequestMapping("/api/portfolio")

@@ -4,7 +4,7 @@ import com.trading.platform.eztrade.wallet.adapter.out.persistence.jpa.WalletTra
 import com.trading.platform.eztrade.wallet.domain.WalletTransaction;
 
 /**
- * Mapper (paquete-privado) dominio &lt;-&gt; JPA para {@link WalletTransaction}.
+ * Package-private domain &lt;-&gt; JPA mapper for {@link WalletTransaction}.
  */
 final class WalletTransactionMapper {
 

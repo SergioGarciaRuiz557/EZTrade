@@ -19,11 +19,11 @@ import org.springframework.stereotype.Service;
 import java.util.function.Consumer;
 
 /**
- * Servicio de aplicacion del modulo notifications.
+ * Application service for the notifications module.
  * <p>
- * Implementa el caso de uso de entrada consumiendo eventos de dominio,
- * transformandolos en {@link NotificationMessage} y distribuyendolos a
- * todos los canales configurados mediante puertos de salida.
+ * Implements the input use case by consuming domain events, transforming them
+ * into {@link NotificationMessage}, and distributing them to all configured
+ * channels through output ports.
  */
 @Service
 public class NotificationService implements NotifyOnDomainEventsUseCase {
@@ -46,9 +46,9 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
     }
 
     /**
-     * Construye la notificacion de orden registrada y la despacha por todos los canales.
+     * Builds the order-placed notification and dispatches it through all channels.
      *
-     * @param event evento de alta de orden
+     * @param event order placement event
      */
     @Override
     public void handle(OrderPlacedEvent event) {
@@ -63,9 +63,9 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
     }
 
     /**
-     * Construye la notificacion de orden ejecutada y la despacha por todos los canales.
+     * Builds the order-executed notification and dispatches it through all channels.
      *
-     * @param event evento de ejecucion de orden
+     * @param event order execution event
      */
     @Override
     public void handle(OrderExecutedEvent event) {
@@ -80,9 +80,9 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
     }
 
     /**
-     * Construye la notificacion de orden cancelada y la despacha por todos los canales.
+     * Builds the order-canceled notification and dispatches it through all channels.
      *
-     * @param event evento de cancelacion de orden
+     * @param event order cancellation event
      */
     @Override
     public void handle(OrderCancelledEvent event) {
@@ -97,9 +97,9 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
     }
 
     /**
-     * Construye la notificacion de fondos insuficientes y la despacha por todos los canales.
+     * Builds the insufficient-funds notification and dispatches it through all channels.
      *
-     * @param event evento de fondos insuficientes
+     * @param event insufficient-funds event
      */
     @Override
     public void handle(InsufficientFundsEvent event) {
@@ -118,9 +118,9 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
     }
 
     /**
-     * Construye la notificacion de actualizacion de cartera y la despacha por todos los canales.
+     * Builds the portfolio-update notification and dispatches it through all channels.
      *
-     * @param event evento de valoracion agregada de portfolio
+     * @param event portfolio aggregate valuation event
      */
     @Override
     public void handle(PortfolioValuationUpdatedEvent event) {
@@ -137,9 +137,9 @@ public class NotificationService implements NotifyOnDomainEventsUseCase {
     }
 
     /**
-     * Hace fan-out del mensaje a todos los adaptadores de salida.
+     * Fans out the message to all output adapters.
      *
-     * @param message mensaje normalizado listo para enviar/persistir
+     * @param message normalized message ready to send/persist
      */
     private void dispatch(NotificationMessage message) {
         deliver("email", message, emailNotificationPort::send);

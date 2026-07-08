@@ -7,14 +7,14 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
- * DTO de entrada para publicar acciones en venta dentro de la plataforma.
+ * Input DTO for publishing shares for sale inside the platform.
  * <p>
- * El precio indicado por el usuario se valida en la capa de aplicacion para que
- * no supere el precio actual de mercado.
+ * The user-provided price is validated in the application layer so it does not
+ * exceed the current market price.
  *
- * @param symbol ticker de la accion ofrecida
- * @param quantity numero de acciones que se ponen a la venta
- * @param price precio unitario deseado por el vendedor
+ * @param symbol ticker of the offered share
+ * @param quantity number of shares placed for sale
+ * @param price seller's desired unit price
  */
 public record PlaceSellOfferRequest(
         @NotBlank(message = "Symbol is required")

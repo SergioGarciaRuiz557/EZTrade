@@ -1,62 +1,62 @@
-# Modulo User
+# User Module
 
-## Proposito
+## Purpose
 
-`user` gestiona los usuarios de la plataforma, sus datos basicos y su rol. Tambien expone una API publica para que security pueda cargar usuarios sin depender de la persistencia interna.
+`user` manages platform users, their basic data, and their role. It also exposes a public API so security can load users without depending on internal persistence.
 
-## Dominio
+## Domain
 
-- `User`: modelo de dominio con id, nombre, apellidos, username, email, password y rol.
-- `Role`: enum de roles funcionales.
-- `UserExistsException`: se lanza al registrar email o username duplicado.
-- `UserNotFoundException`: se lanza cuando no se encuentra un usuario por email o username.
+- `User`: domain model with id, first name, last name, username, email, password, and role.
+- `Role`: enum of functional roles.
+- `UserExistsException`: thrown when registering a duplicated email or username.
+- `UserNotFoundException`: thrown when no user is found by email or username.
 
-El dominio no usa JPA ni Spring Security.
+The domain does not use JPA or Spring Security.
 
-## Aplicacion
+## Application
 
-`UserService` implementa:
+`UserService` implements:
 
-- `RegisterUserUserCase`: registra usuarios, codifica password y asigna `Role.USER`.
-- `GetUserUserCase`: busca por email o username.
+- `RegisterUserUserCase`: registers users, encodes the password, and assigns `Role.USER`.
+- `GetUserUserCase`: searches by email or username.
 
-Puerto de salida:
+Output port:
 
-- `UserRepository`: contrato que necesita la aplicacion para persistir y consultar usuarios.
+- `UserRepository`: contract required by the application to persist and query users.
 
-## Adaptadores de entrada
+## Input Adapters
 
-`UserController` expone:
+`UserController` exposes:
 
-| Metodo | Ruta | Uso |
+| Method | Route | Use |
 |---|---|---|
-| `POST` | `/api/user/register` | Registra un usuario nuevo. |
-| `GET` | `/api/user?email=...` | Consulta un usuario por email o username. |
+| `POST` | `/api/user/register` | Registers a new user. |
+| `GET` | `/api/user?email=...` | Queries a user by email or username. |
 
-`UserDTO` es el contrato HTTP y `UserMapper` traduce entre DTO y dominio.
+`UserDTO` is the HTTP contract, and `UserMapper` translates between DTO and domain.
 
-## Adaptadores de salida
+## Output Adapters
 
-- `UserRepository`: implementacion del puerto de aplicacion usando Spring Data.
-- `JpaUserRepository`: repositorio Spring Data.
-- `UserJpaEntity`: entidad de la tabla `user`.
-- `UserJpaMapper`: traduce dominio <-> entidad JPA.
-- `LoadUserForSecurityAdapter`: transforma un usuario de dominio en `UserDetails`.
-- `UserOwnerLookupAdapter`: permite comprobar existencia/propiedad desde otros modulos.
+- `UserRepository`: implementation of the application port using Spring Data.
+- `JpaUserRepository`: Spring Data repository.
+- `UserJpaEntity`: entity for the `user` table.
+- `UserJpaMapper`: translates domain <-> JPA entity.
+- `LoadUserForSecurityAdapter`: transforms a domain user into `UserDetails`.
+- `UserOwnerLookupAdapter`: allows other modules to check existence/ownership.
 
-## Flujo de registro
+## Registration Flow
 
-1. `UserController` recibe `UserDTO`.
-2. `UserMapper` lo convierte en `User`.
-3. `UserService` valida duplicados por email y username.
-4. Codifica password con `PasswordEncoder`.
-5. Asigna `Role.USER`.
-6. Persiste mediante `UserRepository`.
-7. Devuelve DTO al cliente.
+1. `UserController` receives `UserDTO`.
+2. `UserMapper` converts it into `User`.
+3. `UserService` validates duplicates by email and username.
+4. It encodes the password with `PasswordEncoder`.
+5. It assigns `Role.USER`.
+6. It persists through `UserRepository`.
+7. It returns the DTO to the client.
 
-## Flujo de login desde security
+## Login Flow from Security
 
-1. Security solicita usuario por email o username.
-2. `LoadUserForSecurityAdapter` delega en el puerto de user.
-3. El usuario se adapta a `UserDetails`.
-4. Spring Security valida password y roles.
+1. Security requests the user by email or username.
+2. `LoadUserForSecurityAdapter` delegates to the user port.
+3. The user is adapted to `UserDetails`.
+4. Spring Security validates password and roles.

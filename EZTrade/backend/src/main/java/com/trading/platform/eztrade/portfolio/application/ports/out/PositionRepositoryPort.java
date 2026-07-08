@@ -6,23 +6,23 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Puerto de salida para persistir y consultar posiciones de portfolio.
+ * Output port for persisting and querying portfolio positions.
  * <p>
- * La aplicacion trabaja con {@link Position}; los detalles JPA quedan en el
- * adaptador de infraestructura.
+ * The application works with {@link Position}; JPA details remain in the
+ * infrastructure adapter.
  */
 public interface PositionRepositoryPort {
 
-    /** Busca la posicion unica de un usuario para un simbolo. */
+    /** Finds the single user position for a symbol. */
     Optional<Position> findByOwnerAndSymbol(String owner, String symbol);
 
-    /** Recupera todas las posiciones historicas/actuales de un usuario. */
+    /** Retrieves all historical/current positions for a user. */
     List<Position> findByOwner(String owner);
 
-    /** Inserta o actualiza una posicion y devuelve el estado persistido. */
+    /** Inserts or updates a position and returns the persisted state. */
     Position save(Position position);
 
-    /** Elimina la posicion identificada por owner y simbolo. */
+    /** Deletes the position identified by owner and symbol. */
     void deleteByOwnerAndSymbol(String owner, String symbol);
 }
 

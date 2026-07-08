@@ -6,10 +6,10 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * Adaptador de persistencia para usuarios.
+ * Persistence adapter for users.
  * <p>
- * Traduce entre el agregado de dominio puro y la entidad JPA usada por la
- * infraestructura de base de datos.
+ * Translates between the pure domain aggregate and the JPA entity used by the
+ * database infrastructure.
  */
 @Repository
 public class UserRepository implements com.trading.platform.eztrade.user.application.ports.out.UserRepository {

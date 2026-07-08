@@ -7,47 +7,46 @@ import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.UniqueElements;
 
 /**
- * DTO que representa los datos de un usuario recibidos o enviados
- * a través de la capa de entrada de la aplicación.
+ * DTO representing user data received or sent through the application's input
+ * layer.
  * <p>
- * Incluye anotaciones de validación para asegurar que los campos
- * mínimos requeridos estén informados y cumplan las restricciones
- * de formato y longitud.
+ * Includes validation annotations to ensure the required fields are present and
+ * satisfy format and length constraints.
  */
 public class UserDTO {
 
     /**
-     * Nombre del usuario.
+     * User first name.
      * <p>
-     * Campo obligatorio, no puede ser nulo ni estar en blanco.
+     * Required field; it cannot be null or blank.
      */
     @NotNull(message = "The firstname is mandatory")
     @NotBlank(message = "The firstname is mandatory")
     private String firstname;
 
     /**
-     * Apellidos del usuario.
+     * User last name.
      * <p>
-     * Campo obligatorio, no puede ser nulo ni estar en blanco.
+     * Required field; it cannot be null or blank.
      */
     @NotNull(message = "The lastname is mandatory")
     @NotBlank(message = "The lastname is mandatory")
     private String lastname;
 
     /**
-     * Nombre de usuario del usuario.
+     * User username.
      * <p>
-     * Campo obligatorio y único a nivel de persistencia.
+     * Required field and unique at the persistence level.
      */
     @NotNull(message = "The username is mandatory")
     @NotBlank(message = "The username is mandatory")
     private String username;
 
     /**
-     * Correo electrónico del usuario.
+     * User email address.
      * <p>
-     * Campo obligatorio, debe tener un formato de email válido
-     * y ser único en el sistema.
+     * Required field; it must have a valid email format and be unique in the
+     * system.
      */
     @NotNull(message = "The email is mandatory")
     @NotBlank(message = "The email is mandatory")
@@ -56,10 +55,10 @@ public class UserDTO {
     private String email;
 
     /**
-     * Contraseña del usuario.
+     * User password.
      * <p>
-     * Campo obligatorio, no puede ser nulo ni estar en blanco y
-     * debe tener al menos 5 caracteres de longitud.
+     * Required field; it cannot be null or blank and must be at least 5
+     * characters long.
      */
     @NotNull(message = "The password is mandatory")
     @NotBlank(message = "The password is mandatory")
@@ -67,19 +66,19 @@ public class UserDTO {
     private String password;
 
     /**
-     * Constructor sin argumentos requerido por algunos frameworks
-     * de serialización y deserialización.
+     * No-args constructor required by some serialization and deserialization
+     * frameworks.
      */
     public UserDTO() {}
 
     /**
-     * Constructor completo para inicializar todos los campos del DTO.
+     * Full constructor for initializing every DTO field.
      *
-     * @param firstname nombre del usuario
-     * @param lastname apellidos del usuario
-     * @param username nombre de usuario
-     * @param email correo electrónico del usuario
-     * @param password contraseña del usuario
+     * @param firstname user first name
+     * @param lastname user last name
+     * @param username username
+     * @param email user email address
+     * @param password user password
      */
     public UserDTO(String firstname, String lastname, String username, String email, String password) {
         this.firstname = firstname;
@@ -90,90 +89,90 @@ public class UserDTO {
     }
 
     /**
-     * Devuelve el nombre del usuario.
+     * Returns the user first name.
      *
-     * @return nombre del usuario
+     * @return user first name
      */
     public String getFirstname() {
         return firstname;
     }
 
     /**
-     * Establece el nombre del usuario.
+     * Sets the user first name.
      *
-     * @param firstname nombre del usuario
+     * @param firstname user first name
      */
     public void setFirstname(String firstname) {
         this.firstname = firstname;
     }
 
     /**
-     * Devuelve los apellidos del usuario.
+     * Returns the user last name.
      *
-     * @return apellidos del usuario
+     * @return user last name
      */
     public String getLastname() {
         return lastname;
     }
 
     /**
-     * Establece los apellidos del usuario.
+     * Sets the user last name.
      *
-     * @param lastname apellidos del usuario
+     * @param lastname user last name
      */
     public void setLastname(String lastname) {
         this.lastname = lastname;
     }
 
     /**
-     * Devuelve el nombre de usuario.
+     * Returns the username.
      *
-     * @return nombre de usuario
+     * @return username
      */
     public String getUsername() {
         return username;
     }
 
     /**
-     * Establece el nombre de usuario.
+     * Sets the username.
      *
-     * @param username nombre de usuario
+     * @param username username
      */
     public void setUsername(String username) {
         this.username = username;
     }
 
     /**
-     * Devuelve el correo electrónico del usuario.
+     * Returns the user email address.
      *
-     * @return correo electrónico del usuario
+     * @return user email address
      */
     public String getEmail() {
         return email;
     }
 
     /**
-     * Establece el correo electrónico del usuario.
+     * Sets the user email address.
      *
-     * @param email correo electrónico del usuario
+     * @param email user email address
      */
     public void setEmail(String email) {
         this.email = email;
     }
 
     /**
-     * Devuelve la contraseña del usuario.
+     * Returns the user password.
      *
-     * @return contraseña del usuario
+     * @return user password
      */
     public String getPassword() {
         return password;
     }
 
     /**
-     * Establece la contraseña del usuario.
+     * Sets the user password.
      *
-     * @param password contraseña del usuario
+     * @param password user password
      */
     public void setPassword(String password) {
         this.password = password;

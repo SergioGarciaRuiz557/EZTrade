@@ -5,7 +5,7 @@ import com.trading.platform.eztrade.portfolio.domain.CashProjection;
 import java.util.Optional;
 
 /**
- * Puerto de salida para persistir la proyeccion local de cash disponible.
+ * Output port for persisting the local available-cash projection.
  */
 public interface CashProjectionRepositoryPort {
 

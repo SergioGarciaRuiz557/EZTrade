@@ -8,31 +8,30 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio de autenticación de usuarios.
+ * User authentication service.
  * <p>
- * Se encarga de validar las credenciales recibidas y generar
- * un token JWT para el usuario autenticado.
+ * Validates the received credentials and generates a JWT token for the
+ * authenticated user.
  */
 @Service
 public class AuthService {
 
     /**
-     * Componente de Spring Security encargado de realizar el proceso
-     * de autenticación con las credenciales proporcionadas.
+     * Spring Security component responsible for performing the authentication
+     * process with the provided credentials.
      */
     private final AuthenticationManager authenticationManager;
 
     /**
-     * Servicio responsable de la generación de tokens JWT
-     * para los usuarios autenticados.
+     * Service responsible for generating JWT tokens for authenticated users.
      */
     private final JwtService jwtService;
 
     /**
-     * Crea una nueva instancia del servicio de autenticación.
+     * Creates a new authentication service instance.
      *
-     * @param authenticationManager gestor de autenticación de Spring Security
-     * @param jwtService            servicio usado para generar tokens JWT
+     * @param authenticationManager Spring Security authentication manager
+     * @param jwtService            service used to generate JWT tokens
      */
     public AuthService(AuthenticationManager authenticationManager,
                        JwtService jwtService) {
@@ -41,13 +40,13 @@ public class AuthService {
     }
 
     /**
-     * Autentica a un usuario con email o username y contraseña y genera un token JWT.
+     * Authenticates a user with email or username and password, then generates a JWT token.
      *
-     * @param identifier email o username del usuario
-     * @param password contraseña en texto plano del usuario
-     * @return token JWT asociado al usuario autenticado
+     * @param identifier user email or username
+     * @param password user plaintext password
+     * @return JWT token associated with the authenticated user
      * @throws org.springframework.security.core.AuthenticationException
-     *         si las credenciales no son válidas
+     *         if the credentials are invalid
      */
     public String login(String identifier, String password) {
         Authentication authentication =

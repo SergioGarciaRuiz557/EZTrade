@@ -4,7 +4,7 @@ import com.trading.platform.eztrade.portfolio.adapter.out.persistence.jpa.CashPr
 import com.trading.platform.eztrade.portfolio.domain.CashProjection;
 
 /**
- * Mapper interno de la proyeccion de cash entre dominio y JPA.
+ * Internal mapper for the cash projection between the domain model and JPA.
  */
 final class CashProjectionMapper {
 

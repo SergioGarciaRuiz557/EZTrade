@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * API REST del modulo wallet para consultar balance y depositar fondos.
+ * Wallet module REST API for balances, deposits, withdrawals, transfers, and movement history.
  */
 @RestController
 @RequestMapping("/api/v1/wallet")

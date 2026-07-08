@@ -1,5 +1,5 @@
 /** @type {import('postcss-load-config').Config} */
-// PostCSS procesa Tailwind y anade prefijos CSS necesarios para compatibilidad de navegadores.
+// PostCSS processes Tailwind and adds CSS prefixes required for browser compatibility.
 const config = {
   plugins: {
     tailwindcss: {},

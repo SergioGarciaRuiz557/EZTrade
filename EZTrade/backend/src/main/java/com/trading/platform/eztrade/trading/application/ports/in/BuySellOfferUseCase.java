@@ -3,36 +3,36 @@ package com.trading.platform.eztrade.trading.application.ports.in;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
 
 /**
- * Caso de uso para comprar una oferta de venta publicada por otro usuario.
+ * Use case for buying a sell offer published by another user.
  * <p>
- * Este flujo genera dos ordenes ejecutadas: una BUY para el comprador y la
- * propia SELL para el vendedor. Wallet y portfolio se actualizan despues por
- * los eventos ya existentes de ejecucion de orden.
+ * This flow generates two executed orders: a BUY for the buyer and the SELL
+ * itself for the seller. Wallet and portfolio are updated later through the
+ * existing order-execution events.
  */
 public interface BuySellOfferUseCase {
 
     /**
-     * Compra una oferta SELL pendiente.
+     * Buys a pending SELL offer.
      *
-     * @param command comprador e identificador de la oferta
-     * @return resultado con la orden del comprador y la del vendedor
+     * @param command buyer and offer identifier
+     * @return result with the buyer order and seller order
      */
     MarketplaceTradeResult buyOffer(BuySellOfferCommand command);
 
     /**
-     * Datos necesarios para comprar una oferta.
+     * Data required to buy an offer.
      *
-     * @param buyer usuario que compra la oferta
-     * @param sellOfferId id de la orden SELL pendiente que se quiere comprar
+     * @param buyer user buying the offer
+     * @param sellOfferId id of the pending SELL order to buy
      */
     record BuySellOfferCommand(String buyer, Long sellOfferId) {
     }
 
     /**
-     * Resultado de una compraventa entre usuarios.
+     * Result of a marketplace trade between users.
      *
-     * @param buyerOrder orden BUY creada y ejecutada para el comprador
-     * @param sellerOrder orden SELL ejecutada para el vendedor
+     * @param buyerOrder BUY order created and executed for the buyer
+     * @param sellerOrder SELL order executed for the seller
      */
     record MarketplaceTradeResult(TradeOrder buyerOrder, TradeOrder sellerOrder) {
     }

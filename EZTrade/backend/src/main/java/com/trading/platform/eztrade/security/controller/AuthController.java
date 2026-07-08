@@ -11,38 +11,37 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Controlador REST responsable de gestionar las operaciones de autenticación.
+ * REST controller responsible for managing authentication operations.
  * <p>
- * Expone el endpoint de inicio de sesión que valida las credenciales del usuario
- * y devuelve un token JWT en caso de autenticación exitosa.
+ * Exposes the login endpoint, validates user credentials, and returns a JWT
+ * token when authentication succeeds.
  */
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     /**
-     * Servicio de autenticación encargado de la lógica de login
-     * y generación del token JWT.
+     * Authentication service responsible for login logic and JWT generation.
      */
     private final AuthService authService;
 
     /**
-     * Crea una nueva instancia del controlador de autenticación.
+     * Creates a new authentication controller instance.
      *
-     * @param authService servicio de autenticación utilizado para validar credenciales
+     * @param authService authentication service used to validate credentials
      */
     public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
     /**
-     * Endpoint de inicio de sesión.
+     * Login endpoint.
      * <p>
-     * Recibe las credenciales del usuario, delega la autenticación en
-     * el {@code AuthService} y, si es correcta, devuelve un token JWT.
+     * Receives user credentials, delegates authentication to {@code AuthService},
+     * and returns a JWT token when authentication succeeds.
      *
-     * @param request objeto con el identificador (email o username) y la contraseña del usuario
-     * @return respuesta HTTP 200 con el token JWT en el cuerpo
+     * @param request object with the identifier (email or username) and user password
+     * @return HTTP 200 response with the JWT token in the body
      */
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> login(

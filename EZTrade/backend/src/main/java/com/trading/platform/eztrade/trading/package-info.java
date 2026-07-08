@@ -1,18 +1,18 @@
 /**
- * Modulo Trading.
+ * Trading module.
  * <p>
- * Este modulo encapsula la gestion del ciclo de vida de ordenes de compra y venta,
- * asi como su ejecucion y cancelacion.
+ * This module encapsulates the lifecycle management of buy and sell orders,
+ * including execution and cancellation.
  * <p>
- * Arquitectura y limites:
+ * Architecture and boundaries:
  * <ul>
- *   <li>Arquitectura hexagonal: dominio, aplicacion (puertos/casos de uso) y adaptadores.</li>
- *   <li>El dominio es puro: sin dependencias de Spring ni detalles de infraestructura.</li>
- *   <li>La aplicacion orquesta reglas de negocio a traves de puertos de entrada/salida.</li>
- *   <li>La comunicacion con otros modulos se realiza mediante eventos de dominio.</li>
- *   <li>Para validar precios del marketplace, trading solo depende de la API
- *       publica {@code market :: api}; no consulta directamente adaptadores ni
- *       servicios internos de market.</li>
+ *   <li>Hexagonal architecture: domain, application (ports/use cases), and adapters.</li>
+ *   <li>The domain is pure: no Spring dependencies or infrastructure details.</li>
+ *   <li>The application orchestrates business rules through input/output ports.</li>
+ *   <li>Communication with other modules is performed through domain events.</li>
+ *   <li>To validate marketplace prices, trading only depends on the public
+ *       {@code market :: api}; it does not query adapters or internal market
+ *       services directly.</li>
  * </ul>
  */
 @ApplicationModule(

@@ -1,7 +1,7 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Base de datos - Resumen entidad-relacion
+title EZTrade Database - Entity-Relationship Summary
 
 entity "user" as UserTable {
   * id : BIGINT <<PK>>
@@ -74,13 +74,13 @@ UserTable ||..o{ PositionTable : logical owner identifier
 UserTable ||..o| CashProjectionTable : logical owner identifier
 UserTable ||..o{ NotificationTable : recipient
 TradeOrderTable ||..o{ WalletLedgerTable : referenceType=ORDER\nreferenceId=order id
-TradeOrderTable ||..o{ PositionTable : owner + symbol\nvia eventos de orden ejecutada
+TradeOrderTable ||..o{ PositionTable : owner + symbol\nvia executed-order events
 WalletAccountTable ||..o{ WalletLedgerTable : owner + balance deltas
 WalletAccountTable ||..o| CashProjectionTable : AvailableCashUpdatedEvent
 
 note bottom
-No se declaran claves foraneas fisicas en las entidades JPA inspeccionadas.
-Las relaciones discontinuas son enlaces logicos inferidos desde campos, eventos y metodos de repositorio.
+No physical foreign keys are declared in the inspected JPA entities.
+Dashed relationships are logical links inferred from fields, events, and repository methods.
 end note
 
 @enduml

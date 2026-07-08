@@ -30,18 +30,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Servicio de aplicacion del modulo portfolio.
+ * Application service for the portfolio module.
  * <p>
- * Orquesta tres flujos:
+ * Orchestrates three flows:
  * <ul>
- *   <li>Actualizar posiciones al recibir {@link OrderExecutedEvent}.</li>
- *   <li>Sincronizar la proyeccion de cash desde {@link AvailableCashUpdatedEvent}.</li>
- *   <li>Construir la vista agregada que consume la API REST.</li>
+ *   <li>Update positions when receiving {@link OrderExecutedEvent}.</li>
+ *   <li>Synchronize the cash projection from {@link AvailableCashUpdatedEvent}.</li>
+ *   <li>Build the aggregate view consumed by the REST API.</li>
  * </ul>
  * <p>
- * Para las consultas de usuario tambien enriquece las posiciones abiertas con
- * valoracion de mercado mediante {@link MarketPriceLookupPort}. Esa dependencia
- * entra por la API publica de market para respetar Spring Modulith.
+ * For user queries, it also enriches open positions with market valuation
+ * through {@link MarketPriceLookupPort}. That dependency enters through the
+ * market public API to respect Spring Modulith boundaries.
  */
 @Service
 @Transactional
@@ -64,8 +64,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
 
     @Override
     public void handle(OrderExecutedEvent event) {
-        // El evento llega ya confirmado por wallet. Portfolio solo refleja el
-        // efecto economico sobre posiciones y publica su snapshot agregada.
+        // The event arrives already confirmed by wallet. Portfolio only reflects
+        // the economic effect on positions and publishes its aggregate snapshot.
         String owner = event.owner();
         String symbol = normalizeSymbol(event.symbol());
         BigDecimal quantity = positive(event.quantity(), "Quantity");
@@ -90,13 +90,13 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
     @Override
     @Transactional(readOnly = true)
     public PortfolioSnapshot getByOwner(String owner) {
-        // En lectura HTTP si se incluyen precios actuales para mostrar valor de mercado.
+        // HTTP reads include current prices to show market value.
         return buildSnapshot(owner, true);
     }
 
     private PortfolioSnapshot buildSnapshot(String owner, boolean includeMarketValuations) {
-        // Las posiciones cerradas se conservan en persistencia para mantener el
-        // PnL realizado acumulado, pero no forman parte de posiciones abiertas.
+        // Closed positions are kept in persistence to preserve accumulated
+        // realized PnL, but they are not part of open positions.
         List<Position> allPositions = positionRepository.findByOwner(owner);
         List<Position> openPositions = allPositions.stream()
                 .filter(position -> !position.isClosed())
@@ -113,8 +113,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                 .map(CashProjection::availableCash)
                 .orElse(BigDecimal.ZERO);
 
-        // Las valoraciones de mercado se omiten en eventos internos para evitar
-        // llamadas externas innecesarias al recalcular tras cada ejecucion.
+        // Market valuations are omitted in internal events to avoid unnecessary
+        // external calls when recalculating after each execution.
         Map<String, PositionMarketValuation> marketValuations = includeMarketValuations
                 ? buildMarketValuations(openPositions)
                 : Map.of();
@@ -137,8 +137,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
 
     @Override
     public void handle(AvailableCashUpdatedEvent event) {
-        // Wallet es la fuente de verdad. Portfolio solo persiste la ultima foto
-        // recibida para componer consultas de cartera.
+        // Wallet is the source of truth. Portfolio only persists the latest
+        // received picture to compose portfolio queries.
         if (event.owner() == null || event.owner().isBlank()) {
             throw new PortfolioDomainException("Owner is required");
         }
@@ -158,7 +158,7 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
         Position saved;
 
         if (current == null) {
-            // Primera compra del simbolo: se abre una posicion nueva.
+            // First purchase for the symbol: a new position is opened.
             saved = positionRepository.save(Position.open(owner, symbol, quantity, price));
             eventPublisher.publish(new PositionOpenedEvent(
                     owner,
@@ -168,7 +168,7 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
                     LocalDateTime.now()
             ));
         } else {
-            // Compra adicional: se recalcula el coste medio ponderado en dominio.
+            // Additional purchase: the weighted average cost is recalculated in the domain.
             saved = positionRepository.save(current.increase(quantity, price));
             eventPublisher.publish(new PositionIncreasedEvent(
                     owner,
@@ -191,8 +191,8 @@ public class PortfolioService implements HandleOrderExecutedUseCase, GetPortfoli
         Position updated = result.position();
 
         if (updated.isClosed()) {
-            // Se guarda la posicion cerrada en vez de borrarla para conservar el
-            // PnL realizado historico en snapshots posteriores.
+            // Save the closed position instead of deleting it to preserve
+            // historical realized PnL in later snapshots.
             positionRepository.save(updated);
             eventPublisher.publish(new PositionClosedEvent(
                     owner,

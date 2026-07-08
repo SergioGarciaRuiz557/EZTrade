@@ -7,10 +7,10 @@ import com.trading.platform.eztrade.market.domain.Symbol;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementación del caso de uso {@link GetPriceUserCase}.
+ * Implementation of the {@link GetPriceUserCase} use case.
  * <p>
- * Orquesta la obtención del precio de mercado actual delegando el acceso
- * a datos en el puerto de salida {@link GetPriceMarketProviderPort}.
+ * Orchestrates retrieval of the current market price by delegating data access
+ * to the {@link GetPriceMarketProviderPort} output port.
  */
 @Service
 public class GetPriceService implements GetPriceUserCase {

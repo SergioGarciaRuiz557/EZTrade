@@ -4,22 +4,22 @@ import com.trading.platform.eztrade.user.domain.User;
 import com.trading.platform.eztrade.user.domain.exceptions.UserExistsException;
 
 /**
- * Caso de uso de aplicación para el registro de un nuevo {@link User}.
+ * Application use case for registering a new {@link User}.
  * <p>
- * Define la operación de alta de usuario que puede ser invocada
- * desde los adaptadores de entrada (por ejemplo, controladores REST).
+ * Defines the user creation operation that can be invoked from input adapters
+ * such as REST controllers.
  */
 public interface RegisterUserUserCase {
 
     /**
-     * Registra un nuevo usuario en el sistema.
+     * Registers a new user in the system.
      * <p>
-     * La implementación deberá verificar que no exista ya un usuario
-     * con las mismas credenciales y lanzar una excepción en tal caso.
+     * The implementation must verify that no user already exists with the same
+     * credentials and throw an exception when that happens.
      *
-     * @param user entidad de dominio {@link User} con los datos a registrar
-     * @return el {@link User} registrado, incluyendo cualquier dato generado (por ejemplo, identificador)
-     * @throws UserExistsException si ya existe un usuario que impide el registro
+     * @param user {@link User} domain entity with the data to register
+     * @return registered {@link User}, including generated data such as the identifier
+     * @throws UserExistsException if an existing user prevents registration
      */
     User registerUser(User user) throws UserExistsException;
 }

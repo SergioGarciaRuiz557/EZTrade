@@ -5,29 +5,28 @@ import com.trading.platform.eztrade.trading.domain.TradeOrder;
 import java.math.BigDecimal;
 
 /**
- * Caso de uso para publicar una oferta de venta respaldada por acciones propias.
+ * Use case for publishing a sell offer backed by the user's own shares.
  * <p>
- * La implementacion valida que el usuario tenga acciones suficientes y que el
- * precio ofertado no sea superior al precio actual de AlphaVantage.
+ * The implementation validates that the user has enough shares and that the
+ * offered price is not higher than the current Alpha Vantage price.
  */
 public interface PlaceSellOfferUseCase {
 
     /**
-     * Registra una orden SELL en estado pendiente para que otros usuarios puedan
-     * comprarla desde el marketplace.
+     * Registers a pending SELL order so other users can buy it from the marketplace.
      *
-     * @param command usuario vendedor, simbolo, cantidad y precio ofertado
-     * @return orden SELL pendiente
+     * @param command selling user, symbol, quantity, and offered price
+     * @return pending SELL order
      */
     TradeOrder placeSellOffer(PlaceSellOfferCommand command);
 
     /**
-     * Datos necesarios para publicar una oferta.
+     * Data required to publish an offer.
      *
-     * @param owner usuario vendedor
-     * @param symbol ticker de la accion
-     * @param quantity numero de acciones ofrecidas
-     * @param price precio unitario ofertado, como maximo el precio de mercado
+     * @param owner selling user
+     * @param symbol stock ticker
+     * @param quantity number of offered shares
+     * @param price offered unit price, at most the market price
      */
     record PlaceSellOfferCommand(String owner, String symbol, BigDecimal quantity, BigDecimal price) {
     }

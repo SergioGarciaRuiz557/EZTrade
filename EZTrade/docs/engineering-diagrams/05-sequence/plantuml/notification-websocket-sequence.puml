@@ -1,10 +1,10 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Secuencia - Evento de dominio a notificacion WebSocket
+title EZTrade Sequence - Domain Event to WebSocket Notification
 autonumber
 
-participant "Publicador de dominio\nEventos Spring" as Events
+participant "Domain publisher\nSpring Events" as Events
 participant "DomainEventsListener\n@TransactionalEventListener(AFTER_COMMIT)\n@Async" as Listener
 participant "NotificationService" as NotificationService
 participant "WebSocketNotificationAdapter" as WsAdapter
@@ -19,11 +19,11 @@ database "notification_inbox" as InboxDb
 
 Events -> Listener : OrderPlaced / OrderExecuted /\nOrderCancelled / InsufficientFunds /\nPortfolioValuationUpdated
 Listener -> NotificationService : handle(event)
-NotificationService -> NotificationService : construye NotificationMessage
+NotificationService -> NotificationService : builds NotificationMessage
 NotificationService -> EmailAdapter : send(message)
-EmailAdapter --> NotificationService : solo log
+EmailAdapter --> NotificationService : log only
 NotificationService -> PushAdapter : send(message)
-PushAdapter --> NotificationService : solo log
+PushAdapter --> NotificationService : log only
 NotificationService -> WsAdapter : send(message)
 WsAdapter -> Simp : convertAndSendToUser(recipient,\n/queue/notifications, payload)
 Simp -> Broker : route to /user/queue/notifications
@@ -33,10 +33,10 @@ NotificationService -> InboxAdapter : save(message)
 InboxAdapter -> InboxDb : insert notification_inbox row
 
 note bottom
-Evidencia: DomainEventsListener.java, NotificationService.java,
-WebSocketNotificationAdapter.java, InboxNotificationAdapter.java y
+Evidence: DomainEventsListener.java, NotificationService.java,
+WebSocketNotificationAdapter.java, InboxNotificationAdapter.java, and
 frontend/components/notifications/notifications-ws.tsx.
-Los adaptadores email y push son implementaciones de logging, no proveedores externos.
+Email and push adapters are logging implementations, not external providers.
 end note
 
 @enduml

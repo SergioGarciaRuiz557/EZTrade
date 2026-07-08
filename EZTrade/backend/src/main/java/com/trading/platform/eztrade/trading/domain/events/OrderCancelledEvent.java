@@ -3,12 +3,12 @@ package com.trading.platform.eztrade.trading.domain.events;
 import java.time.LocalDateTime;
 
 /**
- * Evento de dominio emitido cuando una orden es cancelada.
+ * Domain event emitted when an order is cancelled.
  *
- * @param orderId identificador de la orden cancelada
- * @param owner propietario de la orden
- * @param symbol simbolo del activo
- * @param occurredAt fecha y hora de emision del evento
+ * @param orderId cancelled order identifier
+ * @param owner order owner
+ * @param symbol asset symbol
+ * @param occurredAt event emission date and time
  */
 public record OrderCancelledEvent(
         Long orderId,

@@ -14,15 +14,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 
 /**
- * Filtro de autorización específico para el endpoint GET /api/user.
+ * Authorization filter specific to the GET /api/user endpoint.
  * <p>
- * Aplica la regla:
+ * Applies the rule:
  * <ul>
- *     <li>Permitir acceso si el usuario autenticado tiene rol ADMIN.</li>
- *     <li>Permitir acceso si el email solicitado coincide con el usuario autenticado.</li>
- *     <li>En caso contrario, devolver 403 FORBIDDEN antes de llegar al controlador.</li>
+ *     <li>Allow access if the authenticated user has the ADMIN role.</li>
+ *     <li>Allow access if the requested email matches the authenticated user.</li>
+ *     <li>Otherwise, return 403 FORBIDDEN before reaching the controller.</li>
  * </ul>
- * De este modo, el módulo {@code user} no necesita depender de Spring Security.
+ * This way, the {@code user} module does not need to depend on Spring Security.
  */
 @Component
 public class UserAccessFilter extends OncePerRequestFilter {

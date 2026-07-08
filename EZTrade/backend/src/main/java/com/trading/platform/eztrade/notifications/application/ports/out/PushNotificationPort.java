@@ -3,14 +3,14 @@ package com.trading.platform.eztrade.notifications.application.ports.out;
 import com.trading.platform.eztrade.notifications.domain.NotificationMessage;
 
 /**
- * Puerto de salida para enviar notificaciones push.
+ * Output port for sending push notifications.
  * <p>
- * Permite que {@code NotificationService} publique en un canal movil sin
- * depender de SDKs o proveedores externos.
+ * Allows {@code NotificationService} to publish to a mobile channel without
+ * depending on SDKs or external providers.
  */
 public interface PushNotificationPort {
 
-    /** Envia el mensaje ya construido al canal push. */
+    /** Sends the already built message to the push channel. */
     void send(NotificationMessage message);
 }
 

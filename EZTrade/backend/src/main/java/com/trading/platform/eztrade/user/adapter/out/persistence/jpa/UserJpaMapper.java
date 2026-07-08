@@ -3,10 +3,10 @@ package com.trading.platform.eztrade.user.adapter.out.persistence.jpa;
 import com.trading.platform.eztrade.user.domain.User;
 
 /**
- * Mapper interno entre la entidad JPA de usuario y el modelo de dominio.
+ * Internal mapper between the user JPA entity and the domain model.
  * <p>
- * Centraliza la traduccion para que repositorios y adaptadores no dupliquen el
- * conocimiento de campos como username/email/password/role.
+ * Centralizes the translation so repositories and adapters do not duplicate
+ * knowledge about fields such as username/email/password/role.
  */
 final class UserJpaMapper {
 

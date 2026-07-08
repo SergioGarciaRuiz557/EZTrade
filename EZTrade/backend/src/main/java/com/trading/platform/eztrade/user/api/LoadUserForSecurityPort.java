@@ -4,20 +4,19 @@ import org.springframework.modulith.NamedInterface;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Puerto de entrada para la carga de usuarios en el contexto de seguridad.
+ * Input port for loading users in the security context.
  * <p>
- * Este puerto es utilizado por la capa de infraestructura (por ejemplo,
- * adaptadores de Spring Security) para obtener los detalles de un usuario
- * a partir de su identificador.
+ * This port is used by the infrastructure layer (for example, Spring Security
+ * adapters) to obtain a user's details from its identifier.
  */
 @NamedInterface
 public interface LoadUserForSecurityPort {
 
     /**
-     * Carga los detalles de un usuario a partir de su nombre de usuario.
+     * Loads a user's details from its username.
      *
-     * @param username identificador del usuario, normalmente el correo electrónico
-     * @return una instancia de {@link UserDetails} con la información de seguridad del usuario
+     * @param username user identifier, usually the email address
+     * @return {@link UserDetails} instance with the user's security information
      */
     UserDetails loadByUsername(String username);
 }

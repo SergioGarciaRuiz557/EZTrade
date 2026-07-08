@@ -1,38 +1,43 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade - Contexto del sistema
+title EZTrade - System Context
 
-actor "Usuario final\n(inversor/trader)" as User
-actor "Desarrollador/a" as Dev
+actor "End user\n(investor/trader)" as User
+actor "Developer" as Dev
 
-rectangle "EZTrade\nPlataforma web de trading" as System EZ_BACKEND {
+rectangle "EZTrade\nWeb trading platform" as System EZ_BACKEND {
   component "Frontend\nNext.js + React" as Frontend EZ_FRONTEND
   component "Backend\nSpring Boot + Spring Modulith" as Backend EZ_BACKEND
 }
 
-database "MySQL local\nBase EZTrade" as MySQL EZ_DB
-component "Alpha Vantage API\nprecios, busqueda, overview, velas" as Alpha EZ_EXTERNAL
-component "GitHub Actions\nCI backend Maven" as GHA EZ_DEVOPS
+database "MySQL\nEZTrade database" as MySQL EZ_DB
+component "Alpha Vantage API\nprices, search, overview, candles" as Alpha EZ_EXTERNAL
+component "GitHub Actions\nBackend Maven CI" as GHA EZ_DEVOPS
+component "Docker Compose\nlocal development runtime" as Compose EZ_DEVOPS
 
-User --> Frontend : Navega, opera,\nrecibe notificaciones
+User --> Frontend : Browses, trades,\nreceives notifications
 Frontend --> Backend : REST JSON\nJWT Bearer
 Frontend --> Backend : WebSocket/STOMP\n/ws, /user/queue/notifications
 Backend --> MySQL : JPA/Hibernate\nDDL auto update
 Backend --> Alpha : HTTPS RestClient\nAPI key + throttle
-Dev --> GHA : push / pull_request\na main
+Dev --> GHA : push / pull_request\nto main
 GHA --> Backend : mvn -B clean verify\nworking-directory EZTrade/backend
+Dev --> Compose : docker compose up --build
+Compose --> Frontend : exposes localhost:3000
+Compose --> Backend : exposes localhost:8088
+Compose --> MySQL : exposes localhost:3306
 
 note right of System
-Evidencia: frontend/package.json, frontend/lib/api-client.ts,
+Evidence: frontend/package.json, frontend/lib/api-client.ts,
 backend/pom.xml, application.properties, .env.example,
-AlphaVantageAPI.java y ../.github/workflows/maven.yml.
+AlphaVantageAPI.java, docker-compose.yml,
+Dockerfiles, and ../.github/workflows/maven.yml.
 end note
 
-note bottom of GHA
-No se han encontrado Dockerfile, docker-compose,
-Nginx, Terraform, Kubernetes ni scripts de despliegue
-para la aplicacion.
+note bottom of Compose
+Compose starts MySQL, backend, and frontend for local development.
+Production deployment manifests or IaC are not declared in the repository.
 end note
 
 @enduml

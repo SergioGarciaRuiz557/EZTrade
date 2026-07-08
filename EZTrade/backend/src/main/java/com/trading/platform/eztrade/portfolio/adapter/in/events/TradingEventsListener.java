@@ -6,7 +6,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador de entrada que traduce eventos de trading a casos de uso de portfolio.
+ * Input adapter that translates trading events into portfolio use cases.
  */
 @Component
 public class TradingEventsListener {

@@ -10,9 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Adaptador de persistencia para transacciones del wallet.
+ * Persistence adapter for wallet transactions.
  * <p>
- * Implementa {@link WalletTransactionRepositoryPort} usando Spring Data JPA.
+ * Implements {@link WalletTransactionRepositoryPort} using Spring Data JPA.
  */
 @Repository
 public class WalletTransactionRepositoryAdapter implements WalletTransactionRepositoryPort {

@@ -5,10 +5,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador de salida que publica eventos de dominio usando Spring Events.
+ * Output adapter that publishes domain events using Spring Events.
  * <p>
- * Implementa el puerto {@link DomainEventPublisherPort} para desacoplar la
- * capa de aplicacion de la tecnologia concreta de publicacion.
+ * Implements {@link DomainEventPublisherPort} to decouple the application layer
+ * from the concrete publication technology.
  */
 @Component("tradingDomainEventPublisher")
 public class SpringDomainEventPublisher implements DomainEventPublisherPort {
@@ -16,18 +16,18 @@ public class SpringDomainEventPublisher implements DomainEventPublisherPort {
     private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * Constructor con el publisher nativo de Spring.
+     * Constructor with Spring's native publisher.
      *
-     * @param eventPublisher publicador de eventos del contexto
+     * @param eventPublisher context event publisher
      */
     public SpringDomainEventPublisher(ApplicationEventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
     }
 
     /**
-     * Publica un evento de dominio en el bus de Spring.
+     * Publishes a domain event to the Spring bus.
      *
-     * @param event evento a publicar
+     * @param event event to publish
      */
     @Override
     public void publish(Object event) {

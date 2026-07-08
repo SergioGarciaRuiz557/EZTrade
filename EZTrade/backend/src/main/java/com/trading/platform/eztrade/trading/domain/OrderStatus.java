@@ -1,19 +1,19 @@
 package com.trading.platform.eztrade.trading.domain;
 
 /**
- * Estado del ciclo de vida de una orden.
+ * Order lifecycle status.
  * <p>
- * El agregado {@link TradeOrder} transita entre estos estados segun
- * las reglas de negocio del modulo.
+ * The {@link TradeOrder} aggregate transitions between these states according
+ * to the module's business rules.
  */
 public enum OrderStatus {
 
-    /** Orden creada y pendiente de ejecucion/cancelacion. */
+    /** Order created and pending execution/cancellation. */
     PENDING,
 
-    /** Orden ejecutada correctamente. */
+    /** Successfully executed order. */
     EXECUTED,
 
-    /** Orden cancelada por su propietario. */
+    /** Order cancelled by its owner. */
     CANCELLED
 }

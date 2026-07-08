@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
 
 /**
- * Traduce errores de dominio del wallet a respuestas HTTP de cliente.
+ * Translates wallet domain errors into client-facing HTTP responses.
  */
 @RestControllerAdvice(basePackages = "com.trading.platform.eztrade.wallet.adapter.in.web")
 public class WalletExceptionHandler {

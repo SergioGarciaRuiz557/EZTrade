@@ -1,55 +1,55 @@
-# Diagramas de arquitectura
+# Architecture Diagrams
 
-Esta seccion ofrece la vision estructural de EZTrade: frontera del sistema, contenedores logicos, modulos Spring Modulith y relacion frontend-backend-base de datos. Los diagramas se han obtenido cruzando `frontend/package.json`, `frontend/lib/api-client.ts`, `backend/pom.xml`, `backend/src/main/resources/application.properties`, los controladores REST, `WebSocketConfig`, `AlphaVantageAPI` y `../.github/workflows/maven.yml`.
+This section provides the structural view of EZTrade: system boundary, logical containers, Spring Modulith modules, and the frontend-backend-database relationship. The diagrams were obtained by cross-checking `frontend/package.json`, `frontend/lib/api-client.ts`, `backend/pom.xml`, `backend/src/main/resources/application.properties`, REST controllers, `WebSocketConfig`, `AlphaVantageAPI`, and `../.github/workflows/maven.yml`.
 
-## Contexto del sistema
+## System Context
 
-[![Contexto del sistema](./rendered/system-context.png)](./rendered/system-context.svg)
+[![System context](./rendered/system-context.png)](./rendered/system-context.svg)
 
-**Proposito.** Situa EZTrade frente a sus usuarios, la API externa de Alpha Vantage, MySQL local y la automatizacion CI.
+**Purpose.** Places EZTrade in relation to its users, the external Alpha Vantage API, local MySQL, and CI automation.
 
-**Como leerlo.** El rectangulo central es el sistema propio. Las flechas muestran interacciones confirmadas: REST y STOMP desde el navegador, JDBC hacia MySQL, HTTPS hacia Alpha Vantage y Maven verify desde GitHub Actions.
+**How to read it.** The central rectangle is the owned system. Arrows show confirmed interactions: REST and STOMP from the browser, JDBC to MySQL, HTTPS to Alpha Vantage, and Maven verify from GitHub Actions.
 
-**Valor.** Es el diagrama mas util para abrir una memoria tecnica porque define frontera, actores y dependencias externas sin entrar todavia en detalles internos.
+**Value.** This is the most useful diagram for opening a technical report because it defines boundary, actors, and external dependencies before going into internal details.
 
-**Limitacion.** No se muestra infraestructura de produccion porque no hay manifests, IaC, reverse proxy ni scripts de despliegue en el repositorio.
+**Limitation.** Production infrastructure is not shown because, although local Docker Compose exists, there are no production manifests, IaC, reverse proxy, or deployment scripts in the repository.
 
-## Arquitectura de contenedores de alto nivel
+## High-Level Container Architecture
 
-[![Arquitectura de contenedores de alto nivel](./rendered/high-level-container-architecture.png)](./rendered/high-level-container-architecture.svg)
+[![High-level container architecture](./rendered/high-level-container-architecture.png)](./rendered/high-level-container-architecture.svg)
 
-**Proposito.** Descompone el sistema en tiempo de ejecucion frontend, tiempo de ejecucion backend, base de datos e integracion externa.
+**Purpose.** Decomposes the system into frontend runtime, backend runtime, database, and external integration.
 
-**Como leerlo.** Next.js concentra rutas, contexto de autenticacion, clientes API y STOMP. Spring Boot concentra seguridad, controladores, modulos, eventos, cache y broker STOMP. MySQL y Alpha Vantage quedan fuera del backend como dependencias de infraestructura.
+**How to read it.** Next.js concentrates routes, authentication context, API clients, and STOMP. Spring Boot concentrates security, controllers, modules, events, cache, and STOMP broker. MySQL and Alpha Vantage remain outside the backend as infrastructure dependencies.
 
-**Valor.** Aporta una vision de contenedores clara para explicar despliegue local, contratos HTTP, WebSocket y persistencia.
+**Value.** Provides a clear container view for explaining the local Docker/runtime setup, HTTP contracts, WebSocket, and persistence.
 
-**Limitacion.** La topologia es logica/inferida por configuracion, no una topologia Docker Compose.
+**Limitation.** The topology reflects local development containers and logical responsibilities; it is not a production deployment topology.
 
-## Dependencias logicas entre modulos
+## Logical Module Dependencies
 
-[![Dependencias logicas entre modulos](./rendered/logical-module-dependencies.png)](./rendered/logical-module-dependencies.svg)
+[![Logical module dependencies](./rendered/logical-module-dependencies.png)](./rendered/logical-module-dependencies.svg)
 
-**Proposito.** Representa los modulos Spring Modulith y sus dependencias permitidas.
+**Purpose.** Represents Spring Modulith modules and their allowed dependencies.
 
-**Como leerlo.** Las flechas continuas son dependencias directas por puertos/API publicas; las discontinuas son eventos de dominio publicados y consumidos mediante Eventos Spring.
+**How to read it.** Solid arrows are direct dependencies through public ports/APIs; dashed arrows are domain events published and consumed through Spring Events.
 
-**Valor.** Justifica la modularidad: `trading` no depende directamente de `wallet` o `portfolio`, sino que coordina mediante eventos; `security` solo cruza hacia `user :: api`.
+**Value.** Justifies modularity: `trading` does not directly depend on `wallet` or `portfolio`; it coordinates through events. `security` only crosses into `user :: api`.
 
-**Evidencia.** `package-info.java` de cada modulo y `ModulithStructureTest`.
+**Evidence.** Each module's `package-info.java` and `ModulithStructureTest`.
 
-## Arquitectura frontend-backend-base de datos
+## Frontend-Backend-Database Architecture
 
-[![Arquitectura frontend-backend-base de datos](./rendered/frontend-backend-database-architecture.png)](./rendered/frontend-backend-database-architecture.svg)
+[![Frontend-backend-database architecture](./rendered/frontend-backend-database-architecture.png)](./rendered/frontend-backend-database-architecture.svg)
 
-**Proposito.** Une la perspectiva de UI, API, seguridad, aplicacion, dominio, persistencia y notificaciones.
+**Purpose.** Connects the UI, API, security, application, domain, persistence, and notification perspectives.
 
-**Como leerlo.** La lectura principal va de paginas Next.js a clientes API, despues a filtros de seguridad, controladores, servicios, dominio y adaptadores. El flujo de notificaciones vuelve por STOMP hacia el cliente.
+**How to read it.** The main reading path goes from Next.js pages to API clients, then to security filters, controllers, services, domain, and adapters. The notification flow returns through STOMP to the client.
 
-**Valor.** Es el puente entre arquitectura de software y tiempo de ejecucion operativo, especialmente relevante para explicar mantenibilidad y trazabilidad tecnica.
+**Value.** It is the bridge between software architecture and operational runtime, especially relevant for explaining maintainability and technical traceability.
 
-**Limitacion.** La estructura de tablas se infiere desde JPA; no hay DDL versionado.
+**Limitation.** The table structure is inferred from JPA; there is no versioned DDL.
 
 ## Conclusion
 
-En conjunto, estos diagramas muestran que EZTrade es una aplicacion full stack modular: frontend Next.js, backend Spring Boot/Spring Modulith, persistencia relacional y eventos internos para desacoplar operaciones financieras, portfolio y notificaciones. La documentacion tambien deja visible que la infraestructura productiva no esta declarada todavia.
+Together, these diagrams show that EZTrade is a modular full-stack application: Next.js frontend, Spring Boot/Spring Modulith backend, relational persistence, and internal events to decouple financial operations, portfolio, and notifications. The documentation also makes visible that production infrastructure is not declared yet.

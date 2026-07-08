@@ -1,10 +1,10 @@
-# Modulo Trading
+# Trading Module
 
-## Proposito
+## Purpose
 
-`trading` gestiona el ciclo de vida de ordenes de compra/venta y el marketplace entre usuarios. Es un modulo Spring Modulith con arquitectura hexagonal y dependencia permitida hacia `market :: api` para consultar precios actuales.
+`trading` manages the lifecycle of buy/sell orders and the user-to-user marketplace. It is a Spring Modulith module with hexagonal architecture and an allowed dependency on `market :: api` to query current prices.
 
-## Estructura
+## Structure
 
 ```text
 trading/
@@ -31,101 +31,101 @@ trading/
       persistence/TradeOrderRepositoryAdapter, TradeOrderMapper, jpa/
 ```
 
-## Dominio
+## Domain
 
-`TradeOrder` es el agregado raiz. Encapsula:
+`TradeOrder` is the aggregate root. It encapsulates:
 
-- propietario,
-- simbolo normalizado,
-- lado (`BUY` o `SELL`),
-- cantidad,
-- precio,
-- estado (`PENDING`, `EXECUTED`, `CANCELLED`),
-- fecha de creacion y fecha de ejecucion.
+- owner,
+- normalized symbol,
+- side (`BUY` or `SELL`),
+- quantity,
+- price,
+- status (`PENDING`, `EXECUTED`, `CANCELLED`),
+- creation date and execution date.
 
-Reglas principales:
+Main rules:
 
-- propietario y simbolo son obligatorios,
-- cantidad y precio deben ser positivos,
-- solo una orden `PENDING` puede ejecutarse,
-- solo una orden `PENDING` puede cancelarse,
-- solo el propietario puede cancelar su orden,
-- `totalAmount()` calcula `price * quantity`.
+- owner and symbol are required,
+- quantity and price must be positive,
+- only a `PENDING` order can be executed,
+- only a `PENDING` order can be cancelled,
+- only the owner can cancel their order,
+- `totalAmount()` calculates `price * quantity`.
 
-## Servicio de aplicacion
+## Application Service
 
-`TradingService` implementa todos los casos de uso. Sus responsabilidades actuales son:
+`TradingService` implements all use cases. Its current responsibilities are:
 
-- crear ordenes con `place(...)`,
-- ejecutar ordenes con `execute(...)`,
-- cancelar ordenes con `cancel(...)`,
-- consultar ordenes por id o propietario,
-- comprar directamente al mercado con `buy(...)`,
-- publicar y consultar ofertas SELL,
-- comprar ofertas SELL de otros usuarios.
+- creating orders with `place(...)`,
+- executing orders with `execute(...)`,
+- cancelling orders with `cancel(...)`,
+- querying orders by id or owner,
+- buying directly from the market with `buy(...)`,
+- publishing and querying SELL offers,
+- buying SELL offers from other users.
 
-Para el marketplace consulta `MarketPriceLookupPort`:
+For the marketplace, it queries `MarketPriceLookupPort`:
 
-- una compra al mercado obtiene precio actual de market,
-- una oferta SELL no puede publicarse con precio superior al precio actual,
-- al comprar una oferta se revalida el precio antes de ejecutar.
+- a market buy obtains the current price from market,
+- a SELL offer cannot be published with a price above the current price,
+- when an offer is bought, the price is revalidated before execution.
 
-## API REST
+## REST API
 
-### Ordenes
+### Orders
 
 Base: `/api/v1/trading/orders`
 
-| Metodo | Ruta | Uso |
+| Method | Route | Use |
 |---|---|---|
-| `POST` | `/api/v1/trading/orders` | Crea una orden manual BUY o SELL. |
-| `POST` | `/api/v1/trading/orders/{orderId}/execute` | Ejecuta una orden pendiente. |
-| `POST` | `/api/v1/trading/orders/{orderId}/cancel` | Cancela una orden pendiente del usuario autenticado. |
-| `GET` | `/api/v1/trading/orders/{orderId}` | Consulta una orden por id. |
-| `GET` | `/api/v1/trading/orders` | Lista ordenes del usuario autenticado. |
+| `POST` | `/api/v1/trading/orders` | Creates a manual BUY or SELL order. |
+| `POST` | `/api/v1/trading/orders/{orderId}/execute` | Executes a pending order. |
+| `POST` | `/api/v1/trading/orders/{orderId}/cancel` | Cancels a pending order owned by the authenticated user. |
+| `GET` | `/api/v1/trading/orders/{orderId}` | Queries an order by id. |
+| `GET` | `/api/v1/trading/orders` | Lists orders for the authenticated user. |
 
 ### Marketplace
 
 Base: `/api/v1/trading`
 
-| Metodo | Ruta | Uso |
+| Method | Route | Use |
 |---|---|---|
-| `POST` | `/market/buy` | Compra al mercado usando precio actual. |
-| `POST` | `/offers` | Publica una oferta SELL. |
-| `GET` | `/offers?symbol=AAPL` | Lista ofertas SELL pendientes visibles para el comprador. |
-| `POST` | `/offers/{offerId}/buy` | Compra una oferta SELL de otro usuario. |
+| `POST` | `/market/buy` | Buys from the market using the current price. |
+| `POST` | `/offers` | Publishes a SELL offer. |
+| `GET` | `/offers?symbol=AAPL` | Lists pending SELL offers visible to the buyer. |
+| `POST` | `/offers/{offerId}/buy` | Buys another user's SELL offer. |
 
-## Eventos
+## Events
 
-- `OrderPlacedEvent`: se publica al crear una orden. Wallet lo usa para reservar fondos si es BUY.
-- `OrderExecutionRequestEvent`: se publica al ejecutar una orden. Wallet lo liquida y, si todo va bien, publica `OrderExecutedEvent`.
-- `OrderExecutedEvent`: representa ejecucion confirmada. Lo consume portfolio para actualizar posiciones y notifications para avisar.
-- `OrderCancelledEvent`: se publica al cancelar. Wallet libera reservas si existian.
+- `OrderPlacedEvent`: published when an order is created. Wallet uses it to reserve funds if it is a BUY.
+- `OrderExecutionRequestEvent`: published when an order is executed. Wallet settles it and, if everything succeeds, publishes `OrderExecutedEvent`.
+- `OrderExecutedEvent`: represents confirmed execution. Portfolio consumes it to update positions, and notifications consumes it to notify users.
+- `OrderCancelledEvent`: published when an order is cancelled. Wallet releases reservations if they existed.
 
-## Persistencia
+## Persistence
 
-`TradeOrderRepositoryPort` es el contrato usado por la aplicacion. La implementacion JPA se reparte en:
+`TradeOrderRepositoryPort` is the contract used by the application. The JPA implementation is split into:
 
-- `TradeOrderRepositoryAdapter`: adapta el puerto a Spring Data.
-- `TradeOrderMapper`: transforma dominio <-> JPA.
-- `TradeOrderJpaEntity`: tabla `trade_order`.
-- `SpringDataTradeOrderRepository`: consultas por owner, ofertas pendientes y bloqueos para compra de oferta.
+- `TradeOrderRepositoryAdapter`: adapts the port to Spring Data.
+- `TradeOrderMapper`: transforms domain <-> JPA.
+- `TradeOrderJpaEntity`: `trade_order` table.
+- `SpringDataTradeOrderRepository`: queries by owner, pending offers, and locks for offer purchase.
 
-## Flujo: compra al mercado
+## Flow: Market Buy
 
-1. `TradingMarketplaceController.buyFromMarket` recibe simbolo y cantidad.
-2. `TradingService.buy` normaliza simbolo y consulta precio actual.
-3. Crea una orden BUY pendiente.
-4. Publica `OrderPlacedEvent`; wallet reserva efectivo.
-5. Ejecuta la orden y publica `OrderExecutionRequestEvent`.
-6. Wallet liquida la compra y publica `OrderExecutedEvent`.
-7. Portfolio abre o incrementa posicion.
+1. `TradingMarketplaceController.buyFromMarket` receives symbol and quantity.
+2. `TradingService.buy` normalizes the symbol and queries the current price.
+3. It creates a pending BUY order.
+4. It publishes `OrderPlacedEvent`; wallet reserves cash.
+5. It executes the order and publishes `OrderExecutionRequestEvent`.
+6. Wallet settles the buy and publishes `OrderExecutedEvent`.
+7. Portfolio opens or increases the position.
 
-## Flujo: compra de oferta
+## Flow: Offer Purchase
 
-1. El vendedor publica `POST /api/v1/trading/offers`.
-2. Trading valida precio actual y acciones disponibles segun historico de ordenes ejecutadas.
-3. El comprador llama a `POST /api/v1/trading/offers/{offerId}/buy`.
-4. Trading bloquea la oferta con `findByIdForUpdate`.
-5. Crea una BUY para el comprador y ejecuta BUY + SELL.
-6. Wallet liquida ambos lados y portfolio refleja las posiciones.
+1. The seller publishes `POST /api/v1/trading/offers`.
+2. Trading validates current price and available shares according to executed order history.
+3. The buyer calls `POST /api/v1/trading/offers/{offerId}/buy`.
+4. Trading locks the offer with `findByIdForUpdate`.
+5. It creates a BUY for the buyer and executes BUY + SELL.
+6. Wallet settles both sides, and portfolio reflects the positions.

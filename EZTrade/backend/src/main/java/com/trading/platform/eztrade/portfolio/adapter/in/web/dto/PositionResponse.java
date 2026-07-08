@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 /**
- * DTO de salida para exponer una posicion del portfolio.
+ * Output DTO for exposing a portfolio position.
  */
 public record PositionResponse(
         String symbol,

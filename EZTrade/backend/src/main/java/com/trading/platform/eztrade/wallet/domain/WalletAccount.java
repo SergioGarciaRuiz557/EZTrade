@@ -4,24 +4,24 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
- * Entidad de dominio que representa la <strong>cuenta de efectivo</strong> (wallet) de un usuario.
+ * Domain entity that represents a user's <strong>cash account</strong> (wallet).
  * <p>
- * Modela dos "bolsillos":
+ * Models two "pockets":
  * <ul>
- *   <li><strong>availableBalance</strong>: fondos disponibles para retirar o para reservar en una orden.</li>
- *   <li><strong>reservedBalance</strong>: fondos retenidos temporalmente (p. ej. al colocar una orden BUY) hasta que la orden
- *   se cancele (se liberan) o se ejecute (se liquidan).</li>
+ *   <li><strong>availableBalance</strong>: funds available to withdraw or reserve for an order.</li>
+ *   <li><strong>reservedBalance</strong>: funds temporarily held (for example, when placing a BUY order) until the order
+ *   is cancelled (released) or executed (settled).</li>
  * </ul>
  * <p>
- * La clase es <strong>inmutable</strong>: cada operación devuelve una nueva instancia con los balances actualizados. Esto
- * simplifica el razonamiento del dominio y reduce efectos colaterales; la persistencia se encarga en la capa de
- * aplicación/adaptadores.
+ * The class is <strong>immutable</strong>: each operation returns a new instance
+ * with updated balances. This simplifies domain reasoning and reduces side
+ * effects; persistence is handled by the application/adapters layer.
  * <p>
- * <strong>Invariantes</strong>:
+ * <strong>Invariants</strong>:
  * <ul>
- *   <li>{@code owner} no puede ser nulo ni vacío.</li>
- *   <li>Los balances nunca pueden ser negativos.</li>
- *   <li>Las operaciones que consumen fondos verifican suficiencia y lanzan {@link WalletDomainException} si no se cumple.</li>
+ *   <li>{@code owner} cannot be null or blank.</li>
+ *   <li>Balances can never be negative.</li>
+ *   <li>Operations that consume funds check sufficiency and throw {@link WalletDomainException} if the invariant is not met.</li>
  * </ul>
  */
 public class WalletAccount {
@@ -31,7 +31,7 @@ public class WalletAccount {
     private final BigDecimal reservedBalance;
 
     /**
-     * Constructor privado: fuerza el uso de factorías y asegura que todas las instancias cumplen invariantes.
+     * Private constructor: forces factory usage and ensures every instance satisfies invariants.
      */
     private WalletAccount(String owner, BigDecimal availableBalance, BigDecimal reservedBalance) {
         this.owner = validateOwner(owner);
@@ -42,23 +42,23 @@ public class WalletAccount {
     }
 
     /**
-     * Abre una cuenta nueva para un owner (balances a cero).
+     * Opens a new account for an owner (zero balances).
      * <p>
-     * Se usa cuando aún no existe registro persistido para el usuario.
+     * Used when no persisted record exists for the user yet.
      */
     public static WalletAccount open(String owner) {
         return new WalletAccount(owner, BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
     /**
-     * Reconstruye (rehydrate) la entidad desde persistencia.
+     * Rehydrates the entity from persistence.
      */
     public static WalletAccount rehydrate(String owner, BigDecimal availableBalance, BigDecimal reservedBalance) {
         return new WalletAccount(owner, availableBalance, reservedBalance);
     }
 
     /**
-     * Ingresa fondos en el saldo disponible.
+     * Deposits funds into the available balance.
      */
     public WalletAccount deposit(BigDecimal amount) {
         validateAmount(amount);
@@ -66,9 +66,9 @@ public class WalletAccount {
     }
 
     /**
-     * Retira fondos del saldo disponible.
+     * Withdraws funds from the available balance.
      *
-     * @throws WalletDomainException si no hay saldo disponible suficiente.
+     * @throws WalletDomainException if there is not enough available balance
      */
     public WalletAccount withdraw(BigDecimal amount) {
         validateAmount(amount);
@@ -77,9 +77,9 @@ public class WalletAccount {
     }
 
     /**
-     * Reserva fondos: reduce disponible y aumenta reservado.
+     * Reserves funds: decreases available balance and increases reserved balance.
      * <p>
-     * Se utiliza para órdenes BUY antes de ejecutarse.
+     * Used for BUY orders before they are executed.
      */
     public WalletAccount reserve(BigDecimal amount) {
         validateAmount(amount);
@@ -88,9 +88,9 @@ public class WalletAccount {
     }
 
     /**
-     * Libera fondos reservados: aumenta disponible y reduce reservado.
+     * Releases reserved funds: increases available balance and decreases reserved balance.
      * <p>
-     * Se utiliza al cancelar una orden o cuando la ejecución requiere menos efectivo del que se reservó inicialmente.
+     * Used when cancelling an order or when execution requires less cash than was initially reserved.
      */
     public WalletAccount release(BigDecimal amount) {
         validateAmount(amount);
@@ -99,9 +99,10 @@ public class WalletAccount {
     }
 
     /**
-     * Liquida una compra (BUY) consumiendo saldo reservado.
+     * Settles a purchase (BUY) by consuming reserved balance.
      * <p>
-     * En este caso el disponible no cambia aquí, porque ya se descontó al reservar.
+     * In this case the available balance does not change here, because it was
+     * already deducted when reserving.
      */
     public WalletAccount settleReservedDebit(BigDecimal amount) {
         validateAmount(amount);
@@ -110,7 +111,7 @@ public class WalletAccount {
     }
 
     /**
-     * Liquida una venta (SELL) abonando en saldo disponible.
+     * Settles a sale (SELL) by crediting the available balance.
      */
     public WalletAccount settleCredit(BigDecimal amount) {
         validateAmount(amount);
@@ -118,9 +119,10 @@ public class WalletAccount {
     }
 
     /**
-     * Aplica una comisión.
+     * Applies a fee.
      * <p>
-     * Se modela como un retiro del disponible para reutilizar validaciones de importe y suficiencia.
+     * Modeled as a withdrawal from the available balance to reuse amount and
+     * sufficiency validations.
      */
     public WalletAccount chargeFee(BigDecimal amount) {
         return withdraw(amount);

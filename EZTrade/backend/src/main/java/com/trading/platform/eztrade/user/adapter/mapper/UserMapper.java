@@ -4,19 +4,19 @@ import com.trading.platform.eztrade.user.adapter.in.DTOs.UserDTO;
 import com.trading.platform.eztrade.user.domain.User;
 
 /**
- * Mapper para convertir entre la entidad de dominio {@link User}
- * y el DTO de entrada/salida {@link UserDTO}.
+ * Mapper for converting between the {@link User} domain entity and the
+ * {@link UserDTO} input/output DTO.
  * <p>
- * Se utiliza en la capa de adaptadores para aislar la representación
- * expuesta por la API de la entidad de dominio.
+ * Used in the adapter layer to isolate the API representation from the domain
+ * entity.
  */
 public class UserMapper {
 
     /**
-     * Convierte un objeto {@link UserDTO} en una entidad de dominio {@link User}.
+     * Converts a {@link UserDTO} object into a {@link User} domain entity.
      *
-     * @param userDTO objeto DTO que contiene los datos del usuario
-     * @return instancia de {@link User} construida a partir de los datos del DTO
+     * @param userDTO DTO object containing the user data
+     * @return {@link User} instance built from the DTO data
      */
     public static User userDTOToUser(UserDTO userDTO) {
         return new User(
@@ -29,10 +29,10 @@ public class UserMapper {
     }
 
     /**
-     * Convierte una entidad de dominio {@link User} en un objeto {@link UserDTO}.
+     * Converts a {@link User} domain entity into a {@link UserDTO} object.
      *
-     * @param user entidad de dominio que representa al usuario
-     * @return instancia de {@link UserDTO} construida a partir de la entidad de dominio
+     * @param user domain entity representing the user
+     * @return {@link UserDTO} instance built from the domain entity
      */
     public static UserDTO userToUserDTO(User user) {
         return new UserDTO(

@@ -1,10 +1,10 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Secuencia - Login JWT y restauracion de sesion
+title EZTrade Sequence - JWT Login and Session Restoration
 autonumber
 
-actor "Usuario" as User
+actor "User" as User
 participant "LoginPage" as LoginPage
 participant "AuthProvider\nuseAuth()" as AuthProvider
 participant "authApi" as AuthApi
@@ -16,7 +16,7 @@ database "localStorage" as LocalStorage
 participant "UserController\nGET /api/user" as UserController
 participant "UserService / repository" as UserService
 
-User -> LoginPage : envia identificador + password
+User -> LoginPage : sends identifier + password
 LoginPage -> AuthProvider : login(identifier, password)
 AuthProvider -> AuthApi : login(...)
 AuthApi -> AuthController : POST /auth/login\n{ email, password }
@@ -28,12 +28,12 @@ JwtService --> AuthService : JWT
 AuthService --> AuthController : token
 AuthController --> AuthApi : 200 JwtResponse
 AuthApi --> AuthProvider : token
-AuthProvider -> AuthProvider : decodifica payload JWT\nsolo en cliente
+AuthProvider -> AuthProvider : decodes JWT payload\nclient-side only
 AuthProvider -> LocalStorage : set token
 AuthProvider -> AuthApi : getUser(payload.sub,\nwith token)
 AuthApi -> UserController : GET /api/user?email=...
 UserController -> UserService : getUser(email)
-UserService --> UserController : modelo de dominio User
+UserService --> UserController : User domain model
 UserController --> AuthApi : UserDTO
 AuthApi --> AuthProvider : UserProfile
 AuthProvider -> LocalStorage : set user
@@ -41,9 +41,9 @@ AuthProvider --> LoginPage : session ready
 LoginPage -> User : router.push("/")
 
 note bottom
-Evidencia: frontend/app/(auth)/login/page.tsx, lib/auth-context.tsx,
-features/auth/api.ts, AuthController.java, AuthService.java y JwtService.java.
-El frontend decodifica el JWT solo para UX/restauracion de sesion; la validacion de firma es responsabilidad del backend.
+Evidence: frontend/app/(auth)/login/page.tsx, lib/auth-context.tsx,
+features/auth/api.ts, AuthController.java, AuthService.java, and JwtService.java.
+The frontend decodes the JWT only for UX/session restoration; signature validation is the backend's responsibility.
 end note
 
 @enduml

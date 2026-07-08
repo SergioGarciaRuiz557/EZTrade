@@ -7,13 +7,14 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
- * DTO de entrada para comprar acciones directamente al mercado.
+ * Input DTO for buying shares directly from the market.
  * <p>
- * No incluye precio porque el backend lo obtiene desde AlphaVantage mediante el
- * modulo market. Asi se evita que el cliente manipule el precio de compra.
+ * It does not include a price because the backend obtains it from AlphaVantage
+ * through the market module. This prevents the client from manipulating the
+ * purchase price.
  *
- * @param symbol ticker de la accion a comprar
- * @param quantity numero de acciones solicitadas
+ * @param symbol ticker of the share to buy
+ * @param quantity requested number of shares
  */
 public record BuyFromMarketRequest(
         @NotBlank(message = "Symbol is required")

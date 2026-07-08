@@ -7,12 +7,11 @@ import com.trading.platform.eztrade.market.domain.Symbol;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementación del caso de uso {@link GetOverviewUserCase}.
+ * Implementation of the {@link GetOverviewUserCase} use case.
  * <p>
- * Delegando en el puerto de salida {@link GetOverviewProviderPort},
- * permite obtener la información fundamental de un instrumento sin
- * acoplar la capa de aplicación a un proveedor concreto (por ejemplo,
- * Alpha Vantage).
+ * By delegating to the {@link GetOverviewProviderPort} output port, it obtains
+ * an instrument's fundamental information without coupling the application layer
+ * to a concrete provider (for example, Alpha Vantage).
  */
 @Service
 public class GetOverviewService implements GetOverviewUserCase {

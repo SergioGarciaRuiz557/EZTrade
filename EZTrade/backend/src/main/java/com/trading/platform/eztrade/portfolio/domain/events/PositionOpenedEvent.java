@@ -4,14 +4,14 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento publicado cuando portfolio crea la primera posicion de un usuario en
- * un simbolo tras ejecutar una BUY.
+ * Event published when portfolio creates a user's first position in a symbol
+ * after executing a BUY.
  *
- * @param owner usuario propietario de la posicion
- * @param symbol simbolo normalizado
- * @param quantity cantidad abierta
- * @param averageCost coste medio inicial
- * @param occurredAt momento de publicacion del evento
+ * @param owner user that owns the position
+ * @param symbol normalized symbol
+ * @param quantity open quantity
+ * @param averageCost initial average cost
+ * @param occurredAt event publication timestamp
  */
 public record PositionOpenedEvent(
         String owner,

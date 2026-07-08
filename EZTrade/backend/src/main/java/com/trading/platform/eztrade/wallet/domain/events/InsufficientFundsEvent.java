@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento de dominio publicado cuando el wallet no puede completar una operación por <strong>fondos insuficientes</strong>.
+ * Domain event published when the wallet cannot complete an operation due to
+ * <strong>insufficient funds</strong>.
  * <p>
- * Se usa para notificar al módulo de trading (u otros consumidores) de que no se ha podido reservar o liquidar una
- * orden por falta de saldo. Incluye el estado actual del wallet y una razón textual.
+ * Used to notify the trading module (or other consumers) that an order could
+ * not be reserved or settled due to lack of balance. Includes the current wallet
+ * state and a textual reason.
  */
 public record InsufficientFundsEvent(
         String orderId,

@@ -1,76 +1,76 @@
-# Modulo Market
+# Market Module
 
-## Proposito
+## Purpose
 
-`market` proporciona datos de mercado a clientes HTTP y a otros modulos. Consulta AlphaVantage, valida simbolos y cachea respuestas para reducir llamadas externas.
+`market` provides market data to HTTP clients and to other modules. It queries Alpha Vantage, validates symbols, and caches responses to reduce external calls.
 
-## Dominio
+## Domain
 
-- `Symbol`: value object que valida y normaliza el ticker.
-- `MarketPrice`: precio actual de un simbolo y timestamp.
-- `Instrument`: resultado de busqueda de instrumentos.
-- `InstrumentOverview`: datos fundamentales resumidos.
-- `Candle`: vela historica OHLCV.
-- `InvalidSymbolException` y `ExternalApiException`: errores propios del modulo.
+- `Symbol`: value object that validates and normalizes the ticker.
+- `MarketPrice`: current price for a symbol and timestamp.
+- `Instrument`: instrument search result.
+- `InstrumentOverview`: summarized fundamental data.
+- `Candle`: historical OHLCV candle.
+- `InvalidSymbolException` and `ExternalApiException`: module-specific errors.
 
-## Aplicacion
+## Application
 
-Puertos de entrada:
+Input ports:
 
 - `GetPriceUserCase`
 - `SearchInstrumentUserCase`
 - `GetOverviewUserCase`
 - `GetDailyCandlesUserCase`
 
-Servicios:
+Services:
 
 - `GetPriceService`
 - `SearchInstrumentService`
 - `GetOverviewService`
 - `GetDailyCandlesService`
 
-Puertos de salida:
+Output ports:
 
 - `GetPriceMarketProviderPort`
 - `SearchInstrumentProviderPort`
 - `GetOverviewProviderPort`
 - `GetDailyCandlesProviderPort`
 
-## Adaptadores
+## Adapters
 
-### Entrada REST
+### REST Input
 
-`MarketController` expone:
+`MarketController` exposes:
 
-| Metodo | Ruta | Uso |
+| Method | Route | Use |
 |---|---|---|
-| `GET` | `/api/v1/market/get-price?symbol=AAPL` | Precio actual. |
-| `GET` | `/api/v1/market/search?input=apple` | Busqueda de instrumentos. |
-| `GET` | `/api/v1/market/get-overview?symbol=AAPL` | Resumen fundamental. |
-| `GET` | `/api/v1/market/get-daily-candles?symbol=AAPL` | Velas diarias. |
+| `GET` | `/api/v1/market/get-price?symbol=AAPL` | Current price. |
+| `GET` | `/api/v1/market/search?input=apple` | Instrument search. |
+| `GET` | `/api/v1/market/get-overview?symbol=AAPL` | Fundamental overview. |
+| `GET` | `/api/v1/market/get-daily-candles?symbol=AAPL` | Daily candles. |
 
-Los DTOs de salida son `MarketPriceResponse`, `InstrumentResponse`, `InstrumentOverviewResponse` y `CandleResponse`.
+Output DTOs are `MarketPriceResponse`, `InstrumentResponse`, `InstrumentOverviewResponse`, and `CandleResponse`.
 
-### Salida externa
+### External Output
 
-`AlphaVantageAPI` implementa los puertos de proveedor. Construye URLs, aplica timeouts, controla rate limit y transforma JSON externo a modelos de dominio.
+`AlphaVantageAPI` implements the provider ports. It builds URLs, applies timeouts, controls rate limits, and transforms external JSON into domain models.
 
 ### Cache
 
-`CachedMarketDataProvider` decora al proveedor externo con `@Cacheable`:
+`CachedMarketDataProvider` decorates the external provider with `@Cacheable`:
 
-- cache `marketPrice`,
-- cache `instrumentOverview`,
-- cache `dailyCandles`.
+- `marketPrice` cache,
+- `instrumentOverview` cache,
+- `dailyCandles` cache.
 
-## API interna
+## Internal API
 
-`MarketPriceLookupPort` esta en `market/api` y permite a trading y portfolio obtener precios actuales sin depender de adaptadores internos. Su implementacion es `MarketPriceLookupAdapter`.
+`MarketPriceLookupPort` lives in `market/api` and allows trading and portfolio to obtain current prices without depending on internal adapters. Its implementation is `MarketPriceLookupAdapter`.
 
-## Flujo
+## Flow
 
-1. El controlador recibe un simbolo o input.
-2. El caso de uso delega en su puerto de salida.
-3. El adaptador cacheado intenta resolver desde cache.
-4. Si no hay cache, `AlphaVantageAPI` consulta el proveedor externo.
-5. El resultado se transforma a dominio y despues a DTO REST.
+1. The controller receives a symbol or input.
+2. The use case delegates to its output port.
+3. The cached adapter tries to resolve from cache.
+4. If there is no cache hit, `AlphaVantageAPI` queries the external provider.
+5. The result is transformed to domain and then to a REST DTO.

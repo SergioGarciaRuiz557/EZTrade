@@ -1,43 +1,43 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Backend - Flujo de peticion HTTP
+title EZTrade Backend - HTTP Request Flow
 
-actor "Cliente autenticado" as Client
+actor "Authenticated client" as Client
 participant "Tomcat / Spring MVC\nserver.port=8088" as Tomcat
 participant "CorsConfigurationSource" as Cors
 participant "JwtAuthFilter" as JwtFilter
 participant "UserDetailsService\nLoadUserForSecurityAdapter" as UserDetails
 participant "UserAccessFilter" as AccessFilter
 participant "REST Controller" as Controller
-participant "Servicio de caso de uso" as Service
-participant "Agregado de dominio" as Domain
-participant "Adaptador de repositorio" as Repo
+participant "Use case service" as Service
+participant "Domain aggregate" as Domain
+participant "Repository adapter" as Repo
 database "MySQL" as Db
 
-Client -> Tomcat : peticion HTTP REST\nAuthorization: Bearer JWT
-Tomcat -> Cors : valida origenes configurados
+Client -> Tomcat : HTTP REST request\nAuthorization: Bearer JWT
+Tomcat -> Cors : validates configured origins
 Cors --> Tomcat : allowed / rejected
 Tomcat -> JwtFilter : filter chain
-JwtFilter -> UserDetails : carga usuario desde user :: api
+JwtFilter -> UserDetails : loads user from user :: api
 UserDetails --> JwtFilter : UserDetails
 JwtFilter -> JwtFilter : validate token\nset SecurityContext
 JwtFilter -> AccessFilter : continue chain
 AccessFilter -> AccessFilter : owner-level access checks\nwhere applicable
 AccessFilter -> Controller : route to controller
 Controller -> Service : call port/use case
-Service -> Domain : aplica invariantes
+Service -> Domain : applies invariants
 Service -> Repo : load/save through port
 Repo -> Db : Spring Data JPA
-Db --> Repo : datos de entidad
+Db --> Repo : entity data
 Repo --> Service : domain model
 Service --> Controller : result DTO source
-Controller --> Client : respuesta JSON
+Controller --> Client : JSON response
 
 note bottom
-Evidencia: AuthenticationConfig, JwtAuthFilter, UserAccessFilter,
-controladores, servicios, adaptadores de repositorio y application.properties.
-Los endpoints publicos /api/user/register, /auth/login y /ws estan marcados como permitAll.
+Evidence: AuthenticationConfig, JwtAuthFilter, UserAccessFilter,
+controllers, services, repository adapters, and application.properties.
+The public endpoints /api/user/register, /auth/login, and /ws are marked as permitAll.
 end note
 
 @enduml

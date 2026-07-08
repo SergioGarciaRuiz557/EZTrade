@@ -7,80 +7,80 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Puerto de salida para persistencia/consulta de ordenes.
+ * Output port for order persistence/querying.
  * <p>
- * Su implementacion concreta pertenece a la capa de adaptadores.
+ * Its concrete implementation belongs to the adapter layer.
  */
 public interface TradeOrderRepositoryPort {
 
     /**
-     * Guarda una orden nueva o existente.
+     * Saves a new or existing order.
      *
-     * @param order agregado a persistir
-     * @return agregado persistido
+     * @param order aggregate to persist
+     * @return persisted aggregate
      */
     TradeOrder save(TradeOrder order);
 
     /**
-     * Busca una orden por id.
+     * Finds an order by id.
      *
-     * @param orderId identificador de la orden
-     * @return optional con la orden si existe
+     * @param orderId order identifier
+     * @return optional with the order if it exists
      */
     Optional<TradeOrder> findById(OrderId orderId);
 
     /**
-     * Busca una orden por id aplicando bloqueo de escritura en persistencia cuando
-     * la infraestructura lo soporte.
+     * Finds an order by id while applying a persistence write lock when the
+     * infrastructure supports it.
      * <p>
-     * En el marketplace se usa para bloquear una oferta SELL mientras se compra,
-     * evitando que dos compradores la ejecuten simultaneamente.
+     * In the marketplace, this locks a SELL offer while it is being bought,
+     * preventing two buyers from executing it simultaneously.
      *
-     * @param orderId identificador de la orden
-     * @return optional con la orden si existe
+     * @param orderId order identifier
+     * @return optional with the order if it exists
      */
     Optional<TradeOrder> findByIdForUpdate(OrderId orderId);
 
     /**
-     * Obtiene todas las ordenes de un propietario.
+     * Gets all orders for an owner.
      *
-     * @param owner propietario de las ordenes
-     * @return lista de ordenes
+     * @param owner order owner
+     * @return order list
      */
     List<TradeOrder> findByOwner(String owner);
 
     /**
-     * Obtiene ordenes ejecutadas de un propietario para un simbolo.
+     * Gets an owner's executed orders for a symbol.
      * <p>
-     * Permite calcular dentro de trading la posicion neta de un usuario sin
-     * introducir una dependencia directa hacia portfolio.
+     * Allows trading to calculate a user's net position without introducing a
+     * direct dependency on portfolio.
      *
-     * @param owner propietario
-     * @param symbol simbolo
-     * @return ordenes ejecutadas del propietario para ese simbolo
+     * @param owner owner
+     * @param symbol symbol
+     * @return owner's executed orders for that symbol
      */
     List<TradeOrder> findExecutedOrdersByOwnerAndSymbol(String owner, String symbol);
 
     /**
-     * Obtiene ofertas de venta pendientes para un simbolo, excluyendo al comprador.
+     * Gets pending sell offers for a symbol, excluding the buyer.
      * <p>
-     * Es la consulta base del listado del marketplace.
+     * This is the base query for the marketplace listing.
      *
-     * @param symbol simbolo opcional; si es null o blanco se devuelven todos los simbolos
-     * @param excludedOwner propietario a excluir
-     * @return lista de ofertas de venta pendientes
+     * @param symbol optional symbol; if null or blank, all symbols are returned
+     * @param excludedOwner owner to exclude
+     * @return list of pending sell offers
      */
     List<TradeOrder> findPendingSellOffers(String symbol, String excludedOwner);
 
     /**
-     * Obtiene las ofertas de venta pendientes de un propietario para un simbolo.
+     * Gets an owner's pending sell offers for a symbol.
      * <p>
-     * Se usa para descontar las acciones ya comprometidas en ofertas y no dejar
-     * que un vendedor publique mas acciones de las que tiene disponibles.
+     * Used to subtract shares already committed to offers and prevent a seller
+     * from publishing more shares than are available.
      *
-     * @param owner propietario
-     * @param symbol simbolo
-     * @return lista de ofertas pendientes del propietario
+     * @param owner owner
+     * @param symbol symbol
+     * @return owner's pending offer list
      */
     List<TradeOrder> findPendingSellOffersByOwnerAndSymbol(String owner, String symbol);
 }

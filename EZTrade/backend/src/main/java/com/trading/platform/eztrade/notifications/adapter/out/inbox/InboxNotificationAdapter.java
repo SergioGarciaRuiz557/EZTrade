@@ -7,7 +7,7 @@ import com.trading.platform.eztrade.notifications.domain.NotificationMessage;
 import org.springframework.stereotype.Repository;
 
 /**
- * Persistencia de notificaciones in-app (inbox).
+ * Persistence for in-app notifications (inbox).
  */
 @Repository
 public class InboxNotificationAdapter implements InboxNotificationPort {

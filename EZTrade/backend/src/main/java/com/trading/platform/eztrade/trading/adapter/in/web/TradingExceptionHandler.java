@@ -13,18 +13,18 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Maneja errores de dominio del modulo trading en la capa web.
+ * Handles trading module domain errors in the web layer.
  * <p>
- * Traduce excepciones de negocio a respuestas HTTP comprensibles para el cliente.
+ * Translates business exceptions into HTTP responses that clients can understand.
  */
 @RestControllerAdvice(basePackages = "com.trading.platform.eztrade.trading.adapter.in.web")
 public class TradingExceptionHandler {
 
     /**
-     * Convierte una {@link TradingDomainException} en respuesta HTTP 400.
+     * Converts a {@link TradingDomainException} into an HTTP 400 response.
      *
-     * @param ex excepcion de dominio capturada
-     * @return cuerpo JSON con el mensaje de error
+     * @param ex captured domain exception
+     * @return JSON body with the error message
      */
     @ExceptionHandler(TradingDomainException.class)
     public ResponseEntity<Map<String, String>> handleDomain(TradingDomainException ex) {

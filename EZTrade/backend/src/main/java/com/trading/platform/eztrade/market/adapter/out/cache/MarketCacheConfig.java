@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Configuracion de infraestructura para cachear respuestas del proveedor market.
+ * Infrastructure configuration for caching market provider responses.
  */
 @Configuration
 @EnableCaching

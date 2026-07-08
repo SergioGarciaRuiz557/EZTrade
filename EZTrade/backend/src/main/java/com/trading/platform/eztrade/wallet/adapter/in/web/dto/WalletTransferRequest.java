@@ -8,7 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 
 /**
- * DTO de entrada para transferir fondos disponibles a otro usuario.
+ * Input DTO for transferring available funds to another user.
  */
 public record WalletTransferRequest(
         @NotBlank(message = "Recipient is required")

@@ -6,23 +6,23 @@ import com.trading.platform.eztrade.trading.domain.TradeOrder;
 import java.util.List;
 
 /**
- * Puerto de entrada para consultas de ordenes.
+ * Input port for order queries.
  */
 public interface GetOrdersUseCase {
 
     /**
-     * Obtiene una orden por su identificador.
+     * Gets an order by its identifier.
      *
-     * @param orderId id de la orden
-     * @return orden encontrada
+     * @param orderId order id
+     * @return found order
      */
     TradeOrder getById(OrderId orderId);
 
     /**
-     * Obtiene todas las ordenes de un propietario.
+     * Gets all orders for an owner.
      *
-     * @param owner propietario de las ordenes
-     * @return lista de ordenes del propietario
+     * @param owner order owner
+     * @return owner's order list
      */
     List<TradeOrder> getByOwner(String owner);
 }

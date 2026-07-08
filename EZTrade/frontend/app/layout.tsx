@@ -10,7 +10,7 @@ const inter = Inter({
   variable: "--font-inter",
 })
 
-// Fuente monoespaciada para cifras, simbolos y cualquier dato que convenga alinear visualmente.
+// Monospaced font for figures, symbols, and any data that benefits from visual alignment.
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   description: "Opera en los mercados financieros de forma sencilla y segura con EZTrade",
 }
 
-// Configuracion de viewport y color del navegador en dispositivos moviles.
+// Viewport and browser color configuration for mobile devices.
 export const viewport: Viewport = {
   themeColor: "#FBBF24",
   width: "device-width",
@@ -36,10 +36,10 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${jetbrainsMono.variable} dark bg-background`}>
       <body className="font-sans antialiased">
-        {/* AuthProvider envuelve toda la aplicacion para compartir usuario, token y acciones de sesion. */}
+        {/* AuthProvider wraps the whole application to share user, token, and session actions. */}
         <AuthProvider>
           {children}
-          {/* Conexion global para notificaciones privadas y contenedor unico de toasts. */}
+          {/* Global connection for private notifications and the single toast container. */}
           <NotificationsWebSocket />
           <Toaster />
         </AuthProvider>

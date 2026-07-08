@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Representa el precio de mercado actual de un instrumento.
+ * Represents the current market price of an instrument.
  */
 public record MarketPrice(Symbol symbol, double price, Instant timestamp) {
 

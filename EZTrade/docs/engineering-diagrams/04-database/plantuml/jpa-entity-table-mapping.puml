@@ -1,9 +1,9 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Base de datos - Correspondencia entre entidades JPA y tablas
+title EZTrade Database - JPA Entity and Table Mapping
 
-package "Modelo de dominio" as Domain EZ_DOMAIN {
+package "Domain model" as Domain EZ_DOMAIN {
   class User
   class TradeOrder
   class WalletAccount
@@ -13,7 +13,7 @@ package "Modelo de dominio" as Domain EZ_DOMAIN {
   class NotificationMessage <<record>>
 }
 
-package "Entidades JPA de infraestructura" as Jpa EZ_BACKEND {
+package "Infrastructure JPA entities" as Jpa EZ_BACKEND {
   class UserJpaEntity
   class TradeOrderJpaEntity
   class WalletAccountJpaEntity
@@ -23,7 +23,7 @@ package "Entidades JPA de infraestructura" as Jpa EZ_BACKEND {
   class InboxNotificationJpaEntity
 }
 
-package "Tablas relacionales" as Tables EZ_DB {
+package "Relational tables" as Tables EZ_DB {
   class "user" as TUser <<table>>
   class "trade_order" as TTrade <<table>>
   class "wallet_account" as TWalletAccount <<table>>
@@ -50,8 +50,8 @@ CashProjectionJpaEntity --> TCash : @Table(name="portfolio_cash_projection")
 InboxNotificationJpaEntity --> TNotification : @Table(name="notification_inbox")
 
 note bottom
-Evidencia: paquetes adapter/out/persistence/jpa y clases mapper.
-El modelo de dominio se mantiene libre de anotaciones JPA; la persistencia se resuelve mediante adaptadores y mappers.
+Evidence: adapter/out/persistence/jpa packages and mapper classes.
+The domain model remains free of JPA annotations; persistence is handled through adapters and mappers.
 end note
 
 @enduml

@@ -1,25 +1,27 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Calidad - Senales de calidad estatica y arquitectonica
+title EZTrade Quality - Static and Architectural Quality Signals
 
-component "Reglas de modulos Spring Modulith\npackage-info.java allowedDependencies" as ModuleRules EZ_BACKEND
+component "Spring Modulith module rules\npackage-info.java allowedDependencies" as ModuleRules EZ_BACKEND
 component "ModulithStructureTest\nApplicationModules.verify()" as ModulithTest EZ_BACKEND
 component "Maven verify in CI" as MavenVerify EZ_DEVOPS
-component "Configuracion del compilador TypeScript\ntsconfig.json" as TsConfig EZ_FRONTEND
-component "Script de lint Next\npackage.json: next lint" as NextLint EZ_FRONTEND
-component "Ejecucion CI frontend\nno presente" as FrontendCiGap EZ_RISK
-component "No se encontro Sonar/Checkstyle/SpotBugs" as StaticGap EZ_RISK
+component "TypeScript compiler config\ntsconfig.json" as TsConfig EZ_FRONTEND
+component "Next lint script\npackage.json: next lint" as NextLint EZ_FRONTEND
+component "Frontend CI execution\nnot present" as FrontendCiGap EZ_RISK
+component "No Sonar/Checkstyle/SpotBugs found" as StaticGap EZ_RISK
+component "Docker local runtime\nnot built in CI" as DockerCiGap EZ_RISK
 
-ModuleRules --> ModulithTest : verifica grafo de dependencias
-ModulithTest --> MavenVerify : ejecutado en la fase test
-TsConfig ..> NextLint : herramientas locales de calidad disponibles
-NextLint ..> FrontendCiGap : script declarado, pero no en el flujo de trabajo
+ModuleRules --> ModulithTest : verifies dependency graph
+ModulithTest --> MavenVerify : executed during test phase
+TsConfig ..> NextLint : local quality tools available
+NextLint ..> FrontendCiGap : script declared, but not in workflow
 StaticGap ..> MavenVerify : no dedicated static analysis step
+DockerCiGap ..> MavenVerify : Compose exists, but CI does not build images
 
 note bottom
-Evidencia: backend package-info.java files, ModulithStructureTest.java,
-frontend/package.json, frontend/tsconfig.json y flujo de trabajo de GitHub Actions.
+Evidence: backend package-info.java files, ModulithStructureTest.java,
+frontend/package.json, frontend/tsconfig.json, docker-compose.yml, and the GitHub Actions workflow.
 end note
 
 @enduml

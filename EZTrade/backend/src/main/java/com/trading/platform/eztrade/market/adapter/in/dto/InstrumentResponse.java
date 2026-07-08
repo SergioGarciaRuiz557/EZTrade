@@ -3,10 +3,10 @@ package com.trading.platform.eztrade.market.adapter.in.dto;
 import com.trading.platform.eztrade.market.domain.Instrument;
 
 /**
- * DTO REST para una coincidencia de busqueda de instrumentos.
+ * REST DTO for an instrument search match.
  * <p>
- * Representa la informacion compacta devuelta por AlphaVantage al buscar por
- * palabra clave: ticker, nombre, region y moneda.
+ * Represents the compact information returned by Alpha Vantage when searching
+ * by keyword: ticker, name, region, and currency.
  */
 public record InstrumentResponse(
         String symbol,
@@ -14,7 +14,7 @@ public record InstrumentResponse(
         String region,
         String currency
 ) {
-    /** Mapea el record de dominio al contrato publico del controlador. */
+    /** Maps the domain record to the controller's public contract. */
     public static InstrumentResponse from(Instrument instrument) {
         return new InstrumentResponse(
                 instrument.symbol(),

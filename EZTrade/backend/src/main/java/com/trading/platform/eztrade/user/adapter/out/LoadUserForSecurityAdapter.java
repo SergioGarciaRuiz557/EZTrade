@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Adaptador que traduce el usuario del dominio a la representacion requerida
- * por Spring Security. El dominio no implementa UserDetails.
+ * Adapter that translates the domain user into the representation required by
+ * Spring Security. The domain model does not implement {@code UserDetails}.
  */
 @Component
 class LoadUserForSecurityAdapter implements LoadUserForSecurityPort {

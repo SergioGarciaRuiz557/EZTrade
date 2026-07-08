@@ -3,14 +3,14 @@ package com.trading.platform.eztrade.notifications.application.ports.out;
 import com.trading.platform.eztrade.notifications.domain.NotificationMessage;
 
 /**
- * Puerto de salida para entregar notificaciones en tiempo real por WebSocket.
+ * Output port for delivering real-time notifications through WebSocket.
  * <p>
- * El adaptador actual usa STOMP/SimpMessagingTemplate, pero el servicio de
- * aplicacion solo necesita este contrato.
+ * The current adapter uses STOMP/SimpMessagingTemplate, but the application
+ * service only needs this contract.
  */
 public interface WebSocketNotificationPort {
 
-    /** Envia el mensaje al destino WebSocket del usuario destinatario. */
+    /** Sends the message to the recipient user's WebSocket destination. */
     void send(NotificationMessage message);
 }
 

@@ -48,12 +48,12 @@ interface PositionAccumulator {
 const MARKET_DATA_UNAVAILABLE_MESSAGE =
   "Alpha Vantage no esta disponible. No se puede consultar el precio real de mercado ahora mismo."
 
-// Normaliza simbolos para que busquedas y ordenes usen el formato esperado por el backend.
+// Normalizes symbols so searches and orders use the format expected by the backend.
 function normalizeSymbol(value: string) {
   return value.trim().toUpperCase()
 }
 
-// Devuelve 0 si el input no es un numero positivo, facilitando validaciones de formularios.
+// Returns 0 if the input is not a positive number, simplifying form validations.
 function parsePositiveNumber(value: string) {
   const parsed = Number.parseFloat(value)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
@@ -150,7 +150,7 @@ function isMarketDataError(error: unknown) {
   )
 }
 
-// Extrae mensajes de errores lanzados por la capa API y usa un texto seguro si no hay detalle.
+// Extracts messages from errors thrown by the API layer and uses safe text when there is no detail.
 function getErrorMessage(error: unknown, fallback: string) {
   if (isMarketDataError(error)) return MARKET_DATA_UNAVAILABLE_MESSAGE
 
@@ -168,14 +168,14 @@ function MarketDataNotice({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Refresca caches relacionadas tras crear, ejecutar o cancelar acciones de trading.
+// Refreshes related caches after creating, executing, or cancelling trading actions.
 function refreshTradingData() {
   mutate("orders")
   mutate("portfolio")
   mutate("wallet")
 }
 
-// Formulario para crear ordenes de compra usando el precio actual del mercado.
+// Form for creating buy orders using the current market price.
 function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string; onOrderCreated: () => void }) {
   const [symbol, setSymbol] = useState("")
   const [quantity, setQuantity] = useState("")
@@ -185,7 +185,7 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
-    // Si se llega desde Mercado o la portada, precarga simbolo y precio automaticamente.
+    // If reached from Market or the home page, preloads symbol and price automatically.
     const nextSymbol = normalizeSymbol(initialSymbol)
     if (!nextSymbol) return
 
@@ -218,7 +218,7 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
     }
   }, [initialSymbol])
 
-  // Consulta manual del precio para el simbolo escrito.
+  // Manual price lookup for the typed symbol.
   const handleLookup = async () => {
     const nextSymbol = normalizeSymbol(symbol)
     if (!nextSymbol) return
@@ -238,7 +238,7 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
     }
   }
 
-  // Crea una orden BUY pendiente tras validar simbolo y cantidad.
+  // Creates a pending BUY order after validating symbol and quantity.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     const nextSymbol = normalizeSymbol(symbol)
@@ -282,7 +282,7 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
     }
   }
 
-  // Valores derivados que alimentan resumen visual y estado del boton.
+  // Derived values that feed the visual summary and button state.
   const quantityValue = parsePositiveNumber(quantity)
   const estimatedTotal = quantityValue * (marketPrice?.price || 0)
   const canSubmit = Boolean(normalizeSymbol(symbol)) && quantityValue > 0
@@ -366,7 +366,7 @@ function BuyOrderForm({ initialSymbol, onOrderCreated }: { initialSymbol: string
   )
 }
 
-// Formulario para publicar ofertas de venta desde posiciones existentes del portfolio.
+// Form for publishing sell offers from existing portfolio positions.
 function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   const {
     data: portfolio,
@@ -384,7 +384,7 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   const [isPriceLoading, setIsPriceLoading] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Solo se pueden vender posiciones con cantidad disponible.
+  // Only positions with available quantity can be sold.
   const localPortfolio = buildPortfolioFromOrders(orders)
   const displayedPortfolio = portfolio || localPortfolio
   const usingLocalPortfolio = !portfolio && Boolean(localPortfolio)
@@ -394,13 +394,13 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   const portfolioMarketUnavailable = Boolean(portfolioError) || (portfolioLoading && usingLocalPortfolio)
 
   useEffect(() => {
-    // Preselecciona el simbolo si la navegacion lo trae por query string.
+    // Preselects the symbol if navigation provides it through the query string.
     const nextSymbol = normalizeSymbol(initialSymbol)
     if (nextSymbol) setSelectedSymbol(nextSymbol)
   }, [initialSymbol])
 
   useEffect(() => {
-    // Al elegir posicion se consulta el precio de mercado para limitar el precio de la oferta.
+    // When a position is selected, the market price is queried to limit the offer price.
     if (!selectedSymbol) {
       setMarketPrice(null)
       setMarketNotice("")
@@ -434,7 +434,7 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
     }
   }, [selectedSymbol])
 
-  // Publica una oferta SELL en el marketplace local.
+  // Publishes a SELL offer in the local marketplace.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!selectedPosition) return
@@ -470,7 +470,7 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
     }
   }
 
-  // Validaciones derivadas: no vender mas acciones ni por encima del precio de mercado.
+  // Derived validations: do not sell more shares or above the market price.
   const quantityValue = parsePositiveNumber(quantity)
   const priceValue = parsePositiveNumber(price)
   const maxPrice = marketPrice?.price
@@ -623,33 +623,33 @@ function SellOfferForm({ initialSymbol }: { initialSymbol: string }) {
   )
 }
 
-// Lista y compra ofertas de venta publicadas por otros usuarios.
+// Lists and buys sell offers published by other users.
 function MarketplaceOffers({ initialSymbol, onOrderCreated }: { initialSymbol: string; onOrderCreated: () => void }) {
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState("")
   const [actionLoading, setActionLoading] = useState<number | null>(null)
 
   useEffect(() => {
-    // Si llega un simbolo inicial, se usa tambien como filtro del marketplace.
+    // If an initial symbol arrives, it is also used as the marketplace filter.
     const nextSymbol = normalizeSymbol(initialSymbol)
     if (!nextSymbol) return
     setQuery(nextSymbol)
     setFilter(nextSymbol)
   }, [initialSymbol])
 
-  // La key incluye el filtro para que SWR cachee resultados por simbolo.
+  // The key includes the filter so SWR caches results by symbol.
   const { data: offers, isLoading } = useSWR<TradeOrder[]>(
     ["sell-offers", filter],
     () => tradingApi.getSellOffers(filter || undefined)
   )
 
-  // Aplica el filtro escrito por el usuario.
+  // Applies the filter typed by the user.
   const handleFilter = (event: React.FormEvent) => {
     event.preventDefault()
     setFilter(normalizeSymbol(query))
   }
 
-  // Crea una orden BUY pendiente al precio de la oferta seleccionada.
+  // Creates a pending BUY order at the selected offer price.
   const handleBuyOffer = async (offer: TradeOrder) => {
     setActionLoading(offer.id)
     try {
@@ -775,12 +775,12 @@ function MarketplaceOffers({ initialSymbol, onOrderCreated }: { initialSymbol: s
   )
 }
 
-// Muestra ordenes abiertas e historial, con acciones de ejecutar o cancelar.
+// Shows open orders and history, with execute or cancel actions.
 function OrdersList() {
   const { data: orders, isLoading } = useSWR<TradeOrder[]>("orders", () => tradingApi.getOrders())
   const [actionLoading, setActionLoading] = useState<number | null>(null)
 
-  // Ejecuta manualmente una orden de compra pendiente.
+  // Manually executes a pending buy order.
   const handleExecute = async (orderId: number) => {
     setActionLoading(orderId)
     try {
@@ -802,7 +802,7 @@ function OrdersList() {
     }
   }
 
-  // Cancela una orden pendiente y libera recursos reservados en backend.
+  // Cancels a pending order and releases reserved resources in the backend.
   const handleCancel = async (orderId: number) => {
     setActionLoading(orderId)
     try {
@@ -832,7 +832,7 @@ function OrdersList() {
     )
   }
 
-  // Se separan pendientes e historial para mostrar cada grupo en su tab.
+  // Pending orders and history are separated to show each group in its tab.
   const pendingOrders = orders?.filter((order) => order.status === "PENDING") || []
   const historyOrders = orders?.filter((order) => order.status !== "PENDING") || []
 
@@ -975,7 +975,7 @@ export default function TradingPage() {
   const [initialSymbol, setInitialSymbol] = useState("")
 
   useEffect(() => {
-    // Lee query params generados desde Mercado o la portada para abrir la pestana correcta.
+    // Reads query params generated from Market or the home page to open the correct tab.
     const params = new URLSearchParams(window.location.search)
     const symbol = normalizeSymbol(params.get("symbol") || "")
     const side = params.get("side")

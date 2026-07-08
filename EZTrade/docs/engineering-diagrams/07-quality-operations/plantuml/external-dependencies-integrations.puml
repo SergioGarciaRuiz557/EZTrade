@@ -1,19 +1,19 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Operations - Dependencias externas e integraciones
+title EZTrade Operations - External Dependencies and Integrations
 
-package "Dependencias e integraciones backend" as Backend EZ_BACKEND {
+package "Backend dependencies and integrations" as Backend EZ_BACKEND {
   component "Spring Boot 4.0.1" as SpringBoot
   component "Spring Modulith 2.0.1" as Modulith
   component "Spring Data JPA + MySQL connector" as JpaMysql
   component "Spring Security + JJWT" as SecurityJwt
   component "Spring WebSocket/STOMP" as WebSocket
   component "Caffeine cache" as Caffeine
-  component "Alpha Vantage API\ndatos de mercado externos" as Alpha EZ_EXTERNAL
+  component "Alpha Vantage API\nexternal market data" as Alpha EZ_EXTERNAL
 }
 
-package "Dependencias frontend" as Frontend EZ_FRONTEND {
+package "Frontend dependencies" as Frontend EZ_FRONTEND {
   component "Next.js 15 + React 19" as NextReact
   component "SWR" as Swr
   component "@stomp/stompjs" as StompJs
@@ -22,13 +22,22 @@ package "Dependencias frontend" as Frontend EZ_FRONTEND {
   component "Tailwind CSS" as Tailwind
 }
 
-database "MySQL local/ejecucion" as MySQL EZ_DB
-component "GitHub Actions" as GithubActions EZ_DEVOPS
+package "Runtime and CI tooling" as Tooling EZ_DEVOPS {
+  component "Docker Compose" as DockerCompose
+  component "backend Dockerfile\nEclipse Temurin 21" as BackendDocker
+  component "frontend Dockerfile\nNode 22 Alpine" as FrontendDocker
+  component "GitHub Actions" as GithubActions
+}
+
+database "MySQL local/runtime" as MySQL EZ_DB
 
 JpaMysql --> MySQL
-Alpha --> SpringBoot : llamadas RestClient desde AlphaVantageAPI
+Alpha --> SpringBoot : RestClient calls from AlphaVantageAPI
 WebSocket --> StompJs : STOMP protocol
 GithubActions --> SpringBoot : Maven verify
+DockerCompose --> BackendDocker
+DockerCompose --> FrontendDocker
+DockerCompose --> MySQL : mysql:8.4 service
 NextReact --> Swr : data fetching
 NextReact --> UiDeps : UI primitives/icons
 NextReact --> Recharts : charts
@@ -36,8 +45,9 @@ NextReact --> Tailwind : styling
 Caffeine --> Alpha : cache external calls
 
 note bottom
-Evidencia: backend/pom.xml, frontend/package.json, AlphaVantageAPI.java,
-CachedMarketDataProvider.java, notifications-ws.tsx y flujo de trabajo de GitHub Actions.
+Evidence: backend/pom.xml, frontend/package.json, docker-compose.yml,
+backend/Dockerfile, frontend/Dockerfile, AlphaVantageAPI.java,
+CachedMarketDataProvider.java, notifications-ws.tsx, and the GitHub Actions workflow.
 end note
 
 @enduml

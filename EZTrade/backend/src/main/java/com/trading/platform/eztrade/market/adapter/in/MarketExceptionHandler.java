@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.Map;
 
 /**
- * Traduce errores del modulo market a respuestas HTTP claras para el cliente.
+ * Translates market module errors into clear HTTP responses for the client.
  */
 @RestControllerAdvice(basePackages = "com.trading.platform.eztrade.market.adapter.in")
 public class MarketExceptionHandler {

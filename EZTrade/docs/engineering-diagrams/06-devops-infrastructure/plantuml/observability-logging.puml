@@ -1,15 +1,16 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade DevOps - Observabilidad, logging y senales de ejecucion
+title EZTrade DevOps - Observability, Logging, and Runtime Signals
 
-component "Dependencia Spring Boot Actuator" as Actuator EZ_BACKEND
-component "Dependencia de observabilidad Spring Modulith" as ModulithObs EZ_BACKEND
-component "Logs de acceso Tomcat\nserver.tomcat.accesslog.*" as AccessLogs EZ_BACKEND
-component "CommonsRequestLoggingFilter\nincluye query + payload" as RequestLogging EZ_BACKEND
-component "Logs de aplicacion\nloggers SLF4J" as AppLogs EZ_BACKEND
-component "Fallos en canales de notificacion\nlog.warn" as NotificationLogs EZ_BACKEND
-component "Errores de mercado externo\nExternalApiException" as MarketErrors EZ_BACKEND
+component "Spring Boot Actuator dependency" as Actuator EZ_BACKEND
+component "Spring Modulith observability dependency" as ModulithObs EZ_BACKEND
+component "Tomcat access logs\nserver.tomcat.accesslog.*" as AccessLogs EZ_BACKEND
+component "CommonsRequestLoggingFilter\nincludes query + payload" as RequestLogging EZ_BACKEND
+component "Application logs\nSLF4J loggers" as AppLogs EZ_BACKEND
+component "Notification channel failures\nlog.warn" as NotificationLogs EZ_BACKEND
+component "External market errors\nExternalApiException" as MarketErrors EZ_BACKEND
+component "Docker Compose logs\ndocker compose logs backend/frontend/db" as ComposeLogs EZ_DEVOPS
 
 folder "logs/\naccess*.log" as LogsFolder EZ_DB
 
@@ -17,18 +18,19 @@ AccessLogs --> LogsFolder
 RequestLogging --> AppLogs
 NotificationLogs --> AppLogs
 MarketErrors --> AppLogs
-Actuator ..> AppLogs : dependencia presente
-ModulithObs ..> AppLogs : dependencia presente
+Actuator ..> AppLogs : dependency present
+ModulithObs ..> AppLogs : dependency present
+ComposeLogs ..> AppLogs : local container stdout/stderr
 
 note right
-No hay registro Prometheus, dashboard Grafana,
-OpenTelemetry tracing, centralized log shipper
-ni configuracion de alertas.
+No Prometheus registry, Grafana dashboard,
+OpenTelemetry tracing, centralized log shipper,
+or alert configuration was found.
 end note
 
 note bottom
-Evidencia: application.properties, HttpObservabilityConfig.java, pom.xml,
-NotificationService.java y AlphaVantageAPI.java.
+Evidence: application.properties, HttpObservabilityConfig.java, pom.xml,
+docker-compose.yml, NotificationService.java, and AlphaVantageAPI.java.
 end note
 
 @enduml

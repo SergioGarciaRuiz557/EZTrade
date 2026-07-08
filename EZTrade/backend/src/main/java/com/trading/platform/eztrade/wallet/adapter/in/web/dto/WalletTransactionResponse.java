@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * DTO de salida para movimientos historicos del wallet.
+ * Output DTO for wallet historical movements.
  */
 public record WalletTransactionResponse(
         Long id,

@@ -5,9 +5,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador de salida que implementa {@link DomainEventPublisherPort} usando el bus de eventos de Spring.
+ * Output adapter that implements {@link DomainEventPublisherPort} using the Spring event bus.
  * <p>
- * Convierte la intención de "publicar un evento de dominio" en una llamada a
+ * Converts the intention to "publish a domain event" into a call to
  * {@link ApplicationEventPublisher#publishEvent(Object)}.
  */
 @Component("walletDomainEventPublisher")

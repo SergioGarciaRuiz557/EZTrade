@@ -1,47 +1,47 @@
-# Diagramas frontend
+# Frontend Diagrams
 
-Estos diagramas documentan el frontend Next.js/React a partir de `frontend/app`, `frontend/components`, `frontend/features` y `frontend/lib`. El foco esta en estructura, rutas, estado y contratos hacia el backend.
+These diagrams document the Next.js/React frontend based on `frontend/app`, `frontend/components`, `frontend/features`, and `frontend/lib`. The focus is structure, routes, state, and contracts toward the backend.
 
-## Estructura frontend
+## Frontend Structure
 
-[![Estructura frontend](./rendered/frontend-structure.png)](./rendered/frontend-structure.svg)
+[![Frontend structure](./rendered/frontend-structure.png)](./rendered/frontend-structure.svg)
 
-**Proposito.** Mostrar como se organiza el proyecto frontend por App Router, componentes reutilizables, features y librerias compartidas.
+**Purpose.** Show how the frontend project is organized by App Router, reusable components, features, and shared libraries.
 
-**Como leerlo.** `app/` define pantallas y layouts; `features/` encapsula clientes API y tipos; `lib/` concentra autenticacion y cliente HTTP; `components/` aporta navegacion, UI y WebSocket.
+**How to read it.** `app/` defines screens and layouts; `features/` encapsulates API clients and types; `lib/` concentrates authentication and HTTP client; `components/` provides navigation, UI, and WebSocket.
 
-**Valor.** Explica una estructura mantenible para React sin mezclar vistas, contratos HTTP y utilidades.
+**Value.** Explains a maintainable React structure without mixing views, HTTP contracts, and utilities.
 
-## Vista general de rutas React
+## React Routing Overview
 
-[![Vista general de rutas React](./rendered/react-routing-overview.png)](./rendered/react-routing-overview.svg)
+[![React routing overview](./rendered/react-routing-overview.png)](./rendered/react-routing-overview.svg)
 
-**Proposito.** Representar rutas publicas, rutas de autenticacion y rutas protegidas.
+**Purpose.** Represent public routes, authentication routes, and protected routes.
 
-**Como leerlo.** `(auth)` redirige usuarios ya autenticados; `(dashboard)` bloquea acceso sin token. `Sidebar` articula la navegacion principal y `MarketPage` enlaza con `TradingPage` mediante query params.
+**How to read it.** `(auth)` redirects already authenticated users; `(dashboard)` blocks access without a token. `Sidebar` articulates main navigation, and `MarketPage` links to `TradingPage` through query params.
 
-**Valor.** Permite justificar experiencia de usuario, proteccion de pantallas y navegacion funcional.
+**Value.** Helps justify user experience, screen protection, and functional navigation.
 
-## Gestion de estado frontend
+## Frontend State Management
 
-[![Gestion de estado frontend](./rendered/frontend-state-management.png)](./rendered/frontend-state-management.svg)
+[![Frontend state management](./rendered/frontend-state-management.png)](./rendered/frontend-state-management.svg)
 
-**Proposito.** Mostrar como se gestiona estado en cliente sin Redux/Zustand.
+**Purpose.** Show how client state is managed without Redux/Zustand.
 
-**Como leerlo.** `AuthProvider` mantiene sesion y `localStorage`; SWR cachea lecturas de portfolio, wallet y ordenes; formularios y dialogos usan `useState`; STOMP alimenta toasts.
+**How to read it.** `AuthProvider` maintains session and `localStorage`; SWR caches reads for portfolio, wallet, and orders; forms and dialogs use `useState`; STOMP feeds toasts.
 
-**Valor.** Explica decisiones de estado reales y su impacto sobre UX, cache y recuperacion de sesion.
+**Value.** Explains real state decisions and their impact on UX, cache, and session restoration.
 
-## Interaccion frontend-backend
+## Frontend-Backend Interaction
 
-[![Interaccion frontend-backend](./rendered/frontend-backend-interaction.png)](./rendered/frontend-backend-interaction.svg)
+[![Frontend-backend interaction](./rendered/frontend-backend-interaction.png)](./rendered/frontend-backend-interaction.svg)
 
-**Proposito.** Mapear clientes API frontend con controladores backend.
+**Purpose.** Map frontend API clients to backend controllers.
 
-**Como leerlo.** Cada `features/*/api.ts` apunta a endpoints concretos: auth/user, market, trading, wallet y portfolio. `fetchWithAuth` centraliza cabecera JWT y manejo de 401.
+**How to read it.** Each `features/*/api.ts` points to concrete endpoints: auth/user, market, trading, wallet, and portfolio. `fetchWithAuth` centralizes the JWT header and 401 handling.
 
-**Valor.** Da trazabilidad entre UI, contratos HTTP y adaptadores REST backend, util para evolucionar endpoints sin perder impacto.
+**Value.** Gives traceability between UI, HTTP contracts, and backend REST adapters, useful for evolving endpoints without losing impact visibility.
 
 ## Conclusion
 
-El frontend usa una arquitectura pragmaticamente modular: rutas por App Router, features por dominio, estado global minimo y clientes API explicitos. La comunicacion WebSocket se limita a notificaciones privadas, lo que encaja con el backend STOMP.
+The frontend uses a pragmatically modular architecture: App Router routes, domain-based features, minimal global state, and explicit API clients. WebSocket communication is limited to private notifications, matching the backend STOMP design.

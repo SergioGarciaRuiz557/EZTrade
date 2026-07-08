@@ -3,14 +3,14 @@ package com.trading.platform.eztrade.portfolio.application.ports.in;
 import com.trading.platform.eztrade.portfolio.domain.PortfolioSnapshot;
 
 /**
- * Puerto de entrada para consultar la cartera agregada de un usuario.
+ * Input port for querying a user's aggregate portfolio.
  * <p>
- * Lo usa el adaptador REST y mantiene fuera del controlador la composicion de
- * posiciones, cash proyectado y valoraciones de mercado.
+ * Used by the REST adapter; keeps the composition of positions, projected cash,
+ * and market valuations outside the controller.
  */
 public interface GetPortfolioUseCase {
 
-    /** Devuelve la foto actual del portfolio para el owner indicado. */
+    /** Returns the current portfolio picture for the given owner. */
     PortfolioSnapshot getByOwner(String owner);
 }
 

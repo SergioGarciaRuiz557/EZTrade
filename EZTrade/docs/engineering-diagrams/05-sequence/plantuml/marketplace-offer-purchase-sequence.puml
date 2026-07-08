@@ -1,10 +1,10 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Secuencia - Compra de oferta SELL en marketplace
+title EZTrade Sequence - SELL Offer Purchase in Marketplace
 autonumber
 
-actor "Comprador" as Comprador
+actor "Buyer" as Buyer
 participant "TradingPage\nMarketplaceOffers" as Page
 participant "tradingApi" as Api
 participant "TradingMarketplaceController\nPOST /api/v1/trading/offers/{offerId}/buy" as Controller
@@ -12,11 +12,11 @@ participant "TradingService\nbuyOffer()" as TradingService
 participant "TradeOrderRepositoryPort" as Repo
 database "trade_order" as TradeOrderDb
 participant "MarketPriceLookupPort" as MarketPort
-participant "Eventos Spring" as Events
-participant "WalletService\nmediante listener" as Wallet
-participant "PortfolioService\nmediante listener" as Portfolio
+participant "Spring Events" as Events
+participant "WalletService\nthrough listener" as Wallet
+participant "PortfolioService\nthrough listener" as Portfolio
 
-Comprador -> Page : clicks buy offer
+Buyer -> Page : clicks buy offer
 Page -> Api : buySellOffer(offerId)
 Api -> Controller : POST /api/v1/trading/offers/{offerId}/buy\nJWT Bearer
 Controller -> TradingService : buyOffer(BuySellOfferCommand)
@@ -27,7 +27,7 @@ Repo --> TradingService : TradeOrder
 TradingService -> TradingService : validate seller != buyer\nstatus=PENDING\nside=SELL
 TradingService -> MarketPort : currentPrice(symbol)
 MarketPort --> TradingService : current market price
-TradingService -> Repo : busca ofertas SELL pendientes\ny ordenes ejecutadas
+TradingService -> Repo : finds pending SELL offers\nand executed orders
 Repo --> TradingService : seller coverage data
 
 TradingService -> TradingService : place BUY order for buyer\nsame symbol, quantity, price
@@ -53,9 +53,9 @@ Controller --> Api : MarketplaceTradeResponse
 Api --> Page : mutate offers/orders/portfolio/wallet
 
 note bottom
-Evidencia: TradingMarketplaceController.buyOffer, TradingService.buyOffer,
-SpringDataTradeOrderRepository.findByIdForUpdate y endpoints de marketplace en frontend/features/trading/api.ts.
-El bloqueo pesimista esta declarado explicitamente en el metodo del repositorio.
+Evidence: TradingMarketplaceController.buyOffer, TradingService.buyOffer,
+SpringDataTradeOrderRepository.findByIdForUpdate, and marketplace endpoints in frontend/features/trading/api.ts.
+The pessimistic lock is explicitly declared in the repository method.
 end note
 
 @enduml

@@ -1,18 +1,18 @@
 package com.trading.platform.eztrade.wallet.domain;
 
 /**
- * Origen o categoría de la referencia asociada a un movimiento del wallet.
+ * Source or category of the reference associated with a wallet movement.
  * <p>
- * En el ledger cada entrada guarda un {@code referenceType} + {@code referenceId} para:
+ * In the ledger, each entry stores a {@code referenceType} + {@code referenceId} to:
  * <ul>
- *   <li>facilitar auditoría/trazabilidad (de dónde viene el movimiento),</li>
- *   <li>y ayudar a mantener idempotencia en operaciones que puedan reintentarse.</li>
+ *   <li>support auditing/traceability (where the movement comes from),</li>
+ *   <li>and help preserve idempotency for operations that may be retried.</li>
  * </ul>
  */
 public enum ReferenceType {
-    /** Movimiento asociado a una orden del módulo de trading (normalmente {@code referenceId = orderId}). */
+    /** Movement associated with a trading module order (usually {@code referenceId = orderId}). */
     ORDER,
-    /** Movimiento originado por un ajuste manual/administrativo (depósito/retiro/comisión). */
+    /** Movement originated by a manual/administrative adjustment (deposit/withdrawal/fee). */
     MANUAL
 }
 

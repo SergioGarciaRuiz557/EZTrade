@@ -3,18 +3,18 @@ package com.trading.platform.eztrade.trading.domain;
 import java.math.BigDecimal;
 
 /**
- * Value object que representa la cantidad negociada de un activo.
+ * Value object representing the traded quantity of an asset.
  * <p>
- * Garantiza que la cantidad sea estrictamente positiva.
+ * Guarantees that the quantity is strictly positive.
  *
- * @param value cantidad en unidades del activo
+ * @param value quantity in asset units
  */
 public record Quantity(BigDecimal value) {
 
     /**
-     * Constructor compacto con validacion de dominio.
+     * Compact constructor with domain validation.
      *
-     * @throws TradingDomainException si la cantidad es nula o menor/igual a cero
+     * @throws TradingDomainException if the quantity is null or less than/equal to zero
      */
     public Quantity {
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {

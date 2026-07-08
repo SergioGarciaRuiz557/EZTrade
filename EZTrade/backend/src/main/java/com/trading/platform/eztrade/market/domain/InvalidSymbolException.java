@@ -1,8 +1,8 @@
 package com.trading.platform.eztrade.market.domain;
 
 /**
- * Excepción de dominio que indica que se ha intentado crear o utilizar
- * un símbolo (ticker) que no cumple las reglas de validación establecidas.
+ * Domain exception indicating that an attempt was made to create or use a
+ * symbol (ticker) that does not satisfy the established validation rules.
  */
 public class InvalidSymbolException extends RuntimeException {
     public InvalidSymbolException(String message) {

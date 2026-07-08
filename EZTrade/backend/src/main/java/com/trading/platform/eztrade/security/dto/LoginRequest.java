@@ -4,27 +4,27 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * DTO que representa la petición de inicio de sesión del usuario.
+ * DTO representing the user's login request.
  * <p>
- * Contiene las credenciales necesarias para autenticarse en el sistema:
- * email o username, y contraseña.
+ * Contains the credentials required to authenticate in the system: email or
+ * username, plus password.
  */
 public class LoginRequest {
 
     /**
-     * Correo electrónico del usuario (opcional si se informa username).
+     * User email address (optional if username is provided).
      */
     private String email;
 
     /**
-     * Nombre de usuario (opcional si se informa email).
+     * Username (optional if email is provided).
      */
     private String username;
 
     /**
-     * Contraseña del usuario.
+     * User password.
      * <p>
-     * Campo obligatorio.
+     * Required field.
      */
     @NotBlank
     private String password;
@@ -39,9 +39,9 @@ public class LoginRequest {
     }
 
     /**
-     * Devuelve el correo electrónico del usuario.
+     * Returns the user email address.
      *
-     * @return email del usuario
+     * @return user email
      */
     public String getEmail() {
         return email;
@@ -52,18 +52,18 @@ public class LoginRequest {
     }
 
     /**
-     * Devuelve el identificador de login normalizado (email o username).
+     * Returns the normalized login identifier (email or username).
      *
-     * @return email si está informado; en caso contrario username
+     * @return email if present; otherwise username
      */
     public String getIdentifier() {
         return hasText(email) ? email : username;
     }
 
     /**
-     * Devuelve la contraseña del usuario.
+     * Returns the user password.
      *
-     * @return contraseña del usuario
+     * @return user password
      */
     public String getPassword() {
         return password;

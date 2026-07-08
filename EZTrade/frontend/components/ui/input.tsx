@@ -1,10 +1,10 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-// Props nativas de input para reutilizar el componente como un input HTML normal.
+// Native input props to reuse the component as a regular HTML input.
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
 
-// Input base con estilos de foco, disabled y placeholders coherentes con el tema.
+// Base input with focus, disabled, and placeholder styles consistent with the theme.
 const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, type, ...props }, ref) => {
   return (
     <input

@@ -1,17 +1,17 @@
 package com.trading.platform.eztrade.trading.application.ports.out;
 
 /**
- * Puerto de salida para publicacion de eventos de dominio.
+ * Output port for publishing domain events.
  * <p>
- * Permite que la capa de aplicacion emita eventos sin depender de una
- * tecnologia concreta de mensajeria/eventos.
+ * Allows the application layer to emit events without depending on a concrete
+ * messaging/events technology.
  */
 public interface DomainEventPublisherPort {
 
     /**
-     * Publica un evento de dominio.
+     * Publishes a domain event.
      *
-     * @param event evento a publicar
+     * @param event event to publish
      */
     void publish(Object event);
 }

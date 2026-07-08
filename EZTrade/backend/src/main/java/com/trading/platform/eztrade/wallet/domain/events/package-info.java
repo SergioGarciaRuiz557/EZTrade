@@ -1,13 +1,14 @@
 /**
- * Interfaz pública del módulo Wallet para <strong>eventos de dominio</strong>.
+ * Public interface of the Wallet module for <strong>domain events</strong>.
  * <p>
- * Spring Modulith usa {@link org.springframework.modulith.NamedInterface} para declarar qué paquete se considera parte
- * del API del módulo. Este paquete contiene <em>records</em> que representan hechos relevantes del dominio de wallet,
- * típicamente publicados tras una operación (reserva/liberación/liquidación) o ante un fallo de negocio
- * (fondos insuficientes).
+ * Spring Modulith uses {@link org.springframework.modulith.NamedInterface} to
+ * declare which package is considered part of the module API. This package
+ * contains <em>records</em> that represent relevant wallet-domain facts,
+ * typically published after an operation (reserve/release/settlement) or after
+ * a business failure (insufficient funds).
  * <p>
- * Nota: los eventos están modelados como objetos simples (records) para facilitar su publicación con el bus de eventos
- * de Spring y su consumo por otros módulos.
+ * Note: events are modeled as simple objects (records) to make publication
+ * through the Spring event bus and consumption by other modules easier.
  */
 @NamedInterface("events")
 package com.trading.platform.eztrade.wallet.domain.events;

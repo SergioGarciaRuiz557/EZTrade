@@ -1,17 +1,17 @@
 package com.trading.platform.eztrade.trading.domain;
 
 /**
- * Excepcion de dominio para violaciones de reglas de negocio en trading.
+ * Domain exception for trading business-rule violations.
  * <p>
- * Se lanza desde el agregado y value objects cuando una operacion no respeta
- * las invariantes del dominio.
+ * Thrown from the aggregate and value objects when an operation does not respect
+ * domain invariants.
  */
 public class TradingDomainException extends RuntimeException {
 
     /**
-     * Crea la excepcion con un mensaje descriptivo.
+     * Creates the exception with a descriptive message.
      *
-     * @param message detalle de la regla violada
+     * @param message detail of the violated rule
      */
     public TradingDomainException(String message) {
         super(message);

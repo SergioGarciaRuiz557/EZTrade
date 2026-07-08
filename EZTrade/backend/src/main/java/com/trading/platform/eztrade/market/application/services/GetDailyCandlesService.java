@@ -9,11 +9,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Implementación del caso de uso {@link GetDailyCandlesUserCase}.
+ * Implementation of the {@link GetDailyCandlesUserCase} use case.
  * <p>
- * Encapsula la lógica de orquestación para obtener la serie de velas diarias
- * de un símbolo, delegando el acceso a la fuente de datos en el puerto de
- * salida {@link GetDailyCandlesProviderPort}.
+ * Encapsulates orchestration logic to obtain a symbol's daily candle series,
+ * delegating data-source access to the {@link GetDailyCandlesProviderPort}
+ * output port.
  */
 @Service
 public class GetDailyCandlesService implements GetDailyCandlesUserCase {

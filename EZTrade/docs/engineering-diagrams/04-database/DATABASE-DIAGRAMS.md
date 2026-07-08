@@ -1,41 +1,41 @@
-# Diagramas de base de datos
+# Database Diagrams
 
-La base de datos se documenta desde entidades JPA y repositorios Spring Data. No se han encontrado migraciones Flyway/Liquibase ni DDL versionado, por lo que los diagramas describen el esquema inferido por JPA/Hibernate y `spring.jpa.hibernate.ddl-auto=update`.
+The database is documented from JPA entities and Spring Data repositories. No Flyway/Liquibase migrations or versioned DDL were found, so the diagrams describe the schema inferred by JPA/Hibernate and `spring.jpa.hibernate.ddl-auto=update`.
 
-## Resumen entidad-relacion
+## Entity-Relationship Summary
 
-[![Resumen entidad-relacion](./rendered/database-er-summary.png)](./rendered/database-er-summary.svg)
+[![Entity-relationship summary](./rendered/database-er-summary.png)](./rendered/database-er-summary.svg)
 
-**Proposito.** Resumir tablas, claves y relaciones logicas principales.
+**Purpose.** Summarize main tables, keys, and logical relationships.
 
-**Como leerlo.** Las relaciones discontinuas no son FKs declaradas: representan conexiones logicas por `owner`, `recipient`, `symbol` y `referenceId`.
+**How to read it.** Dashed relationships are not declared FKs: they represent logical connections through `owner`, `recipient`, `symbol`, and `referenceId`.
 
-**Valor.** Explica la persistencia del dominio sin inventar constraints fisicas.
+**Value.** Explains domain persistence without inventing physical constraints.
 
-**Limitacion.** El repositorio no declara asociaciones JPA entre entidades ni claves foraneas explicitas.
+**Limitation.** The repository does not declare JPA associations between entities or explicit foreign keys.
 
-## Correspondencia entidades JPA-tablas
+## JPA Entity-Table Mapping
 
-[![Correspondencia entidades JPA-tablas](./rendered/jpa-entity-table-mapping.png)](./rendered/jpa-entity-table-mapping.svg)
+[![JPA entity-table mapping](./rendered/jpa-entity-table-mapping.png)](./rendered/jpa-entity-table-mapping.svg)
 
-**Proposito.** Relacionar dominio, entidades JPA y tablas.
+**Purpose.** Relate domain, JPA entities, and tables.
 
-**Como leerlo.** Los mappers convierten entre modelos de dominio y entidades de infraestructura. Cada entidad JPA termina en una tabla concreta.
+**How to read it.** Mappers convert between domain models and infrastructure entities. Each JPA entity ends in a concrete table.
 
-**Valor.** Hace visible la separacion dominio-persistencia, importante para explicar arquitectura hexagonal y testabilidad.
+**Value.** Makes the domain-persistence separation visible, which is important for explaining hexagonal architecture and testability.
 
-## Detalle de tablas de base de datos
+## Detailed Database Tables
 
-[![Detalle de tablas de base de datos](./rendered/database-tables-detailed.png)](./rendered/database-tables-detailed.svg)
+[![Detailed database tables](./rendered/database-tables-detailed.png)](./rendered/database-tables-detailed.svg)
 
-**Proposito.** Detallar columnas, tipos inferidos, indices y restricciones unicas.
+**Purpose.** Detail columns, inferred types, indexes, and unique constraints.
 
-**Como leerlo.** Cada tabla muestra PK, campos relevantes, `DECIMAL(19,8)` para importes/cantidades y constraints declarados con `@Table`, `@Column`, `@Index` y `@UniqueConstraint`.
+**How to read it.** Each table shows PK, relevant fields, `DECIMAL(19,8)` for monetary/quantity values, and constraints declared with `@Table`, `@Column`, `@Index`, and `@UniqueConstraint`.
 
-**Valor.** Sirve como referencia tecnica para memoria, auditoria y futuras migraciones.
+**Value.** Serves as a technical reference for the report, audit, and future migrations.
 
-**Limitacion.** El DDL real puede variar ligeramente segun dialecto MySQL y evolucion previa de una base con `ddl-auto=update`.
+**Limitation.** The real DDL may vary slightly depending on the MySQL dialect and the previous evolution of a database with `ddl-auto=update`.
 
 ## Conclusion
 
-El modelo relacional esta orientado a persistir agregados y proyecciones por modulo. La ausencia de migraciones y FKs explicitas es un punto importante de mejora operativa: facilita el desarrollo local, pero reduce trazabilidad y control del esquema en entornos compartidos.
+The relational model is oriented toward persisting aggregates and projections by module. The absence of migrations and explicit FKs is an important operational improvement point: it simplifies local development but reduces schema traceability and control in shared environments.

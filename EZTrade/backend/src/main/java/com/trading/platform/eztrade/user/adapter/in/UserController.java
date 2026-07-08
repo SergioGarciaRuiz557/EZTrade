@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Controlador REST para la gestion de usuarios.
+ * REST controller for user management.
  * <p>
- * Expone endpoints para registrar nuevos usuarios y consultar usuarios por
- * email o username. El controlador solo adapta HTTP a casos de uso y usa
- * {@link UserMapper} para no exponer directamente el modelo de dominio.
+ * Exposes endpoints to register new users and query users by email or username.
+ * The controller only adapts HTTP to use cases and uses {@link UserMapper} to
+ * avoid exposing the domain model directly.
  */
 @RestController
 @RequestMapping("api/user")
@@ -30,10 +30,10 @@ public class UserController {
     private final GetUserUserCase getUserUserCase;
 
     /**
-     * Construye una nueva instancia del controlador de usuarios.
+     * Builds a new user controller instance.
      *
-     * @param registerUserUserCase caso de uso responsable de registrar usuarios
-     * @param getUserUserCase caso de uso responsable de obtener usuarios
+     * @param registerUserUserCase use case responsible for registering users
+     * @param getUserUserCase use case responsible for retrieving users
      */
     public UserController(RegisterUserUserCase registerUserUserCase, GetUserUserCase getUserUserCase) {
         this.registerUserUserCase = registerUserUserCase;
@@ -41,14 +41,14 @@ public class UserController {
     }
 
     /**
-     * Registra un nuevo usuario.
+     * Registers a new user.
      * <p>
-     * Recibe un {@link UserDTO}, lo transforma a dominio, delega el alta en la
-     * aplicacion y devuelve el usuario persistido en formato DTO.
+     * Receives a {@link UserDTO}, maps it to the domain model, delegates the
+     * creation to the application layer, and returns the persisted user as a DTO.
      *
-     * @param userDTO datos del usuario a registrar
-     * @return respuesta HTTP con el usuario registrado y estado 201 Created
-     * @throws UserExistsException si ya existe un usuario con el mismo email o username
+     * @param userDTO user data to register
+     * @return HTTP response with the registered user and 201 Created status
+     * @throws UserExistsException if a user with the same email or username already exists
      */
     @PostMapping("/register")
     public ResponseEntity<UserDTO> registerUser(@RequestBody UserDTO userDTO) throws UserExistsException {
@@ -59,10 +59,10 @@ public class UserController {
     }
 
     /**
-     * Obtiene un usuario por email o username.
+     * Retrieves a user by email or username.
      *
-     * @param email identificador de busqueda recibido como query param
-     * @return respuesta HTTP con el usuario encontrado en formato DTO
+     * @param email search identifier received as a query parameter
+     * @return HTTP response with the found user as a DTO
      */
     @GetMapping
     public ResponseEntity<UserDTO> getUser(@RequestParam String email) {

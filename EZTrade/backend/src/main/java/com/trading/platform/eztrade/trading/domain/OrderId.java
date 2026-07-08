@@ -1,19 +1,19 @@
 package com.trading.platform.eztrade.trading.domain;
 
 /**
- * Value object que representa el identificador de una orden.
+ * Value object representing an order identifier.
  * <p>
- * Encapsula la regla de dominio de que un id valido debe ser positivo.
- * Se utiliza para evitar el uso de valores primitivos sin semantica.
+ * Encapsulates the domain rule that a valid id must be positive. Used to avoid
+ * raw primitive values without semantics.
  *
- * @param value valor numerico del identificador
+ * @param value numeric identifier value
  */
 public record OrderId(Long value) {
 
     /**
-     * Constructor compacto con validacion de invariantes.
+     * Compact constructor with invariant validation.
      *
-     * @throws TradingDomainException si el id es nulo o no positivo
+     * @throws TradingDomainException if the id is null or not positive
      */
     public OrderId {
         if (value == null || value <= 0) {

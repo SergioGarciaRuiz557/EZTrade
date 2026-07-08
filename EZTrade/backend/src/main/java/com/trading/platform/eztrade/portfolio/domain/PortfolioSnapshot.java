@@ -7,10 +7,10 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Vista de dominio de la cartera de un usuario.
+ * Domain view of a user's portfolio.
  * <p>
- * Agrupa cash proyectado desde wallet, posiciones abiertas, coste base, PnL
- * realizado y, en consultas REST, valoraciones de mercado por simbolo.
+ * Groups projected cash from wallet, open positions, cost basis, realized PnL,
+ * and, for REST queries, market valuations by symbol.
  */
 public record PortfolioSnapshot(
         String owner,
@@ -30,13 +30,13 @@ public record PortfolioSnapshot(
     }
 
     public PortfolioSnapshot {
-        // Copias defensivas: el snapshot debe ser una foto estable de lectura.
+        // Defensive copies: the snapshot must be a stable read-only picture.
         positions = List.copyOf(positions);
         marketValuations = Map.copyOf(marketValuations);
     }
 
     /**
-     * Busca la valoracion de mercado por simbolo normalizando a mayusculas.
+     * Finds the market valuation by symbol, normalizing it to uppercase.
      */
     public Optional<PositionMarketValuation> marketValuationFor(String symbol) {
         if (symbol == null) {

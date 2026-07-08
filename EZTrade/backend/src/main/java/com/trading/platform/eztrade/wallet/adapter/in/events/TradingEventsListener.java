@@ -11,11 +11,12 @@ import org.springframework.stereotype.Component;
 
 
 /**
- * Adaptador de entrada basado en eventos Spring.
+ * Input adapter based on Spring events.
  * <p>
- * Escucha eventos del módulo de trading (publicados dentro del mismo proceso mediante Spring events) y delega en los
- * casos de uso del módulo wallet. Mantener el listener separado del servicio permite desacoplar el mecanismo de
- * transporte (Spring events) de la lógica de aplicación.
+ * Listens to trading module events (published within the same process through
+ * Spring events) and delegates to wallet module use cases. Keeping the listener
+ * separate from the service decouples the transport mechanism (Spring events)
+ * from application logic.
  */
 @Component("TradingEventsListener")
 public class TradingEventsListener {
@@ -34,9 +35,9 @@ public class TradingEventsListener {
 
     @EventListener
     public void on(OrderPlacedEvent event) {
-        // Delegación directa al caso de uso.
-        // Sincronico a proposito: si wallet no puede reservar fondos, trading
-        // debe abortar la transaccion y no dejar una BUY pendiente sin respaldo.
+        // Direct delegation to the use case.
+        // Intentionally synchronous: if wallet cannot reserve funds, trading
+        // must abort the transaction and avoid leaving an unsupported pending BUY.
         handleOrderPlacedUseCase.handle(event);
     }
 

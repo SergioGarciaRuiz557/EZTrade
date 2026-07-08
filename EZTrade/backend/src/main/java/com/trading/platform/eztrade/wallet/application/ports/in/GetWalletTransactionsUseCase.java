@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Puerto de entrada para consultar el historico de movimientos del wallet.
+ * Input port for querying the wallet movement history.
  */
 public interface GetWalletTransactionsUseCase {
 

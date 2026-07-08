@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Variables del tema claro usadas por Tailwind mediante hsl(var(--...)). */
+/* Light-theme variables used by Tailwind through hsl(var(--...)). */
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -31,7 +31,7 @@
     --radius: 0.5rem;
   }
 
-  /* Variables equivalentes para el modo oscuro, aplicado desde la clase .dark en el layout raiz. */
+  /* Equivalent variables for dark mode, applied from the .dark class on the root layout. */
   .dark {
     --background: 0 0% 4%;
     --foreground: 0 0% 98%;
@@ -60,11 +60,11 @@
 }
 
 @layer base {
-  /* Todos los elementos heredan el color de borde definido en el tema. */
+  /* All elements inherit the border color defined by the theme. */
   * {
     @apply border-border;
   }
-  /* Estilos globales de fondo y texto de la aplicacion. */
+  /* Global background and text styles for the application. */
   body {
     @apply bg-background text-foreground;
   }

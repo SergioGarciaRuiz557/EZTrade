@@ -3,20 +3,20 @@ package com.trading.platform.eztrade.wallet.application.ports.in;
 import com.trading.platform.eztrade.trading.domain.events.OrderExecutionRequestEvent;
 
 /**
- * Puerto de entrada (caso de uso) para reaccionar cuando se solicita ejecutar una orden.
+ * Input port (use case) for reacting when order execution is requested.
  * <p>
- * En el wallet se utiliza para liquidar:
+ * In the wallet, it is used to settle:
  * <ul>
- *   <li>BUY: consumir saldo reservado (debit).</li>
- *   <li>SELL: abonar saldo disponible (credit).</li>
+ *   <li>BUY: consume reserved balance (debit).</li>
+ *   <li>SELL: credit available balance (credit).</li>
  * </ul>
  */
 public interface HandleOrderExecutedUseCase {
 
     /**
-     * Maneja el evento de solicitud de ejecucion de orden.
+     * Handles the order-execution request event.
      *
-     * @param event evento publicado por el modulo de trading.
+     * @param event event published by the trading module
      */
     void handle(OrderExecutionRequestEvent event);
 }

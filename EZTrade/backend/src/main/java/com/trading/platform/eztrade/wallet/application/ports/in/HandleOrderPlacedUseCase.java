@@ -3,16 +3,16 @@ package com.trading.platform.eztrade.wallet.application.ports.in;
 import com.trading.platform.eztrade.trading.domain.events.OrderPlacedEvent;
 
 /**
- * Puerto de entrada (caso de uso) para reaccionar cuando se coloca una orden.
+ * Input port (use case) for reacting when an order is placed.
  * <p>
- * En el wallet se utiliza para reservar fondos en órdenes BUY.
+ * In the wallet, it is used to reserve funds for BUY orders.
  */
 public interface HandleOrderPlacedUseCase {
 
     /**
-     * Maneja el evento de orden colocada.
+     * Handles the order-placed event.
      *
-     * @param event evento publicado por el módulo de trading.
+     * @param event event published by the trading module
      */
     void handle(OrderPlacedEvent event);
 }

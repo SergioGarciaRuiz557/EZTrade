@@ -1,9 +1,9 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Frontend - APIs de feature hacia endpoints backend
+title EZTrade Frontend - Feature APIs to Backend Endpoints
 
-package "Clientes de feature frontend" as FE EZ_FRONTEND {
+package "Frontend feature clients" as FE EZ_FRONTEND {
   component "authApi" as AuthApi
   component "marketApi" as MarketApi
   component "tradingApi" as TradingApi
@@ -12,7 +12,7 @@ package "Clientes de feature frontend" as FE EZ_FRONTEND {
   component "fetchWithAuth\nhandleResponse" as FetchWithAuth
 }
 
-package "Controladores REST backend" as BE EZ_BACKEND {
+package "Backend REST controllers" as BE EZ_BACKEND {
   component "AuthController\nPOST /auth/login" as AuthController
   component "UserController\nPOST /api/user/register\nGET /api/user" as UserController
   component "MarketController\nGET /api/v1/market/*" as MarketController
@@ -37,8 +37,8 @@ WalletApi --> FetchWithAuth
 PortfolioApi --> FetchWithAuth
 
 note bottom
-Evidencia: frontend/features/*/api.ts y anotaciones de controladores backend.
-La base de la API frontend es NEXT_PUBLIC_API_URL, con valor por defecto http://localhost:8088.
+Evidence: frontend/features/*/api.ts and backend controller annotations.
+The frontend API base is NEXT_PUBLIC_API_URL, defaulting to http://localhost:8088.
 end note
 
 @enduml

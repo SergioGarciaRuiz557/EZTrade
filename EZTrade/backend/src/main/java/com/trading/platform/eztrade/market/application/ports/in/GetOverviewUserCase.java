@@ -4,8 +4,8 @@ import com.trading.platform.eztrade.market.domain.InstrumentOverview;
 import com.trading.platform.eztrade.market.domain.Symbol;
 
 /**
- * Caso de uso para obtener la información fundamental (overview) de un símbolo
- * de mercado concreto.
+ * Use case for obtaining the fundamental information (overview) of a specific
+ * market symbol.
  */
 public interface GetOverviewUserCase {
     InstrumentOverview getOverview(Symbol symbol);

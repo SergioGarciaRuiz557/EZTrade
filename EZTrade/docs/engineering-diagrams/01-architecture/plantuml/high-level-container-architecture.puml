@@ -1,48 +1,52 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade - Arquitectura de contenedores de alto nivel
+title EZTrade - High-Level Container Architecture
 
-node "Cliente" as Client {
-  actor "Navegador" as Browser
+node "Client" as Client {
+  actor "Browser" as Browser
 }
 
-node "Tiempo de ejecucion frontend\nNext.js 15 / React 19" as NextRuntime EZ_FRONTEND {
+node "Frontend runtime\nNext.js 15 / React 19" as NextRuntime EZ_FRONTEND {
   component "App Router\napp/(auth), app/(dashboard), app/page.tsx" as AppRouter
   component "AuthProvider\nlocalStorage + JWT UX decode" as AuthProvider
-  component "Clientes API por feature\nfeatures/*/api.ts" as FeatureClients
+  component "Feature API clients\nfeatures/*/api.ts" as FeatureClients
   component "NotificationsWebSocket\n@stomp/stompjs" as WsClient
 }
 
-node "Tiempo de ejecucion backend\nSpring Boot 4.0.1" as SpringRuntime EZ_BACKEND {
-  component "Cadena de filtros de seguridad\nJWT + UserAccessFilter + CORS" as Security
-  component "Controladores REST\nAuth, User, Market, Trading, Wallet, Portfolio" as Controllers
-  component "Modulos Spring Modulith\nuser/security/market/trading/wallet/portfolio/notifications" as Modules
-  component "Eventos Spring\nadaptadores DomainEventPublisherPort" as Events
-  component "Cache Caffeine\nmarketPrice, overview, dailyCandles" as Cache
+node "Backend runtime\nSpring Boot 4.0.1" as SpringRuntime EZ_BACKEND {
+  component "Security filter chain\nJWT + UserAccessFilter + CORS" as Security
+  component "REST controllers\nAuth, User, Market, Trading, Wallet, Portfolio" as Controllers
+  component "Spring Modulith modules\nuser/security/market/trading/wallet/portfolio/notifications" as Modules
+  component "Spring Events\nDomainEventPublisherPort adapters" as Events
+  component "Caffeine cache\nmarketPrice, overview, dailyCandles" as Cache
   component "STOMP broker\n/topic, /queue, /user" as Broker
 }
 
-database "MySQL\njdbc:mysql://localhost:3306/EZTrade" as Db EZ_DB
+database "MySQL\njdbc:mysql://db:3306/EZTrade in Docker\nlocalhost:3306 from host" as Db EZ_DB
 component "Alpha Vantage API" as Alpha EZ_EXTERNAL
+component "Docker Compose\nservices: db, backend, frontend" as Compose EZ_DEVOPS
 
 Browser --> AppRouter : HTTP pages
-AppRouter --> AuthProvider : estado de sesion
+AppRouter --> AuthProvider : session state
 AppRouter --> FeatureClients : REST operations
 FeatureClients --> Security : fetchWithAuth\nAuthorization Bearer
 WsClient --> Broker : brokerURL /ws\nAuthorization header
-Security --> Controllers : peticion autenticada
-Controllers --> Modules : puertos de entrada / casos de uso
-Modules --> Events : publish/listen eventos de dominio
+Security --> Controllers : authenticated request
+Controllers --> Modules : input ports / use cases
+Modules --> Events : publish/listen domain events
 Modules --> Db : repositories + JPA entities
 Modules --> Cache : cached market provider
 Cache --> Alpha : RestClient HTTPS
 Broker --> WsClient : user notifications
+Compose ..> NextRuntime : builds frontend Dockerfile
+Compose ..> SpringRuntime : builds backend Dockerfile
+Compose ..> Db : starts mysql:8.4
 
 note right of Db
-No se han encontrado scripts Flyway/Liquibase.
-El esquema se infiere desde entidades JPA
-y hibernate ddl-auto=update.
+No Flyway/Liquibase scripts were found.
+The schema is inferred from JPA entities
+and hibernate ddl-auto=update.
 end note
 
 @enduml

@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
 
 /**
- * Adaptador que implementa la API publica de precios de market.
+ * Adapter that implements market's public price API.
  * <p>
- * Su funcion es traducir la llamada simple de otros modulos
- * ({@link MarketPriceLookupPort#currentPrice(String)}) al caso de uso interno
- * de market ({@link GetPriceUserCase}). Asi trading puede validar precios
- * contra AlphaVantage sin acoplarse a controladores ni proveedores externos.
+ * Its role is to translate the simple call made by other modules
+ * ({@link MarketPriceLookupPort#currentPrice(String)}) into market's internal
+ * use case ({@link GetPriceUserCase}). This allows trading to validate prices
+ * against Alpha Vantage without coupling to controllers or external providers.
  */
 @Component
 class MarketPriceLookupAdapter implements MarketPriceLookupPort {
@@ -27,8 +27,8 @@ class MarketPriceLookupAdapter implements MarketPriceLookupPort {
 
     @Override
     public BigDecimal currentPrice(String symbol) {
-        // Reutilizamos el value object Symbol para mantener las mismas reglas
-        // de normalizacion y validacion que el resto del modulo market.
+        // Reuse the Symbol value object to keep the same normalization and
+        // validation rules as the rest of the market module.
         MarketPrice marketPrice = getPriceUserCase.getPrice(Symbol.of(symbol));
         return BigDecimal.valueOf(marketPrice.price());
     }

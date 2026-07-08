@@ -15,10 +15,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entidad JPA de infraestructura para persistir ordenes de trading.
+ * Infrastructure JPA entity used to persist trading orders.
  * <p>
- * Esta clase no contiene reglas de negocio; el comportamiento de dominio
- * vive en {@code TradeOrder}.
+ * This class does not contain business rules; domain behavior lives in
+ * {@code TradeOrder}.
  */
 @Entity
 @Table(name = "trade_order")
@@ -54,57 +54,57 @@ public class TradeOrderJpaEntity {
     @Column
     private LocalDateTime executedAt;
 
-    /** @return id persistido */
+    /** @return persisted id */
     public Long getId() { return id; }
 
-    /** @param id id persistido */
+    /** @param id persisted id */
     public void setId(Long id) { this.id = id; }
 
-    /** @return propietario de la orden */
+    /** @return order owner */
     public String getOwner() { return owner; }
 
-    /** @param owner propietario de la orden */
+    /** @param owner order owner */
     public void setOwner(String owner) { this.owner = owner; }
 
-    /** @return simbolo del activo */
+    /** @return asset symbol */
     public String getSymbol() { return symbol; }
 
-    /** @param symbol simbolo del activo */
+    /** @param symbol asset symbol */
     public void setSymbol(String symbol) { this.symbol = symbol; }
 
-    /** @return lado de la orden */
+    /** @return order side */
     public OrderSide getSide() { return side; }
 
-    /** @param side lado de la orden */
+    /** @param side order side */
     public void setSide(OrderSide side) { this.side = side; }
 
-    /** @return cantidad solicitada */
+    /** @return requested quantity */
     public BigDecimal getQuantity() { return quantity; }
 
-    /** @param quantity cantidad solicitada */
+    /** @param quantity requested quantity */
     public void setQuantity(BigDecimal quantity) { this.quantity = quantity; }
 
-    /** @return precio unitario */
+    /** @return unit price */
     public BigDecimal getPrice() { return price; }
 
-    /** @param price precio unitario */
+    /** @param price unit price */
     public void setPrice(BigDecimal price) { this.price = price; }
 
-    /** @return estado de la orden */
+    /** @return order status */
     public OrderStatus getStatus() { return status; }
 
-    /** @param status estado de la orden */
+    /** @param status order status */
     public void setStatus(OrderStatus status) { this.status = status; }
 
-    /** @return fecha de creacion */
+    /** @return creation timestamp */
     public LocalDateTime getCreatedAt() { return createdAt; }
 
-    /** @param createdAt fecha de creacion */
+    /** @param createdAt creation timestamp */
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    /** @return fecha de ejecucion, si aplica */
+    /** @return execution timestamp, when applicable */
     public LocalDateTime getExecutedAt() { return executedAt; }
 
-    /** @param executedAt fecha de ejecucion, si aplica */
+    /** @param executedAt execution timestamp, when applicable */
     public void setExecutedAt(LocalDateTime executedAt) { this.executedAt = executedAt; }
 }

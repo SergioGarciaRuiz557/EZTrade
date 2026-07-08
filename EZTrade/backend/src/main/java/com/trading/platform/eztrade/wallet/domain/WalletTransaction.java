@@ -5,43 +5,45 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Registro auditable e inmutable de un movimiento monetario del wallet.
+ * Auditable and immutable record of a wallet monetary movement.
  * <p>
- * Este modelo sustituye el término "Ledger" por "Transaction" para hacerlo más intuitivo: en la práctica sigue
- * representando una entrada del histórico de movimientos (libro mayor/ledger) y contiene deltas y balances resultantes.
+ * This model replaces the term "Ledger" with "Transaction" to make it more
+ * intuitive: in practice it still represents a movement-history entry
+ * (ledger) and contains deltas and resulting balances.
  * <p>
- * La combinación (owner, referenceId, movementType) se usa como clave natural para idempotencia.
+ * The combination (owner, referenceId, movementType) is used as a natural key
+ * for idempotency.
  */
 public record WalletTransaction(
         Long id,
-        /** Identificador del usuario/propietario del wallet. */
+        /** User/wallet owner identifier. */
         String owner,
-        /** Clasificación del movimiento (depósito, reserva, liberación, liquidación, etc.). */
+        /** Movement classification (deposit, reserve, release, settlement, etc.). */
         MovementType movementType,
-        /** Importe principal del movimiento (siempre positivo en el dominio). */
+        /** Main movement amount (always positive in the domain). */
         BigDecimal amount,
-        /** Variación aplicada al saldo disponible (puede ser positiva, cero o negativa). */
+        /** Variation applied to the available balance (can be positive, zero, or negative). */
         BigDecimal availableDelta,
-        /** Variación aplicada al saldo reservado (puede ser positiva, cero o negativa). */
+        /** Variation applied to the reserved balance (can be positive, zero, or negative). */
         BigDecimal reservedDelta,
-        /** Saldo disponible resultante tras aplicar el movimiento. */
+        /** Available balance after applying the movement. */
         BigDecimal availableBalanceAfter,
-        /** Saldo reservado resultante tras aplicar el movimiento. */
+        /** Reserved balance after applying the movement. */
         BigDecimal reservedBalanceAfter,
-        /** Tipo/origen de la referencia (orden, ajuste manual...). */
+        /** Reference type/source (order, manual adjustment, etc.). */
         ReferenceType referenceType,
-        /** Identificador de referencia (p. ej. orderId o identificador externo del ajuste manual). */
+        /** Reference identifier (for example, orderId or external manual-adjustment identifier). */
         String referenceId,
-        /** Texto libre para facilitar auditoría/histórico. */
+        /** Free text to support auditing/history. */
         String description,
-        /** Momento "efectivo" del movimiento (normalmente el de ocurrencia del evento que lo dispara). */
+        /** "Effective" movement time, usually when the triggering event occurred. */
         LocalDateTime occurredAt
 ) {
 
     /**
-     * Constructor canónico del record.
+     * Canonical record constructor.
      * <p>
-     * Aquí se validan invariantes para asegurar que cualquier instancia es consistente.
+     * Validates invariants here to ensure every instance is consistent.
      */
     public WalletTransaction {
         owner = validateOwner(owner);
@@ -59,7 +61,7 @@ public record WalletTransaction(
     }
 
     /**
-     * Factoría para crear una transacción nueva (sin id), dejando que la persistencia asigne el identificador.
+     * Factory for creating a new transaction (without id), letting persistence assign the identifier.
      */
     public static WalletTransaction newEntry(String owner,
                                              MovementType movementType,

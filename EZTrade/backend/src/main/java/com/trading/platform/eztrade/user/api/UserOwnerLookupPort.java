@@ -5,13 +5,13 @@ import org.springframework.modulith.NamedInterface;
 import java.util.Optional;
 
 /**
- * API publica para resolver el identificador canonico de un usuario.
+ * Public API for resolving a user's canonical identifier.
  */
 @NamedInterface
 public interface UserOwnerLookupPort {
 
     /**
-     * Resuelve email o username a un owner canonico para otros modulos.
+     * Resolves an email or username to a canonical owner for other modules.
      */
     Optional<String> findOwner(String identifier);
 }

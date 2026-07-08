@@ -1,31 +1,31 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Calidad - Flujo de estrategia de pruebas backend
+title EZTrade Quality - Backend Testing Strategy Flow
 
 start
-:GitHub Actions o el desarrollador local ejecuta\nmvn -B clean verify;
+:GitHub Actions or local developer runs\nmvn -B clean verify;
 :Compile backend;
-:Ejecuta suite de pruebas JUnit;
+:Run JUnit test suite;
 fork
-  :Pruebas de dominio\nTradeOrder, WalletAccount,\nPosition, modelos Market;
+  :Domain tests\nTradeOrder, WalletAccount,\nPosition, Market models;
 fork again
-  :Pruebas de servicios de aplicacion\nTrading, Wallet, Portfolio,\nMarket, User, Auth, Notifications;
+  :Application service tests\nTrading, Wallet, Portfolio,\nMarket, User, Auth, Notifications;
 fork again
-  :Pruebas de controladores y seguridad\nAuth/User/Market/Wallet/Portfolio,\nseguridad Trading, filtros JWT;
+  :Controller and security tests\nAuth/User/Market/Wallet/Portfolio,\nTrading security, JWT filters;
 fork again
-  :Pruebas de integracion/arquitectura\nMarketCachingIntegrationTest,\nModulithStructureTest;
+  :Integration/architecture tests\nMarketCachingIntegrationTest,\nModulithStructureTest;
 end fork
-if (Todas las pruebas pasan?) then (si)
+if (All tests pass?) then (yes)
   :Verify succeeds;
 else (no)
-  :CI falla y bloquea confianza tecnica;
+  :CI fails and blocks technical confidence;
 endif
 stop
 
 note right
-Evidencia: backend/src/test/java y ../.github/workflows/maven.yml.
-No se han encontrado ficheros de pruebas unitarias/e2e frontend.
+Evidence: backend/src/test/java and ../.github/workflows/maven.yml.
+No frontend unit/e2e test files were found.
 end note
 
 @enduml

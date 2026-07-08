@@ -10,10 +10,10 @@ import java.util.Optional;
 
 @Repository
 /**
- * Adaptador de persistencia para {@link com.trading.platform.eztrade.wallet.domain.WalletAccount}.
+ * Persistence adapter for {@link com.trading.platform.eztrade.wallet.domain.WalletAccount}.
  * <p>
- * Implementa el puerto {@link com.trading.platform.eztrade.wallet.application.ports.out.WalletAccountRepositoryPort}
- * delegando en un repositorio Spring Data JPA.
+ * Implements the {@link com.trading.platform.eztrade.wallet.application.ports.out.WalletAccountRepositoryPort}
+ * port by delegating to a Spring Data JPA repository.
  */
 public class WalletAccountRepositoryAdapter implements WalletAccountRepositoryPort {
 
@@ -35,8 +35,8 @@ public class WalletAccountRepositoryAdapter implements WalletAccountRepositoryPo
 
     @Override
     public WalletAccount save(WalletAccount walletAccount) {
-        // Al ser owner único, tratamos el guardado como un "upsert".
-        // Si ya existe entidad, copiamos su id para que JPA haga update en lugar de insert.
+        // Since owner is unique, treat the save as an "upsert".
+        // If an entity already exists, copy its id so JPA updates instead of inserting.
         Optional<WalletAccountJpaEntity> existing = repository.findByOwner(walletAccount.owner());
         WalletAccountJpaEntity toSave = WalletAccountMapper.toEntity(walletAccount);
         existing.ifPresent(entity -> toSave.setId(entity.getId()));

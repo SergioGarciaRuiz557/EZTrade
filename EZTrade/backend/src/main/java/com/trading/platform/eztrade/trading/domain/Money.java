@@ -3,18 +3,18 @@ package com.trading.platform.eztrade.trading.domain;
 import java.math.BigDecimal;
 
 /**
- * Value object para representar importes monetarios en el dominio.
+ * Value object for representing monetary amounts in the domain.
  * <p>
- * Se utiliza tanto para precio unitario como para monto total.
+ * Used both for unit price and total amount.
  *
- * @param value importe monetario
+ * @param value monetary amount
  */
 public record Money(BigDecimal value) {
 
     /**
-     * Constructor compacto con validacion de dominio.
+     * Compact constructor with domain validation.
      *
-     * @throws TradingDomainException si el importe es nulo o menor/igual a cero
+     * @throws TradingDomainException if the amount is null or less than/equal to zero
      */
     public Money {
         if (value == null || value.compareTo(BigDecimal.ZERO) <= 0) {
@@ -23,10 +23,10 @@ public record Money(BigDecimal value) {
     }
 
     /**
-     * Multiplica el importe por una cantidad para obtener un total.
+     * Multiplies the amount by a quantity to obtain a total.
      *
-     * @param quantity cantidad de activos
-     * @return monto resultante de la multiplicacion
+     * @param quantity asset quantity
+     * @return resulting amount from the multiplication
      */
     public Money multiply(Quantity quantity) {
         return new Money(value.multiply(quantity.value()));

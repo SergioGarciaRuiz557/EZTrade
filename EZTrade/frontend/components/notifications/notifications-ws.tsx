@@ -18,19 +18,19 @@ type NotificationPayload = {
 
 type ToastVariant = "default" | "destructive" | "success" | "warning"
 
-// Valores por defecto para conectar al endpoint STOMP del backend.
+// Default values for connecting to the backend STOMP endpoint.
 const DEFAULT_WS_PATH = "/ws"
 const USER_QUEUE_DESTINATION = "/user/queue/notifications"
 const RECONNECT_DELAY_MS = 5000
 
-// Convierte la URL HTTP del backend en su equivalente WebSocket cuando hace falta.
+// Converts the backend HTTP URL to its WebSocket equivalent when needed.
 function normalizeWsUrl(url: string): string {
   if (url.startsWith("https://")) return `wss://${url.slice("https://".length)}`
   if (url.startsWith("http://")) return `ws://${url.slice("http://".length)}`
   return url
 }
 
-// Resuelve la URL final del WebSocket desde NEXT_PUBLIC_WS_URL o desde la URL de la API.
+// Resolves the final WebSocket URL from NEXT_PUBLIC_WS_URL or from the API URL.
 function getWsUrl(): string {
   const explicit = process.env.NEXT_PUBLIC_WS_URL
   if (explicit) return normalizeWsUrl(explicit)
@@ -40,7 +40,7 @@ function getWsUrl(): string {
   return `${wsBaseUrl}${DEFAULT_WS_PATH}`
 }
 
-// Traduce la severidad/tipo del backend al tono visual del toast.
+// Translates backend severity/type into the toast visual tone.
 function chooseVariant(payload: NotificationPayload): ToastVariant {
   const explicitTone = `${payload.variant ?? payload.severity ?? payload.level ?? payload.status ?? ""}`.toLowerCase()
 
@@ -85,7 +85,7 @@ function chooseVariant(payload: NotificationPayload): ToastVariant {
   return "default"
 }
 
-// Acepta mensajes JSON y tambien cuerpos planos para que el toast no falle ante formatos simples.
+// Accepts JSON messages and plain bodies so the toast does not fail on simple formats.
 function parseMessage(message: IMessage): NotificationPayload {
   try {
     return JSON.parse(message.body) as NotificationPayload
@@ -94,13 +94,13 @@ function parseMessage(message: IMessage): NotificationPayload {
   }
 }
 
-// Mantiene una conexion WebSocket por usuario autenticado y muestra cada mensaje como toast.
+// Maintains one WebSocket connection per authenticated user and shows each message as a toast.
 export function NotificationsWebSocket() {
   const { token } = useAuth()
   const clientRef = useRef<Client | null>(null)
 
   useEffect(() => {
-    // Si no hay token se cierra cualquier conexion anterior para no recibir eventos de otra sesion.
+    // If there is no token, close any previous connection to avoid receiving events from another session.
     if (!token) {
       if (clientRef.current) {
         clientRef.current.deactivate()
@@ -118,7 +118,7 @@ export function NotificationsWebSocket() {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
-        // El backend publica notificaciones privadas en la cola de usuario autenticado.
+        // The backend publishes private notifications to the authenticated user's queue.
         client.subscribe(USER_QUEUE_DESTINATION, (message) => {
           const payload = parseMessage(message)
           toast({

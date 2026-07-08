@@ -6,10 +6,10 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-// Provider de Radix que gestiona accesibilidad y ciclo de vida de los toasts.
+// Radix provider that manages toast accessibility and lifecycle.
 const ToastProvider = ToastPrimitives.Provider
 
-// Zona fija donde se apilan las notificaciones.
+// Fixed area where notifications are stacked.
 const ToastViewport = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Viewport>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Viewport>
@@ -25,7 +25,7 @@ const ToastViewport = React.forwardRef<
 ))
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
-// Variantes visuales para mensajes informativos, errores, acciones correctas y avisos.
+// Visual variants for informational messages, errors, successful actions, and warnings.
 const toastVariants = cva(
   "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
@@ -43,7 +43,7 @@ const toastVariants = cva(
   }
 )
 
-// Toast individual con estilos segun variante.
+// Individual toast with styles based on variant.
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> & VariantProps<typeof toastVariants>
@@ -52,7 +52,7 @@ const Toast = React.forwardRef<
 })
 Toast.displayName = ToastPrimitives.Root.displayName
 
-// Boton de accion opcional que puede acompanhar a un toast.
+// Optional action button that can accompany a toast.
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Action>
@@ -68,7 +68,7 @@ const ToastAction = React.forwardRef<
 ))
 ToastAction.displayName = ToastPrimitives.Action.displayName
 
-// Boton de cierre del toast.
+// Toast close button.
 const ToastClose = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Close>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Close>
@@ -87,7 +87,7 @@ const ToastClose = React.forwardRef<
 ))
 ToastClose.displayName = ToastPrimitives.Close.displayName
 
-// Titulo principal del toast.
+// Main toast title.
 const ToastTitle = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Title>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Title>
@@ -96,7 +96,7 @@ const ToastTitle = React.forwardRef<
 ))
 ToastTitle.displayName = ToastPrimitives.Title.displayName
 
-// Texto descriptivo opcional del toast.
+// Optional descriptive toast text.
 const ToastDescription = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Description>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Description>
@@ -108,11 +108,11 @@ ToastDescription.displayName = ToastPrimitives.Description.displayName
 type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>
 type ToastActionElement = React.ReactElement<typeof ToastAction>
 
-// Configuracion global del sistema de toasts.
+// Global configuration for the toast system.
 const TOAST_LIMIT = 3
 const TOAST_REMOVE_DELAY = 5000
 
-// Modelo interno de toast: mezcla props visuales con contenido y accion opcional.
+// Internal toast model: combines visual props with content and optional action.
 type ToasterToast = ToastProps & {
   id: string
   title?: React.ReactNode
@@ -121,13 +121,13 @@ type ToasterToast = ToastProps & {
 }
 
 let count = 0
-// Genera ids simples y suficientes para identificar toasts en memoria.
+// Generates simple ids that are sufficient to identify in-memory toasts.
 function genId() {
   count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString()
 }
 
-// Acciones del reducer que controla alta, actualizacion, cierre y borrado.
+// Reducer actions controlling creation, update, close, and removal.
 type Action =
   | { type: "ADD_TOAST"; toast: ToasterToast }
   | { type: "UPDATE_TOAST"; toast: Partial<ToasterToast> }
@@ -138,10 +138,10 @@ interface State {
   toasts: ToasterToast[]
 }
 
-// Guarda temporizadores de borrado para no programar dos eliminaciones del mismo toast.
+// Stores removal timers to avoid scheduling two removals for the same toast.
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
-// Marca un toast para eliminarlo despues de la animacion/cierre.
+// Marks a toast for removal after the animation/close.
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) return
 
@@ -153,7 +153,7 @@ const addToRemoveQueue = (toastId: string) => {
   toastTimeouts.set(toastId, timeout)
 }
 
-// Reducer puro que transforma el estado global de toasts.
+// Pure reducer that transforms the global toast state.
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
@@ -180,17 +180,17 @@ const reducer = (state: State, action: Action): State => {
   }
 }
 
-// Estado en memoria compartido por todos los componentes que usen useToast.
+// In-memory state shared by all components that use useToast.
 const listeners: Array<(state: State) => void> = []
 let memoryState: State = { toasts: [] }
 
-// Aplica acciones y notifica a los hooks suscritos.
+// Applies actions and notifies subscribed hooks.
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
   listeners.forEach((listener) => listener(memoryState))
 }
 
-// API imperativa usada por pantallas y servicios para mostrar notificaciones.
+// Imperative API used by screens and services to display notifications.
 function toast({ ...props }: Omit<ToasterToast, "id">) {
   const id = genId()
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id })
@@ -214,7 +214,7 @@ function toast({ ...props }: Omit<ToasterToast, "id">) {
   }
 }
 
-// Hook que suscribe un componente React al estado global de toasts.
+// Hook that subscribes a React component to the global toast state.
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
@@ -229,7 +229,7 @@ function useToast() {
   return { ...state, toast, dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }) }
 }
 
-// Renderizador global colocado una vez en RootLayout.
+// Global renderer placed once in RootLayout.
 function Toaster() {
   const { toasts } = useToast()
 

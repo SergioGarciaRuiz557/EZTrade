@@ -1,21 +1,22 @@
 /**
- * Modulo Notifications.
+ * Notifications module.
  * <p>
- * Este modulo consume eventos de negocio emitidos por otros modulos y los transforma
- * en mensajes de notificacion para distintos canales (email, push, websocket e inbox in-app).
+ * This module consumes business events emitted by other modules and transforms
+ * them into notification messages for different channels (email, push,
+ * websocket, and in-app inbox).
  * <p>
- * Flujo funcional:
+ * Functional flow:
  * <ul>
- *   <li>Recibe eventos de dominio (por ejemplo, orden registrada/ejecutada/cancelada).</li>
- *   <li>Construye un mensaje de notificacion con titulo y cuerpo legibles para el usuario.</li>
- *   <li>Hace fan-out del mismo mensaje a varios canales de entrega.</li>
+ *   <li>Receives domain events (for example, order placed/executed/canceled).</li>
+ *   <li>Builds a notification message with a user-readable title and body.</li>
+ *   <li>Fans out the same message to several delivery channels.</li>
  * </ul>
  * <p>
- * Limites:
+ * Boundaries:
  * <ul>
- *   <li>No contiene logica de trading ni de portfolio.</li>
- *   <li>No decide reglas de negocio; solo formatea y enruta notificaciones.</li>
- *   <li>Depende unicamente de interfaces de eventos expuestas por otros modulos.</li>
+ *   <li>It does not contain trading or portfolio logic.</li>
+ *   <li>It does not decide business rules; it only formats and routes notifications.</li>
+ *   <li>It depends only on event interfaces exposed by other modules.</li>
  * </ul>
  */
 @ApplicationModule(

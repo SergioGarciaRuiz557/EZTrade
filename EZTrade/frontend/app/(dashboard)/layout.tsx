@@ -9,14 +9,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { token, isLoading } = useAuth()
   const router = useRouter()
 
-  // Cualquier ruta del grupo dashboard requiere una sesion valida.
+  // Every route in the dashboard group requires a valid session.
   useEffect(() => {
     if (!isLoading && !token) {
       router.push("/login")
     }
   }, [token, isLoading, router])
 
-  // Se espera a que AuthProvider termine de restaurar localStorage antes de decidir.
+  // Wait for AuthProvider to finish restoring localStorage before deciding.
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     )
   }
 
-  // El efecto redirige a login; devolver null evita mostrar contenido protegido.
+  // The effect redirects to login; returning null avoids showing protected content.
   if (!token) {
     return null
   }

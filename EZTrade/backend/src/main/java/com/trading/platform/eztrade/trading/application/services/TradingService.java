@@ -31,23 +31,23 @@ import java.util.Locale;
 import java.util.Objects;
 
 /**
- * Servicio de aplicacion del modulo trading.
+ * Application service for the trading module.
  * <p>
- * Implementa los casos de uso principales del contexto:
- * alta, ejecucion, cancelacion y consulta de ordenes.
+ * Implements the context's main use cases: creation, execution, cancellation,
+ * and order queries.
  * <p>
- * Tambien concentra el nuevo flujo de marketplace:
+ * Also centralizes the marketplace flow:
  * <ul>
- *   <li>compra directa al mercado usando el precio actual de market/AlphaVantage,</li>
- *   <li>publicacion de ofertas SELL de usuarios,</li>
- *   <li>compra de ofertas SELL por otros usuarios.</li>
+ *   <li>direct market purchase using the current market/Alpha Vantage price,</li>
+ *   <li>publication of user SELL offers,</li>
+ *   <li>purchase of SELL offers by other users.</li>
  * </ul>
  * <p>
- * Rol arquitectonico:
+ * Architectural role:
  * <ul>
- *   <li>Orquesta el dominio.</li>
- *   <li>Persistencia via {@link TradeOrderRepositoryPort}.</li>
- *   <li>Comunicacion inter-modulo via {@link DomainEventPublisherPort}.</li>
+ *   <li>Orchestrates the domain.</li>
+ *   <li>Persists through {@link TradeOrderRepositoryPort}.</li>
+ *   <li>Performs inter-module communication through {@link DomainEventPublisherPort}.</li>
  * </ul>
  */
 @Service
@@ -66,11 +66,11 @@ public class TradingService implements PlaceOrderUseCase,
     private final MarketPriceLookupPort marketPriceLookupPort;
 
     /**
-     * Crea el servicio de aplicacion con sus puertos de salida.
+     * Creates the application service with its output ports.
      *
-     * @param tradeOrderRepositoryPort puerto de repositorio de ordenes
-     * @param domainEventPublisherPort puerto para publicacion de eventos
-     * @param marketPriceLookupPort API publica de market para consultar precios actuales
+     * @param tradeOrderRepositoryPort order repository port
+     * @param domainEventPublisherPort event publishing port
+     * @param marketPriceLookupPort public market API for querying current prices
      */
     public TradingService(TradeOrderRepositoryPort tradeOrderRepositoryPort,
                           DomainEventPublisherPort domainEventPublisherPort,
@@ -81,16 +81,15 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Registra una nueva orden y publica {@link OrderPlacedEvent}.
+     * Registers a new order and publishes {@link OrderPlacedEvent}.
      *
-     * @param command datos de creacion de la orden
-     * @return orden creada y persistida
+     * @param command order creation data
+     * @return created and persisted order
      */
     @Override
     public TradeOrder place(PlaceOrderCommand command) {
-        // Las SELL representan ofertas publicadas por usuarios. Antes de
-        // persistirlas se validan las reglas de marketplace: precio maximo y
-        // acciones disponibles.
+        // SELL orders represent offers published by users. Before persisting
+        // them, marketplace rules are validated: maximum price and available shares.
         if (command.side() == OrderSide.SELL) {
             validateSellOffer(command.owner(), command.symbol(), command.quantity(), command.price());
         }
@@ -126,11 +125,11 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Compra directa al mercado al precio actual.
+     * Direct market purchase at the current price.
      * <p>
-     * Crea una orden BUY con el precio consultado a market y la ejecuta en el
-     * mismo flujo para que wallet reserve/liquide fondos y portfolio abra o
-     * incremente la posicion mediante eventos.
+     * Creates a BUY order with the price queried from market and executes it in
+     * the same flow so wallet reserves/settles funds and portfolio opens or
+     * increases the position through events.
      */
     @Override
     public TradeOrder buy(BuyFromMarketCommand command) {
@@ -149,10 +148,10 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Publica una oferta SELL para otros usuarios.
+     * Publishes a SELL offer for other users.
      * <p>
-     * Reutiliza {@link #place(PlaceOrderCommand)} para mantener una unica ruta
-     * de creacion de ordenes y aplicar las mismas validaciones de dominio.
+     * Reuses {@link #place(PlaceOrderCommand)} to keep a single order-creation
+     * path and apply the same domain validations.
      */
     @Override
     public TradeOrder placeSellOffer(PlaceSellOfferCommand command) {
@@ -166,10 +165,10 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Devuelve ofertas SELL pendientes disponibles para el comprador.
+     * Returns pending SELL offers available to the buyer.
      * <p>
-     * Si se filtra por simbolo, se comprueba de nuevo el precio actual para no
-     * mostrar ofertas que hayan quedado por encima del maximo permitido.
+     * If filtered by symbol, the current price is checked again so offers that
+     * have moved above the allowed maximum are not shown.
      */
     @Override
     @Transactional(readOnly = true)
@@ -189,12 +188,12 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Compra una oferta de venta de otro usuario.
+     * Buys another user's sell offer.
      * <p>
-     * El metodo bloquea la oferta con {@code findByIdForUpdate} para reducir el
-     * riesgo de que dos compradores intenten ejecutar la misma oferta a la vez.
-     * Despues crea una BUY para el comprador y ejecuta tanto la BUY como la SELL
-     * original para que wallet y portfolio apliquen sus movimientos por eventos.
+     * The method locks the offer with {@code findByIdForUpdate} to reduce the
+     * risk of two buyers trying to execute the same offer at once. It then
+     * creates a BUY for the buyer and executes both the BUY and the original
+     * SELL so wallet and portfolio apply their movements through events.
      */
     @Override
     public MarketplaceTradeResult buyOffer(BuySellOfferCommand command) {
@@ -225,11 +224,11 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Ejecuta una orden existente y publica {@link OrderExecutionRequestEvent}.
+     * Executes an existing order and publishes {@link OrderExecutionRequestEvent}.
      *
-     * @param orderId identificador de la orden
-     * @return orden ejecutada
-     * @throws TradingDomainException si la orden no existe o no puede ejecutarse
+     * @param orderId order identifier
+     * @return executed order
+     * @throws TradingDomainException if the order does not exist or cannot be executed
      */
     @Override
     public TradeOrder execute(OrderId orderId) {
@@ -246,9 +245,9 @@ public class TradingService implements PlaceOrderUseCase,
                 executed.price().value(),
                 LocalDateTime.now());
         try {
-            // La ejecucion real del dinero no ocurre en trading. Wallet escucha
-            // este evento, valida fondos y, si todo va bien, publica despues el
-            // OrderExecutedEvent que consume portfolio.
+            // The actual money execution does not happen in trading. Wallet
+            // listens to this event, validates funds, and, if everything is OK,
+            // later publishes the OrderExecutedEvent consumed by portfolio.
             domainEventPublisherPort.publish(event);
         } catch (RuntimeException ex) {
             if (isWalletInsufficientFunds(ex)) {
@@ -262,12 +261,12 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Cancela una orden existente y publica {@link OrderCancelledEvent}.
+     * Cancels an existing order and publishes {@link OrderCancelledEvent}.
      *
-     * @param orderId identificador de la orden
-     * @param requestedBy usuario que solicita la cancelacion
-     * @return orden cancelada
-     * @throws TradingDomainException si la orden no existe o no puede cancelarse
+     * @param orderId order identifier
+     * @param requestedBy user requesting cancellation
+     * @return cancelled order
+     * @throws TradingDomainException if the order does not exist or cannot be cancelled
      */
     @Override
     public TradeOrder cancel(OrderId orderId, String requestedBy) {
@@ -287,11 +286,11 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Consulta una orden por id.
+     * Queries an order by id.
      *
-     * @param orderId identificador de la orden
-     * @return orden encontrada
-     * @throws TradingDomainException si no existe
+     * @param orderId order identifier
+     * @return found order
+     * @throws TradingDomainException if it does not exist
      */
     @Override
     @Transactional(readOnly = true)
@@ -301,10 +300,10 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Consulta todas las ordenes de un propietario.
+     * Queries all orders for an owner.
      *
-     * @param owner propietario de las ordenes
-     * @return lista de ordenes
+     * @param owner order owner
+     * @return order list
      */
     @Override
     @Transactional(readOnly = true)
@@ -313,10 +312,10 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Valida una oferta SELL antes de guardarla.
+     * Validates a SELL offer before saving it.
      * <p>
-     * Esta regla evita publicar acciones inexistentes y evita precios superiores
-     * al precio actual de AlphaVantage.
+     * This rule prevents publishing nonexistent shares and prices above the
+     * current Alpha Vantage price.
      */
     private void validateSellOffer(String owner, String symbol, BigDecimal quantity, BigDecimal price) {
         String validatedOwner = validateOwner(owner);
@@ -329,7 +328,7 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Comprueba que el precio ofertado no supere el precio actual de mercado.
+     * Checks that the offered price does not exceed the current market price.
      */
     private void validateCurrentPriceLimit(String symbol, BigDecimal requestedPrice) {
         BigDecimal currentPrice = currentMarketPrice(symbol);
@@ -342,9 +341,8 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Comprueba que el vendedor tenga acciones libres suficientes para una nueva
-     * oferta. Las acciones libres son las compradas y no vendidas menos las que
-     * ya estan comprometidas en otras ofertas pendientes.
+     * Checks that the seller has enough free shares for a new offer. Free shares
+     * are bought and unsold shares minus those already committed in other pending offers.
      */
     private void validateAvailablePositionForNewOffer(String owner, String symbol, BigDecimal quantityToOffer) {
         BigDecimal ownedQuantity = ownedQuantity(owner, symbol);
@@ -360,9 +358,9 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Revalida que el vendedor siga teniendo acciones suficientes justo antes de
-     * ejecutar una oferta. Es una defensa adicional por si su posicion cambio
-     * desde que publico la oferta.
+     * Revalidates that the seller still has enough shares right before executing
+     * an offer. This is an additional defense in case their position changed
+     * since publishing the offer.
      */
     private void validateSellerCanCoverPendingOffers(String owner, String symbol) {
         BigDecimal ownedQuantity = ownedQuantity(owner, symbol);
@@ -376,12 +374,12 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Calcula la cantidad neta de acciones del usuario usando el historico de
-     * ordenes ejecutadas del propio modulo trading.
+     * Calculates the user's net share quantity using the executed-order history
+     * from the trading module itself.
      * <p>
-     * Se hace asi para evitar una dependencia directa de trading hacia portfolio:
-     * portfolio ya depende de los eventos de trading, y consultar portfolio desde
-     * trading crearia un ciclo de modulos en Spring Modulith.
+     * This avoids a direct dependency from trading to portfolio: portfolio already
+     * depends on trading events, and querying portfolio from trading would create
+     * a module cycle in Spring Modulith.
      */
     private BigDecimal ownedQuantity(String owner, String symbol) {
         BigDecimal owned = tradeOrderRepositoryPort.findExecutedOrdersByOwnerAndSymbol(owner, symbol)
@@ -398,8 +396,8 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Suma las acciones que el vendedor ya tiene reservadas en ofertas SELL
-     * pendientes para no permitir publicar mas acciones de las disponibles.
+     * Sums the shares the seller already has reserved in pending SELL offers so
+     * they cannot publish more shares than are available.
      */
     private BigDecimal pendingSellOfferQuantity(String owner, String symbol) {
         return tradeOrderRepositoryPort.findPendingSellOffersByOwnerAndSymbol(owner, symbol)
@@ -409,7 +407,7 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Valida que la orden recibida sea una oferta comprable por el usuario.
+     * Validates that the received order is an offer the user can buy.
      */
     private void validateOfferCanBeBought(TradeOrder sellOffer, String buyer) {
         if (sellOffer.side() != OrderSide.SELL) {
@@ -424,8 +422,8 @@ public class TradingService implements PlaceOrderUseCase,
     }
 
     /**
-     * Obtiene el precio actual desde market y traduce cualquier fallo externo a
-     * una excepcion de dominio de trading con mensaje comprensible para la API.
+     * Obtains the current price from market and translates any external failure
+     * into a trading domain exception with an API-friendly message.
      */
     private BigDecimal currentMarketPrice(String symbol) {
         try {

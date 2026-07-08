@@ -24,11 +24,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Controlador REST para el marketplace de acciones entre usuarios.
+ * REST controller for the user-to-user stock marketplace.
  * <p>
- * Se separa de {@link TradingController} porque estos endpoints no son solo el
- * ciclo de vida generico de ordenes: modelan flujos especificos de producto,
- * como comprar al mercado, publicar ofertas y comprar ofertas de otros usuarios.
+ * It is separated from {@link TradingController} because these endpoints are
+ * not just part of the generic order lifecycle: they model product-specific
+ * flows such as buying from the market, publishing offers, and buying offers
+ * from other users.
  */
 @RestController
 @RequestMapping("/api/v1/trading")
@@ -50,10 +51,10 @@ public class TradingMarketplaceController {
     }
 
     /**
-     * Compra acciones directamente al mercado.
+     * Buys shares directly from the market.
      * <p>
-     * El usuario solo envia simbolo y cantidad. El precio se obtiene dentro del
-     * caso de uso desde AlphaVantage y la orden se crea como BUY ejecutada.
+     * The user only sends symbol and quantity. The price is obtained inside the
+     * use case from AlphaVantage, and the order is created as an executed BUY.
      */
     @PostMapping("/market/buy")
     public ResponseEntity<TradeOrderResponse> buyFromMarket(@Valid @RequestBody BuyFromMarketRequest request,
@@ -67,10 +68,10 @@ public class TradingMarketplaceController {
     }
 
     /**
-     * Publica una oferta de venta para que otros usuarios puedan comprarla.
+     * Publishes a sell offer so other users can buy it.
      * <p>
-     * El caso de uso valida dos reglas principales: el vendedor debe tener
-     * acciones suficientes y el precio no puede superar el precio actual.
+     * The use case validates two main rules: the seller must have enough
+     * shares, and the price cannot exceed the current market price.
      */
     @PostMapping("/offers")
     public ResponseEntity<TradeOrderResponse> placeSellOffer(@Valid @RequestBody PlaceSellOfferRequest request,
@@ -85,10 +86,10 @@ public class TradingMarketplaceController {
     }
 
     /**
-     * Lista ofertas de venta pendientes visibles para el usuario autenticado.
+     * Lists pending sell offers visible to the authenticated user.
      * <p>
-     * Nunca devuelve ofertas del propio usuario. Si se envia simbolo, tambien
-     * filtra ofertas cuyo precio ya haya quedado por encima del mercado actual.
+     * It never returns the user's own offers. When a symbol is provided, it also
+     * filters out offers whose price is already above the current market price.
      */
     @GetMapping("/offers")
     public ResponseEntity<List<TradeOrderResponse>> getAvailableSellOffers(@RequestParam(required = false) String symbol,
@@ -102,11 +103,11 @@ public class TradingMarketplaceController {
     }
 
     /**
-     * Compra una oferta SELL publicada por otro usuario.
+     * Buys a SELL offer published by another user.
      * <p>
-     * Internamente se ejecutan dos ordenes: una BUY para el comprador y la SELL
-     * original para el vendedor. Los efectos en wallet y portfolio siguen
-     * ocurriendo por los eventos de ejecucion ya existentes.
+     * Two orders are executed internally: a BUY for the buyer and the original
+     * SELL for the seller. Wallet and portfolio side effects still happen
+     * through the existing execution events.
      */
     @PostMapping("/offers/{offerId}/buy")
     public ResponseEntity<MarketplaceTradeResponse> buyOffer(@PathVariable Long offerId,

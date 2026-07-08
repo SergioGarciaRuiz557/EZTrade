@@ -1,13 +1,15 @@
 package com.trading.platform.eztrade.wallet.domain;
 
 /**
- * Excepción de dominio para el módulo Wallet.
+ * Domain exception for the Wallet module.
  * <p>
- * Se lanza cuando se viola una regla de negocio o un invariante del modelo (p. ej. intentar retirar más saldo del
- * disponible, reservar fondos sin balance suficiente, importes nulos/negativos, owners vacíos, etc.).
+ * Thrown when a business rule or model invariant is violated (for example,
+ * trying to withdraw more than the available balance, reserving funds without
+ * enough balance, null/negative amounts, blank owners, etc.).
  * <p>
- * Es una {@link RuntimeException} porque representa un error de uso del dominio dentro del mismo proceso y se espera
- * que la capa de aplicación lo traduzca si es necesario (p. ej. a un error de API).
+ * It is a {@link RuntimeException} because it represents a domain usage error
+ * within the same process and is expected to be translated by the application
+ * layer when necessary (for example, to an API error).
  */
 public class WalletDomainException extends RuntimeException {
 

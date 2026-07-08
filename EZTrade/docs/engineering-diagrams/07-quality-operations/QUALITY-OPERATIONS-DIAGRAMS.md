@@ -1,49 +1,49 @@
-# Diagramas de calidad y operacion
+# Quality and Operations Diagrams
 
-Esta seccion resume pruebas, verificacion arquitectonica, alcance de calidad estatica y estrategia de publicaciones inferible. Se ha construido desde `backend/src/test/java`, `backend/pom.xml`, `frontend/package.json`, `frontend/tsconfig.json` y `../.github/workflows/maven.yml`.
+This section summarizes tests, architectural verification, static-quality scope, and inferable release strategy. It was built from `backend/src/test/java`, `backend/pom.xml`, `frontend/package.json`, `frontend/tsconfig.json`, and `../.github/workflows/maven.yml`.
 
-## Flujo de estrategia de pruebas
+## Testing Strategy Flow
 
-[![Flujo de estrategia de pruebas](./rendered/testing-strategy-flow.png)](./rendered/testing-strategy-flow.svg)
+[![Testing strategy flow](./rendered/testing-strategy-flow.png)](./rendered/testing-strategy-flow.svg)
 
-**Proposito.** Mostrar que tipos de pruebas ejecuta el backend.
+**Purpose.** Show which types of tests the backend runs.
 
-**Como leerlo.** El flujo Maven dispara pruebas de dominio, servicios, controladores, seguridad, cache e integracion arquitectonica.
+**How to read it.** The Maven flow triggers domain, service, controller, security, cache, and architectural integration tests.
 
-**Valor.** Aporta una vista de aseguramiento de calidad por capas, util para justificar confianza tecnica.
+**Value.** Provides a layered quality-assurance view, useful for justifying technical confidence.
 
-**Limitacion.** No hay pruebas frontend ni e2e detectados.
+**Limitation.** No frontend or e2e tests were detected.
 
-## Calidad estatica y Modulith
+## Static Quality and Modulith
 
-[![Calidad estatica y Modulith](./rendered/static-quality-and-modulith.png)](./rendered/static-quality-and-modulith.svg)
+[![Static quality and Modulith](./rendered/static-quality-and-modulith.png)](./rendered/static-quality-and-modulith.svg)
 
-**Proposito.** Mostrar controles de calidad estructural y huecos detectados.
+**Purpose.** Show structural quality controls and detected gaps.
 
-**Como leerlo.** Spring Modulith verifica dependencias de modulo; TypeScript y `next lint` existen en frontend, pero el flujo de trabajo no los ejecuta.
+**How to read it.** Spring Modulith verifies module dependencies; TypeScript and `next lint` exist in the frontend, but the workflow does not run them.
 
-**Valor.** Diferencia calidad arquitectonica real de comprobaciones declaradas pero no integrados.
+**Value.** Separates real architectural quality from checks that are declared but not integrated.
 
-## Evidencia de ramas y publicaciones
+## Branching and Release Evidence
 
-[![Evidencia de ramas y publicaciones](./rendered/release-branching-evidence.png)](./rendered/release-branching-evidence.svg)
+[![Branching and release evidence](./rendered/release-branching-evidence.png)](./rendered/release-branching-evidence.svg)
 
-**Proposito.** Documentar la estrategia de ramas y publicacion que puede inferirse.
+**Purpose.** Document the branching and publication strategy that can be inferred.
 
-**Como leerlo.** Solo `main` aparece como rama objetivo de `push` y `pull_request`; no hay jobs de despliegue ni publicacion por tags.
+**How to read it.** Only `main` appears as the target branch for `push` and `pull_request`; there are no deployment jobs or tag-based publication.
 
-**Valor.** Evita inventar GitFlow, staging o produccion cuando el repositorio no los declara.
+**Value.** Avoids inventing GitFlow, staging, or production when the repository does not declare them.
 
-## Dependencias externas e integraciones
+## External Dependencies and Integrations
 
-[![Dependencias externas e integraciones](./rendered/external-dependencies-integrations.png)](./rendered/external-dependencies-integrations.svg)
+[![External dependencies and integrations](./rendered/external-dependencies-integrations.png)](./rendered/external-dependencies-integrations.svg)
 
-**Proposito.** Resumir dependencias externas relevantes de backend, frontend y CI.
+**Purpose.** Summarize relevant backend, frontend, and CI external dependencies.
 
-**Como leerlo.** Backend integra Spring, JPA/MySQL, JWT, WebSocket, Caffeine y Alpha Vantage. Frontend integra Next/React, SWR, STOMP, Radix/lucide, Recharts y Tailwind.
+**How to read it.** Backend integrates Spring, JPA/MySQL, JWT, WebSocket, Caffeine, and Alpha Vantage. Frontend integrates Next/React, SWR, STOMP, Radix/lucide, Recharts, and Tailwind.
 
-**Valor.** Sirve como mapa de riesgo y mantenimiento: cada dependencia importante queda conectada con su responsabilidad.
+**Value.** Serves as a risk and maintenance map: each important dependency is connected with its responsibility.
 
 ## Conclusion
 
-La calidad backend esta bastante trabajada, con pruebas por capas y verificacion Modulith. La operacion y calidad frontend/DevOps tienen oportunidades claras: ejecutar lint/compilacion frontend en CI, incorporar pruebas de UI/e2e y formalizar publicaciones o despliegues cuando existan entornos reales.
+Backend quality is fairly mature, with layered tests and Modulith verification. Frontend/DevOps quality and operations have clear opportunities: run frontend lint/build in CI, add UI/e2e tests, and formalize releases or deployments when real environments exist.

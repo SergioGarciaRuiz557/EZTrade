@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 /**
- * Adaptador que expone una busqueda minima de usuarios a otros modulos.
+ * Adapter that exposes a minimal user lookup to other modules.
  */
 @Component
 class UserOwnerLookupAdapter implements UserOwnerLookupPort {

@@ -14,9 +14,9 @@ import java.util.Locale;
 import java.util.Optional;
 
 /**
- * Adaptador de salida de persistencia para el agregado {@link TradeOrder}.
+ * Persistence output adapter for the {@link TradeOrder} aggregate.
  * <p>
- * Implementa el puerto {@link TradeOrderRepositoryPort} delegando en Spring Data JPA.
+ * Implements {@link TradeOrderRepositoryPort} by delegating to Spring Data JPA.
  */
 @Repository
 public class TradeOrderRepositoryAdapter implements TradeOrderRepositoryPort {
@@ -24,19 +24,19 @@ public class TradeOrderRepositoryAdapter implements TradeOrderRepositoryPort {
     private final SpringDataTradeOrderRepository repository;
 
     /**
-     * Constructor con repositorio JPA.
+     * Constructor with the JPA repository.
      *
-     * @param repository repositorio de infraestructura
+     * @param repository infrastructure repository
      */
     public TradeOrderRepositoryAdapter(SpringDataTradeOrderRepository repository) {
         this.repository = repository;
     }
 
     /**
-     * Persiste una orden de dominio.
+     * Persists a domain order.
      *
-     * @param order agregado a persistir
-     * @return agregado persistido
+     * @param order aggregate to persist
+     * @return persisted aggregate
      */
     @Override
     public TradeOrder save(TradeOrder order) {
@@ -45,10 +45,10 @@ public class TradeOrderRepositoryAdapter implements TradeOrderRepositoryPort {
     }
 
     /**
-     * Busca una orden por id.
+     * Finds an order by id.
      *
-     * @param orderId identificador de la orden
-     * @return optional con la orden si existe
+     * @param orderId order identifier
+     * @return optional containing the order when it exists
      */
     @Override
     public Optional<TradeOrder> findById(OrderId orderId) {
@@ -57,16 +57,16 @@ public class TradeOrderRepositoryAdapter implements TradeOrderRepositoryPort {
 
     @Override
     public Optional<TradeOrder> findByIdForUpdate(OrderId orderId) {
-        // Delegamos en una consulta con bloqueo pesimista para proteger la
-        // compra de ofertas frente a ejecuciones concurrentes.
+        // Delegate to a pessimistic-locking query to protect offer purchases
+        // from concurrent executions.
         return repository.findByIdForUpdate(orderId.value()).map(TradeOrderMapper::toDomain);
     }
 
     /**
-     * Busca todas las ordenes de un propietario.
+     * Finds all orders owned by a given user.
      *
-     * @param owner propietario de las ordenes
-     * @return lista de ordenes
+     * @param owner order owner
+     * @return order list
      */
     @Override
     public List<TradeOrder> findByOwner(String owner) {
@@ -75,8 +75,8 @@ public class TradeOrderRepositoryAdapter implements TradeOrderRepositoryPort {
 
     @Override
     public List<TradeOrder> findExecutedOrdersByOwnerAndSymbol(String owner, String symbol) {
-        // Normalizamos el simbolo aqui porque los metodos derivados de Spring
-        // Data comparan por igualdad exacta contra lo guardado en la base.
+        // Normalize the symbol here because Spring Data derived methods compare
+        // by exact equality against the stored database value.
         return repository.findByStatusAndOwnerAndSymbol(
                         OrderStatus.EXECUTED,
                         owner,
@@ -91,13 +91,13 @@ public class TradeOrderRepositoryAdapter implements TradeOrderRepositoryPort {
     public List<TradeOrder> findPendingSellOffers(String symbol, String excludedOwner) {
         List<TradeOrderJpaEntity> offers;
         if (symbol == null || symbol.isBlank()) {
-            // Sin simbolo se devuelven todas las ofertas pendientes de otros
-            // usuarios. El servicio de aplicacion decide si necesita filtros
-            // adicionales de negocio.
+            // Without a symbol, all pending offers from other users are
+            // returned. The application service decides whether additional
+            // business filters are needed.
             offers = repository.findBySideAndStatusAndOwnerNot(OrderSide.SELL, OrderStatus.PENDING, excludedOwner);
         } else {
-            // Con simbolo se reduce el resultado en base de datos para que el
-            // marketplace no traiga ofertas innecesarias.
+            // With a symbol, the result is reduced in the database so the
+            // marketplace does not fetch unnecessary offers.
             offers = repository.findBySideAndStatusAndSymbolAndOwnerNot(
                     OrderSide.SELL,
                     OrderStatus.PENDING,
@@ -110,8 +110,8 @@ public class TradeOrderRepositoryAdapter implements TradeOrderRepositoryPort {
 
     @Override
     public List<TradeOrder> findPendingSellOffersByOwnerAndSymbol(String owner, String symbol) {
-        // Consulta de soporte para calcular acciones ya comprometidas por un
-        // vendedor en ofertas SELL pendientes.
+        // Supporting query to calculate shares already committed by a seller in
+        // pending SELL offers.
         return repository.findBySideAndStatusAndOwnerAndSymbol(
                         OrderSide.SELL,
                         OrderStatus.PENDING,

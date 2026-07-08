@@ -4,10 +4,10 @@ import com.trading.platform.eztrade.portfolio.adapter.out.persistence.jpa.Positi
 import com.trading.platform.eztrade.portfolio.domain.Position;
 
 /**
- * Mapper interno entre el agregado de dominio {@link Position} y su entidad JPA.
+ * Internal mapper between the {@link Position} domain aggregate and its JPA entity.
  * <p>
- * Mantenerlo separado evita que el dominio tenga anotaciones de persistencia o
- * constructores publicos pensados solo para JPA.
+ * Keeping it separate prevents the domain from having persistence annotations
+ * or public constructors intended only for JPA.
  */
 final class PositionMapper {
 
@@ -15,8 +15,8 @@ final class PositionMapper {
     }
 
     static Position toDomain(PositionJpaEntity entity) {
-        // Rehidrata el agregado pasando por la factoria del dominio para que se
-        // mantengan sus validaciones basicas.
+        // Rehydrate the aggregate through the domain factory so its basic
+        // validations are preserved.
         return Position.rehydrate(
                 entity.getOwner(),
                 entity.getSymbol(),

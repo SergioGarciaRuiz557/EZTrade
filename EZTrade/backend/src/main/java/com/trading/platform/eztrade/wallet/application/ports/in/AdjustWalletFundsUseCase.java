@@ -3,29 +3,30 @@ package com.trading.platform.eztrade.wallet.application.ports.in;
 import java.math.BigDecimal;
 
 /**
- * Puerto de entrada para ajustes manuales de fondos del wallet.
+ * Input port for manual wallet fund adjustments.
  * <p>
- * Se usa para operaciones administrativas o acciones explícitas de usuario (depósito/retiro), así como para cargos de
- * comisiones. Cada operación debe venir identificada con un {@code referenceId} para evitar duplicados en reintentos.
+ * Used for administrative operations or explicit user actions (deposit/withdrawal),
+ * as well as fee charges. Each operation must be identified with a
+ * {@code referenceId} to prevent duplicates on retries.
  */
 public interface AdjustWalletFundsUseCase {
 
-    /** Ingresa saldo disponible. */
+    /** Deposits available balance. */
     void deposit(AdjustCommand command);
 
-    /** Retira saldo disponible. */
+    /** Withdraws available balance. */
     void withdraw(AdjustCommand command);
 
-    /** Carga una comisión (actualmente se modela como retiro del disponible). */
+    /** Charges a fee (currently modeled as a withdrawal from available balance). */
     void chargeFee(AdjustCommand command);
 
     /**
-     * Comando de ajuste.
+     * Adjustment command.
      *
-     * @param owner propietario del wallet.
-     * @param amount importe (debe ser &gt; 0).
-     * @param referenceId identificador idempotente de la operación (p. ej. id externo o uuid).
-     * @param description descripción opcional para auditoría.
+     * @param owner wallet owner
+     * @param amount amount (must be &gt; 0)
+     * @param referenceId idempotent operation identifier (for example, external id or uuid)
+     * @param description optional description for auditing
      */
     record AdjustCommand(String owner, BigDecimal amount, String referenceId, String description) {
     }

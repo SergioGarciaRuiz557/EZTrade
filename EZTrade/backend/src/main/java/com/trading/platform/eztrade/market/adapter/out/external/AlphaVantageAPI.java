@@ -18,53 +18,53 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Adaptador que integra la aplicación con la API pública de Alpha Vantage.
+ * Adapter that integrates the application with the public Alpha Vantage API.
  * <p>
- * Esta clase es un componente de infraestructura que se encarga de:
+ * This infrastructure component is responsible for:
  * <ul>
- *     <li>Obtener el precio actual de un instrumento financiero (acción, ETF, etc.).</li>
- *     <li>Buscar instrumentos por texto (por ejemplo, "IBM", "Apple").</li>
- *     <li>Obtener velas diarias (serie histórica OHLCV) de un símbolo.</li>
+ *     <li>Obtaining the current price of a financial instrument (stock, ETF, etc.).</li>
+ *     <li>Searching instruments by text (for example, "IBM", "Apple").</li>
+ *     <li>Obtaining daily candles (historical OHLCV series) for a symbol.</li>
  * </ul>
  * <p>
- * Implementa los puertos de la capa de aplicación/dominio y traduce esas operaciones
- * en llamadas HTTP contra la API de Alpha Vantage.
+ * It implements the application/domain layer ports and translates those
+ * operations into HTTP calls against the Alpha Vantage API.
  */
 @Component("marketDataProvider")
 public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstrumentProviderPort, GetDailyCandlesProviderPort, GetOverviewProviderPort {
 
     /**
-     * Clave de la API de Alpha Vantage. Debe configurarse en {@code application.properties}
-     * con la propiedad {@code alphaVantage.api.key}.
+     * Alpha Vantage API key. Must be configured in {@code application.properties}
+     * with the {@code alphaVantage.api.key} property.
      */
     @Value("${alphaVantage.api.key}")
     private String apiKey;
 
     /**
-     * URL base de la API de Alpha Vantage, normalmente {@code https://www.alphavantage.co/query}.
-     * Se configura mediante la propiedad {@code alphaVantage.api.base-url}.
+     * Base URL of the Alpha Vantage API, usually {@code https://www.alphavantage.co/query}.
+     * Configured through the {@code alphaVantage.api.base-url} property.
      */
     @Value("${alphaVantage.api.base-url}")
     private String baseUrl;
 
     /**
-     * Tiempo máximo (en milisegundos) que se esperará para conectar y leer respuestas HTTP.
-     * Se configura con {@code alphaVantage.api.timeout}. Si no se define, se usan 5000 ms por defecto.
+     * Maximum time (in milliseconds) to wait for HTTP connection and read operations.
+     * Configured with {@code alphaVantage.api.timeout}. Defaults to 5000 ms when not defined.
      */
     @Value("${alphaVantage.api.timeout:5000}")
     private int timeout;
 
     /**
-     * Tiempo de espera mínimo entre peticiones a la API (en milisegundos).
-     * Esto ayuda a respetar los límites de uso (rate limits) de la versión gratuita de Alpha Vantage.
+     * Minimum waiting time between API requests (in milliseconds).
+     * This helps respect the usage limits (rate limits) of the free Alpha Vantage tier.
      */
     @Value("${alphaVantage.api.min-interval-ms:1100}")
     private long minIntervalMs;
 
     /**
-     * Realiza una pequeña pausa en el hilo actual para espaciar las peticiones HTTP.
+     * Performs a short pause in the current thread to space out HTTP requests.
      * <p>
-     * Si el hilo es interrumpido mientras duerme, se restaura el estado de interrupción.
+     * If the thread is interrupted while sleeping, the interrupted status is restored.
      */
     private void throttle() {
         try {
@@ -93,7 +93,7 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
     }
 
     /**
-     * Nombre del campo raíz que contiene la cotización en la respuesta del endpoint GLOBAL_QUOTE.
+     * Root field name that contains the quote in the GLOBAL_QUOTE endpoint response.
      */
     private static final String GLOBAL_QUOTE_FIELD = "Global Quote";
 
@@ -101,29 +101,29 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
 
 
     /**
-     * Obtiene el precio de mercado actual de un símbolo bursátil utilizando el endpoint
-     * {@code GLOBAL_QUOTE} de Alpha Vantage.
+     * Obtains the current market price of a stock symbol using Alpha Vantage's
+     * {@code GLOBAL_QUOTE} endpoint.
      *
-     * @param symbol símbolo del instrumento (por ejemplo, IBM, AAPL...).
-     * @return una instancia de {@link MarketPrice} con el precio actual y la marca de tiempo.
-     * @throws ExternalApiException si se produce algún error de comunicación con la API
-     *                              o si la respuesta no contiene los datos esperados.
+     * @param symbol instrument symbol (for example, IBM, AAPL...)
+     * @return {@link MarketPrice} instance with the current price and timestamp
+     * @throws ExternalApiException if an API communication error occurs or if
+     *                              the response does not contain the expected data
      */
     @Override
     public MarketPrice getMarketPrice(Symbol symbol) {
-        // Limitamos la frecuencia de peticiones para no sobrepasar el rate limit.
+        // Limit request frequency to avoid exceeding the rate limit.
         throttle();
 
-        // Construimos la URL para el endpoint GLOBAL_QUOTE con el símbolo y la API key.
+        // Build the URL for the GLOBAL_QUOTE endpoint with the symbol and API key.
         System.out.println("Getting market price for " + symbol);
         String url = String.format("%s?function=GLOBAL_QUOTE&symbol=%s&apikey=%s", baseUrl, symbol.value(), apiKey);
 
-        // Configuramos la factoría de peticiones con los timeouts deseados.
+        // Configure the request factory with the desired timeouts.
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeout);
         factory.setReadTimeout(timeout);
 
-        // Creamos el cliente HTTP de Spring usando la URL base y la factoría anterior.
+        // Create the Spring HTTP client using the base URL and the factory above.
         RestClient restClient = RestClient.builder()
                 .baseUrl(baseUrl)
                 .requestFactory(factory)
@@ -131,7 +131,7 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
 
         JsonNode responseJson;
         try {
-            // Realizamos la petición GET y deserializamos la respuesta a un árbol JSON.
+            // Perform the GET request and deserialize the response into a JSON tree.
             responseJson = restClient.get()
                     .uri(url)
                     .retrieve()
@@ -139,7 +139,7 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
 
             ensureApiResponseIsUsable(responseJson, "GLOBAL_QUOTE");
 
-            // Comprobamos que el JSON tiene la estructura mínima necesaria.
+            // Check that the JSON has the minimum required structure.
             if (responseJson.get(GLOBAL_QUOTE_FIELD) == null
                     || responseJson.get(GLOBAL_QUOTE_FIELD).get("05. price") == null) {
                 throw new ExternalApiException("Invalid response from Alpha Vantage API: missing or malformed price data");
@@ -147,19 +147,19 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
         } catch (ExternalApiException e) {
             throw e;
         } catch (Exception e) {
-            // Cualquier error (timeout, red, parseo...) se envuelve en nuestra excepción de dominio.
+            // Wrap any error (timeout, network, parsing...) in our domain exception.
             throw new ExternalApiException("Error communicating with Alpha Vantage API. Please check the value for alphaVantage.api.key in application.properties", e);
         }
 
         double currentPrice;
         try {
-            // Extraemos el precio como texto y lo convertimos a double.
+            // Extract the price as text and convert it to double.
             currentPrice = Double.parseDouble(responseJson.get(GLOBAL_QUOTE_FIELD).get("05. price").asString());
         } catch (Exception e) {
             throw new ExternalApiException("Could not parse price from Alpha Vantage response", e);
         }
 
-        // Devolvemos el objeto de dominio con el instante actual (zona Europe/Madrid).
+        // Return the domain object with the current instant (Europe/Madrid zone).
         return new MarketPrice(
                 symbol,
                 currentPrice,
@@ -168,26 +168,26 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
     }
 
     /**
-     * Busca instrumentos financieros en Alpha Vantage a partir de un texto de entrada
-     * usando el endpoint {@code SYMBOL_SEARCH}.
+     * Searches financial instruments in Alpha Vantage from input text using the
+     * {@code SYMBOL_SEARCH} endpoint.
      *
-     * @param input texto introducido por el usuario (por ejemplo, "IBM", "Apple", "Micro").
-     * @return una lista de {@link Instrument} que coinciden con el criterio. Puede ser vacía
-     * si no se obtienen resultados o si la respuesta de la API no contiene el array esperado.
-     * @throws ExternalApiException si se produce un error de comunicación con la API externa.
+     * @param input text entered by the user (for example, "IBM", "Apple", "Micro")
+     * @return list of {@link Instrument} items matching the criterion. It may be
+     * empty if no results are obtained or if the API response does not contain the expected array
+     * @throws ExternalApiException if a communication error occurs with the external API
      */
     @Override
     public List<Instrument> searchInstruments(String input) {
-        // De nuevo, aplicamos el throttle para respetar los límites de la API.
+        // Apply throttling again to respect the API limits.
         throttle();
 
-        // Endpoint SYMBOL_SEARCH con la palabra clave proporcionada por el usuario.
+        // SYMBOL_SEARCH endpoint with the keyword provided by the user.
         String url = String.format(
                 "%s?function=SYMBOL_SEARCH&keywords=%s&apikey=%s",
                 baseUrl, input, apiKey
         );
 
-        // Cliente HTTP con los mismos timeouts que en el resto de métodos.
+        // HTTP client with the same timeouts used by the other methods.
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeout);
         factory.setReadTimeout(timeout);
@@ -206,20 +206,20 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
             throw new ExternalApiException("Error communicating with Alpha Vantage API for instrument search", e);
         }
 
-        // Si la respuesta no tiene el array "bestMatches", no hay datos útiles que devolver.
+        // If the response does not have the "bestMatches" array, there is no useful data to return.
         if (root == null || root.get("bestMatches") == null || !root.get("bestMatches").isArray()) {
             return List.of();
         }
 
         List<Instrument> result = new ArrayList<>();
 
-        // Recorremos cada coincidencia y la mapeamos a nuestro objeto de dominio Instrument.
+        // Iterate over each match and map it to our Instrument domain object.
         for (JsonNode node : root.get("bestMatches")) {
             result.add(new Instrument(
-                    node.path("1. symbol").asString(),   // Símbolo (ticker)
-                    node.path("2. name").asString(),     // Nombre descriptivo
-                    node.path("4. region").asString(),   // Región/mercado
-                    node.path("8. currency").asString()  // Moneda en la que cotiza
+                    node.path("1. symbol").asString(),   // Symbol (ticker)
+                    node.path("2. name").asString(),     // Descriptive name
+                    node.path("4. region").asString(),   // Region/market
+                    node.path("8. currency").asString()  // Trading currency
             ));
         }
 
@@ -228,38 +228,37 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
 
 
     /**
-     * Obtiene velas diarias (OHLCV) para un símbolo bursátil usando el endpoint
-     * {@code TIME_SERIES_DAILY} de Alpha Vantage.
+     * Obtains daily candles (OHLCV) for a stock symbol using Alpha Vantage's
+     * {@code TIME_SERIES_DAILY} endpoint.
      * <p>
-     * La API devuelve un objeto JSON donde las claves del nodo {@code "Time Series (Daily)"}
-     * son fechas en formato ISO ({@code yyyy-MM-dd}), y cada valor es un objeto con:
+     * The API returns a JSON object where the keys of the {@code "Time Series (Daily)"}
+     * node are ISO dates ({@code yyyy-MM-dd}), and each value is an object with:
      * <ul>
-     *     <li>{@code 1. open}: precio de apertura</li>
-     *     <li>{@code 2. high}: máximo diario</li>
-     *     <li>{@code 3. low}: mínimo diario</li>
-     *     <li>{@code 4. close}: precio de cierre</li>
-     *     <li>{@code 5. volume}: volumen negociado</li>
+     *     <li>{@code 1. open}: opening price</li>
+     *     <li>{@code 2. high}: daily high</li>
+     *     <li>{@code 3. low}: daily low</li>
+     *     <li>{@code 4. close}: closing price</li>
+     *     <li>{@code 5. volume}: traded volume</li>
      * </ul>
-     * Este método recorre, desde la fecha actual hacia atrás, un máximo de 60 días y,
-     * para cada fecha que tenga datos, construye una {@link Candle} con esa información.
+     * This method walks backward from the current date for up to 60 days and,
+     * for each date with data, builds a {@link Candle} with that information.
      *
-     * @param symbol símbolo para el que se quiere obtener la serie histórica diaria.
-     * @return lista de velas diarias. Si la API no devuelve datos para el símbolo, la lista
-     * será vacía.
-     * @throws ExternalApiException si ocurre un error al comunicarse con Alpha Vantage.
+     * @param symbol symbol for which the daily historical series should be obtained
+     * @return list of daily candles. If the API returns no data for the symbol, the list is empty
+     * @throws ExternalApiException if an error occurs while communicating with Alpha Vantage
      */
     @Override
     public List<Candle> getDailyCandles(Symbol symbol) {
-        // Aplicamos el throttle antes de consultar la serie histórica.
+        // Apply throttling before querying the historical series.
         throttle();
 
-        // Construimos la URL para el endpoint TIME_SERIES_DAILY.
+        // Build the URL for the TIME_SERIES_DAILY endpoint.
         String url = String.format(
                 "%s?function=TIME_SERIES_DAILY&symbol=%s&apikey=%s",
                 baseUrl, symbol.value(), apiKey
         );
 
-        // Cliente HTTP configurado con los timeouts de la aplicación.
+        // HTTP client configured with the application timeouts.
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeout);
         factory.setReadTimeout(timeout);
@@ -278,7 +277,7 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
             throw new ExternalApiException("Error communicating with Alpha Vantage API for daily candles", e);
         }
 
-        // Si no hay nodo "Time Series (Daily)", no hay datos históricos disponibles.
+        // If there is no "Time Series (Daily)" node, there is no historical data available.
         if (root == null || root.get("Time Series (Daily)") == null) {
             return List.of();
         }
@@ -287,29 +286,29 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
 
         List<Candle> candles = new ArrayList<>();
 
-        // Tomamos como referencia la fecha actual y miramos hacia atrás un máximo de 60 días.
+        // Use the current date as reference and look backward for up to 60 days.
         LocalDate today = LocalDate.now();
         int maxDays = 60;
 
         for (int i = 0; i < maxDays; i++) {
             LocalDate date = today.minusDays(i);
-            String dateStr = date.toString(); // Formato ISO: "yyyy-MM-dd"
+            String dateStr = date.toString(); // ISO format: "yyyy-MM-dd"
 
-            // En el JSON de Alpha Vantage, cada fecha es una clave dentro de "Time Series (Daily)".
+            // In Alpha Vantage JSON, each date is a key inside "Time Series (Daily)".
             JsonNode c = series.get(dateStr);
             if (c == null) {
-                // Si para esa fecha no hay datos (por ejemplo, fin de semana o límite de histórico), se salta.
+                // If there is no data for that date (for example, weekend or history limit), skip it.
                 continue;
             }
 
-            // Construimos la vela diaria a partir de los campos de la API.
+            // Build the daily candle from the API fields.
             candles.add(new Candle(
-                    date.atStartOfDay(),                 // Momento temporal: inicio del día
-                    c.path("1. open").asDouble(),       // Precio de apertura
-                    c.path("2. high").asDouble(),       // Máximo
-                    c.path("3. low").asDouble(),        // Mínimo
-                    c.path("4. close").asDouble(),      // Cierre
-                    c.path("5. volume").asLong()        // Volumen
+                    date.atStartOfDay(),                 // Time: start of day
+                    c.path("1. open").asDouble(),       // Opening price
+                    c.path("2. high").asDouble(),       // High
+                    c.path("3. low").asDouble(),        // Low
+                    c.path("4. close").asDouble(),      // Close
+                    c.path("5. volume").asLong()        // Volume
             ));
         }
 
@@ -317,30 +316,30 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
     }
 
     /**
-     * Obtiene información fundamental (overview) de un instrumento usando el endpoint
-     * {@code OVERVIEW} de Alpha Vantage.
+     * Obtains fundamental information (overview) for an instrument using Alpha
+     * Vantage's {@code OVERVIEW} endpoint.
      * <p>
-     * Este endpoint devuelve datos fundamentales como sector, industria,
-     * capitalización de mercado, PER, etc. A partir de esa respuesta se construye
-     * un {@link InstrumentOverview} de dominio.
+     * This endpoint returns fundamentals such as sector, industry, market
+     * capitalization, P/E ratio, etc. An {@link InstrumentOverview} domain object
+     * is built from that response.
      *
-     * @param symbol símbolo para el que se quiere obtener el overview (por ejemplo, IBM, AAPL...).
-     * @return un {@link InstrumentOverview} con los datos fundamentales básicos del símbolo.
-     * @throws ExternalApiException si se produce un error de comunicación con la API externa
-     *                              o si la respuesta no contiene los campos esperados.
+     * @param symbol symbol whose overview should be obtained (for example, IBM, AAPL...)
+     * @return {@link InstrumentOverview} with the symbol's basic fundamentals
+     * @throws ExternalApiException if a communication error occurs with the external API
+     *                              or if the response does not contain the expected fields
      */
     @Override
     public InstrumentOverview getOverview(Symbol symbol) {
-        // Respetamos el rate limit de Alpha Vantage
+        // Respect the Alpha Vantage rate limit.
         throttle();
 
-        // Endpoint OVERVIEW para obtener datos fundamentales del símbolo
+        // OVERVIEW endpoint for obtaining the symbol's fundamentals.
         String url = String.format(
                 "%s?function=OVERVIEW&symbol=%s&apikey=%s",
                 baseUrl, symbol.value(), apiKey
         );
 
-        // Cliente HTTP con los mismos timeouts que en el resto de métodos.
+        // HTTP client with the same timeouts used by the other methods.
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(timeout);
         factory.setReadTimeout(timeout);
@@ -351,7 +350,7 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
 
         JsonNode node;
         try {
-            // Realizamos la petición y obtenemos el JSON de respuesta
+            // Perform the request and obtain the JSON response.
             node = restClient.get().uri(url).retrieve().body(JsonNode.class);
             ensureApiResponseIsUsable(node, "OVERVIEW");
         } catch (ExternalApiException e) {
@@ -360,13 +359,13 @@ public class AlphaVantageAPI implements GetPriceMarketProviderPort, SearchInstru
             throw new ExternalApiException("Error communicating with Alpha Vantage API for instrument overview", e);
         }
 
-        // Validación mínima de la respuesta: si es nula o no tiene el campo Symbol,
-        // consideramos que la respuesta no es válida.
+        // Minimum response validation: if it is null or has no Symbol field,
+        // consider the response invalid.
         if (node.get("Symbol") == null) {
             throw new ExternalApiException("Invalid response from Alpha Vantage API: missing overview data");
         }
 
-        // Mapeamos los campos relevantes de la respuesta JSON a nuestro objeto de dominio.
+        // Map the relevant JSON response fields to our domain object.
         return new InstrumentOverview(
                 node.get("Symbol").asString(),
                 node.get("Name").asString(),

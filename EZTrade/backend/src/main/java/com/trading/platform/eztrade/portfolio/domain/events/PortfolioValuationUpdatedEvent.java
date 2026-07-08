@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento de resumen publicado cuando portfolio recalcula la foto agregada de
- * una cartera.
+ * Summary event published when portfolio recalculates a portfolio aggregate
+ * picture.
  * <p>
- * Incluye cash disponible proyectado desde wallet, coste base de posiciones
- * abiertas y PnL realizado acumulado.
+ * Includes available cash projected from wallet, the cost basis of open
+ * positions, and accumulated realized PnL.
  */
 public record PortfolioValuationUpdatedEvent(
         String owner,

@@ -3,31 +3,31 @@ package com.trading.platform.eztrade.security.configuration;
 import org.springframework.http.HttpMethod;
 
 /**
- * Contrato que representa un endpoint securizado de la aplicación.
+ * Contract representing a secured application endpoint.
  * <p>
- * Cada implementación define la ruta, el método HTTP y la política
- * de seguridad asociada al recurso expuesto.
+ * Each implementation defines the path, HTTP method, and security policy
+ * associated with the exposed resource.
  */
 public interface SecuredEndpoint {
 
     /**
-     * Devuelve la ruta del endpoint protegido.
+     * Returns the protected endpoint path.
      *
-     * @return ruta del endpoint (por ejemplo, <strong>`/api/user`</strong>)
+     * @return endpoint path (for example, <strong>`/api/user`</strong>)
      */
     String path();
 
     /**
-     * Devuelve el método HTTP asociado al endpoint.
+     * Returns the HTTP method associated with the endpoint.
      *
-     * @return método HTTP requerido para acceder al recurso
+     * @return HTTP method required to access the resource
      */
     HttpMethod method();
 
     /**
-     * Devuelve la política de seguridad aplicada al endpoint.
+     * Returns the security policy applied to the endpoint.
      *
-     * @return política de seguridad que debe cumplirse para acceder
+     * @return security policy that must be satisfied to access it
      */
     SecurityPolicy policy();
 }

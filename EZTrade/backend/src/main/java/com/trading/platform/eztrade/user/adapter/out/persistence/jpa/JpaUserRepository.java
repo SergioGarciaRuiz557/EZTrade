@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * Repositorio Spring Data para la entidad JPA de usuarios.
+ * Spring Data repository for the user JPA entity.
  */
 public interface JpaUserRepository extends JpaRepository<UserJpaEntity, Long> {
 

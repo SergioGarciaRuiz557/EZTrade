@@ -1,15 +1,14 @@
 /**
- * Módulo de la aplicación responsable de la gestión de usuarios.
+ * Application module responsible for user management.
  * <p>
- * Este módulo agrupa la lógica de dominio, casos de uso y adaptadores
- * relacionados con los usuarios de la plataforma, siguiendo la
- * arquitectura modular de Spring Modulith.
+ * This module groups the domain logic, use cases, and adapters related to
+ * platform users, following Spring Modulith's modular architecture.
  * <p>
- * Elementos principales:
+ * Main elements:
  * <ul>
- *   <li>Dominio: entidades, enums y excepciones de usuario.</li>
- *   <li>Aplicación: servicios y puertos de entrada/salida.</li>
- *   <li>Infraestructura: implementaciones de repositorios y adaptadores.</li>
+ *   <li>Domain: user entities, enums, and exceptions.</li>
+ *   <li>Application: services and input/output ports.</li>
+ *   <li>Infrastructure: repository implementations and adapters.</li>
  * </ul>
  */
 @ApplicationModule

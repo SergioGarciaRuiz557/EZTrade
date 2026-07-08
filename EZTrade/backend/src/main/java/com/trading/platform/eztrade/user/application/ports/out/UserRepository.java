@@ -5,38 +5,38 @@ import com.trading.platform.eztrade.user.domain.User;
 import java.util.Optional;
 
 /**
- * Puerto de salida para el acceso y gestión de la entidad de dominio {@link User}.
+ * Output port for accessing and managing the {@link User} domain entity.
  * <p>
- * Define las operaciones de persistencia que debe ofrecer la capa de
- * adapter (por ejemplo, un repositorio JPA) hacia la capa de aplicación.
+ * Defines the persistence operations that the adapter layer (for example, a JPA
+ * repository) must provide to the application layer.
  */
 public interface UserRepository {
 
     /**
-     * Busca un usuario por su correo electrónico o nombre de usuario.
+     * Finds a user by email address or username.
      *
-     * @param username identificador del usuario (normalmente correo electrónico)
-     * @return un {@link Optional} que contiene el {@link User} si existe,
-     *         o vacío si no se encuentra ningún usuario con ese identificador
+     * @param username user identifier (usually an email address)
+     * @return {@link Optional} containing the {@link User} if it exists, or empty
+     *         if no user is found with that identifier
      */
     Optional<User> findByEmail(String username);
 
     /**
-     * Busca un usuario por su username.
+     * Finds a user by username.
      *
-     * @param username nombre de usuario
-     * @return un {@link Optional} con el usuario si existe
+     * @param username username
+     * @return {@link Optional} with the user if it exists
      */
     Optional<User> findByUsername(String username);
 
     /**
-     * Persiste un usuario en el sistema.
+     * Persists a user in the system.
      * <p>
-     * Si el usuario ya existe, se actualiza su información; en caso contrario,
-     * se crea un nuevo registro.
+     * If the user already exists, its information is updated; otherwise a new
+     * record is created.
      *
-     * @param user entidad de dominio {@link User} a guardar
-     * @return la entidad {@link User} resultante tras la operación de guardado
+     * @param user {@link User} domain entity to save
+     * @return resulting {@link User} entity after the save operation
      */
     User save(User user);
 }

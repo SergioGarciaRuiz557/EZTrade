@@ -1,15 +1,13 @@
 /**
- * Módulo de mercado de la aplicación.
+ * Application market module.
  * <p>
- * Encapsula la lógica relacionada con instrumentos financieros, precios
- * de mercado y su exposición a través de APIs REST y WebSocket/STOMP.
+ * Encapsulates logic related to financial instruments, market prices, and their
+ * exposure through REST APIs and WebSocket/STOMP.
  * <p>
- * Restricciones de dependencias (Spring Modulith):
+ * Dependency constraints (Spring Modulith):
  * <ul>
- *   <li>Puede depender de {@code security} para aspectos transversales
- *       de seguridad, si es necesario.</li>
- *   <li>No debe depender directamente del módulo {@code user} para
- *       mantener un bajo acoplamiento.</li>
+ *   <li>May depend on {@code security} for cross-cutting security concerns when necessary.</li>
+ *   <li>Must not depend directly on the {@code user} module to keep coupling low.</li>
  * </ul>
  */
 @ApplicationModule

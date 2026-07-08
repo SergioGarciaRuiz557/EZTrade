@@ -4,13 +4,12 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Agregado raiz del modulo trading.
+ * Root aggregate of the trading module.
  * <p>
- * Modela una orden de compra/venta y concentra sus invariantes:
- * propietario valido, simbolo valido, cantidades/precios positivos y
- * transiciones de estado permitidas.
+ * Models a buy/sell order and centralizes its invariants: valid owner, valid
+ * symbol, positive quantities/prices, and allowed state transitions.
  * <p>
- * Esta clase pertenece al dominio puro y no depende de Spring ni JPA.
+ * This class belongs to the pure domain and does not depend on Spring or JPA.
  */
 public class TradeOrder {
 
@@ -45,14 +44,14 @@ public class TradeOrder {
     }
 
     /**
-     * Fabrica para crear una nueva orden en estado {@link OrderStatus#PENDING}.
+     * Factory for creating a new order in {@link OrderStatus#PENDING} state.
      *
-     * @param owner email/identificador del propietario de la orden
-     * @param symbol simbolo del activo
-     * @param side tipo de orden (compra o venta)
-     * @param quantity cantidad solicitada
-     * @param price precio unitario
-     * @return nueva orden pendiente
+     * @param owner order owner's email/identifier
+     * @param symbol asset symbol
+     * @param side order side (buy or sell)
+     * @param quantity requested quantity
+     * @param price unit price
+     * @return new pending order
      */
     public static TradeOrder place(String owner, String symbol, OrderSide side, Quantity quantity, Money price) {
         return new TradeOrder(
@@ -69,18 +68,18 @@ public class TradeOrder {
     }
 
     /**
-     * Fabrica para reconstruir el agregado desde persistencia.
+     * Factory for reconstructing the aggregate from persistence.
      *
-     * @param id id de la orden
-     * @param owner propietario
-     * @param symbol simbolo
-     * @param side tipo de orden
-     * @param quantity cantidad
-     * @param price precio unitario
-     * @param status estado actual
-     * @param createdAt fecha de creacion
-     * @param executedAt fecha de ejecucion (puede ser null)
-     * @return agregado rehidratado
+     * @param id order id
+     * @param owner owner
+     * @param symbol symbol
+     * @param side order side
+     * @param quantity quantity
+     * @param price unit price
+     * @param status current status
+     * @param createdAt creation date
+     * @param executedAt execution date (can be null)
+     * @return rehydrated aggregate
      */
     public static TradeOrder rehydrate(OrderId id,
                                        String owner,
@@ -95,10 +94,10 @@ public class TradeOrder {
     }
 
     /**
-     * Devuelve una copia del agregado con id asignado.
+     * Returns a copy of the aggregate with an assigned id.
      *
-     * @param id identificador generado tras persistencia
-     * @return nueva instancia con id
+     * @param id identifier generated after persistence
+     * @return new instance with id
      */
     public TradeOrder withId(OrderId id) {
         return new TradeOrder(
@@ -115,10 +114,10 @@ public class TradeOrder {
     }
 
     /**
-     * Ejecuta la orden si esta pendiente.
+     * Executes the order if it is pending.
      *
-     * @return nueva orden en estado {@link OrderStatus#EXECUTED}
-     * @throws TradingDomainException si la orden no esta pendiente
+     * @return new order in {@link OrderStatus#EXECUTED} state
+     * @throws TradingDomainException if the order is not pending
      */
     public TradeOrder execute() {
         if (status != OrderStatus.PENDING) {
@@ -138,11 +137,11 @@ public class TradeOrder {
     }
 
     /**
-     * Cancela la orden si esta pendiente y la solicita su propietario.
+     * Cancels the order if it is pending and requested by its owner.
      *
-     * @param requestedBy usuario que solicita la cancelacion
-     * @return nueva orden en estado {@link OrderStatus#CANCELLED}
-     * @throws TradingDomainException si no es el propietario o no esta pendiente
+     * @param requestedBy user requesting cancellation
+     * @return new order in {@link OrderStatus#CANCELLED} state
+     * @throws TradingDomainException if the requester is not the owner or the order is not pending
      */
     public TradeOrder cancel(String requestedBy) {
         if (!owner.equals(requestedBy)) {
@@ -165,39 +164,39 @@ public class TradeOrder {
     }
 
     /**
-     * Calcula el importe total de la orden: precio x cantidad.
+     * Calculates the order total amount: price x quantity.
      *
-     * @return monto total de la orden
+     * @return order total amount
      */
     public Money totalAmount() {
         return price.multiply(quantity);
     }
 
-    /** @return id de la orden (puede ser null antes de persistir) */
+    /** @return order id (can be null before persistence) */
     public OrderId id() { return id; }
 
-    /** @return propietario de la orden */
+    /** @return order owner */
     public String owner() { return owner; }
 
-    /** @return simbolo normalizado en mayusculas */
+    /** @return normalized uppercase symbol */
     public String symbol() { return symbol; }
 
-    /** @return tipo de orden */
+    /** @return order side */
     public OrderSide side() { return side; }
 
-    /** @return cantidad de la orden */
+    /** @return order quantity */
     public Quantity quantity() { return quantity; }
 
-    /** @return precio unitario de la orden */
+    /** @return order unit price */
     public Money price() { return price; }
 
-    /** @return estado actual de la orden */
+    /** @return current order status */
     public OrderStatus status() { return status; }
 
-    /** @return fecha y hora de creacion */
+    /** @return creation date and time */
     public LocalDateTime createdAt() { return createdAt; }
 
-    /** @return fecha y hora de ejecucion, o null si no fue ejecutada */
+    /** @return execution date and time, or null if it was not executed */
     public LocalDateTime executedAt() { return executedAt; }
 
     private static String validateOwner(String owner) {

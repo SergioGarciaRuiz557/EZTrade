@@ -4,16 +4,18 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento de dominio publicado cuando el wallet <strong>liquida</strong> una operación asociada a una orden ejecutada.
+ * Domain event published when the wallet <strong>settles</strong> an operation
+ * associated with an executed order.
  * <p>
- * Para una BUY se emite típicamente con dirección {@code DEBIT} (se consume reservado).
- * Para una SELL se emite típicamente con dirección {@code CREDIT} (se abona disponible).
+ * For a BUY, it is typically emitted with {@code DEBIT} direction (reserved
+ * balance is consumed). For a SELL, it is typically emitted with {@code CREDIT}
+ * direction (available balance is credited).
  */
 public record FundsSettledEvent(
         String orderId,
         String owner,
         BigDecimal amount,
-        /** Dirección semántica de la liquidación: "DEBIT" o "CREDIT". */
+        /** Settlement semantic direction: "DEBIT" or "CREDIT". */
         String direction,
         BigDecimal availableBalance,
         BigDecimal reservedBalance,

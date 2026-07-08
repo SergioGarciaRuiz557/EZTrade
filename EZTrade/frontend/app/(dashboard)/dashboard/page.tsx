@@ -110,7 +110,7 @@ function StatCard({
   icon: React.ElementType
   trend?: "up" | "down" | "neutral"
 }) {
-  // Tarjeta reutilizable para metricas principales del dashboard.
+  // Reusable card for the dashboard's main metrics.
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -126,7 +126,7 @@ function StatCard({
 }
 
 export default function DashboardPage() {
-  // SWR mantiene cache local y refresco automatico, pero cada fuente se pinta de forma independiente.
+  // SWR keeps local cache and automatic refresh, but each source renders independently.
   const {
     data: portfolio,
     error: portfolioError,
@@ -139,7 +139,7 @@ export default function DashboardPage() {
     tradingApi.getOrders()
   )
 
-  // Calcula metricas derivadas combinando wallet, portfolio y ordenes.
+  // Calculates derived metrics by combining wallet, portfolio, and orders.
   const localPortfolio = buildPortfolioFromOrders(orders, wallet?.owner || portfolio?.owner)
   const displayedPortfolio = portfolio || localPortfolio
   const usingLocalPortfolio = !portfolio && Boolean(localPortfolio)

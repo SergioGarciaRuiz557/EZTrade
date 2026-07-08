@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
- * Valoracion de mercado de una posicion abierta.
+ * Market valuation of an open position.
  */
 public record PositionMarketValuation(
         String symbol,

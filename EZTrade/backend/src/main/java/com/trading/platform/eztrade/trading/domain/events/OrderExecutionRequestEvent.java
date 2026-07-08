@@ -4,15 +4,15 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento de dominio emitido para solicitar la ejecucion de una orden.
+ * Domain event emitted to request order execution.
  *
- * @param orderId identificador de la orden
- * @param owner propietario de la orden
- * @param symbol simbolo del activo
- * @param side tipo de orden (BUY/SELL)
- * @param quantity cantidad solicitada
- * @param price precio unitario de ejecucion
- * @param occurredAt fecha y hora de emision del evento
+ * @param orderId order identifier
+ * @param owner order owner
+ * @param symbol asset symbol
+ * @param side order side (BUY/SELL)
+ * @param quantity requested quantity
+ * @param price execution unit price
+ * @param occurredAt event emission date and time
  */
 public record OrderExecutionRequestEvent(
         Long orderId,

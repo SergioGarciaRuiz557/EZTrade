@@ -12,11 +12,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Entidad JPA que representa una posicion persistida en portfolio.
+ * JPA entity that represents a persisted portfolio position.
  * <p>
- * La restriccion owner+symbol garantiza una sola posicion por usuario y activo.
- * Las reglas de negocio viven en {@code Position}; esta clase solo modela la
- * tabla y sus columnas.
+ * The owner+symbol constraint guarantees a single position per user and asset.
+ * Business rules live in {@code Position}; this class only models the table and
+ * its columns.
  */
 @Entity
 @Table(
@@ -32,7 +32,7 @@ public class PositionJpaEntity {
     @Column(nullable = false)
     private String owner;
 
-    /** Ticker normalizado; se limita a 10 caracteres para simbolos bursatiles comunes. */
+    /** Normalized ticker; limited to 10 characters for common stock symbols. */
     @Column(nullable = false, length = 10)
     private String symbol;
 

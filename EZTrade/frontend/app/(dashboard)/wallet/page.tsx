@@ -33,7 +33,7 @@ function BalanceCard({ title, amount, icon: Icon, description, variant = "defaul
   description?: string
   variant?: "default" | "primary" | "muted"
 }) {
-  // Tarjeta reutilizable para mostrar balances con el mismo formato visual.
+  // Reusable card for displaying balances with the same visual format.
   return (
     <Card className={variant === "primary" ? "border-primary" : ""}>
       <CardContent className="pt-6">
@@ -55,13 +55,13 @@ function BalanceCard({ title, amount, icon: Icon, description, variant = "defaul
   )
 }
 
-// Convierte inputs monetarios en importes positivos; devuelve 0 cuando no son validos.
+// Converts monetary inputs into positive amounts; returns 0 when invalid.
 function parsePositiveAmount(value: string) {
   const parsed = Number.parseFloat(value)
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0
 }
 
-// Extrae mensajes de la capa API para mostrarlos en toasts.
+// Extracts messages from the API layer to display them in toasts.
 function getErrorMessage(error: unknown, fallback: string) {
   if (error && typeof error === "object" && "message" in error) {
     const message = (error as { message?: unknown }).message
@@ -70,21 +70,21 @@ function getErrorMessage(error: unknown, fallback: string) {
   return fallback
 }
 
-// Refresca las caches que pueden cambiar despues de movimientos de dinero.
+// Refreshes caches that may change after money movements.
 function refreshWalletData() {
   mutate("wallet")
   mutate("portfolio")
   mutate("wallet-transactions")
 }
 
-// Dialogo para anadir fondos a la cuenta del usuario.
+// Dialog for adding funds to the user's account.
 function DepositDialog({ trigger }: { trigger?: ReactElement }) {
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Valida cantidad, crea el deposito y actualiza los datos visibles.
+  // Validates amount, creates the deposit, and updates visible data.
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const amountValue = parsePositiveAmount(amount)
@@ -113,7 +113,7 @@ function DepositDialog({ trigger }: { trigger?: ReactElement }) {
     }
   }
 
-  // Cantidades rapidas para acelerar depositos frecuentes durante pruebas o uso normal.
+  // Quick amounts to speed up frequent deposits during tests or normal use.
   const presetAmounts = [100, 500, 1000, 5000]
   const amountValue = parsePositiveAmount(amount)
 
@@ -201,7 +201,7 @@ function DepositDialog({ trigger }: { trigger?: ReactElement }) {
   )
 }
 
-// Dialogo para retirar efectivo disponible sin tocar fondos reservados.
+// Dialog for withdrawing available cash without touching reserved funds.
 function WithdrawDialog({ availableBalance, trigger }: { availableBalance: number; trigger: ReactElement }) {
   const [open, setOpen] = useState(false)
   const [amount, setAmount] = useState("")
@@ -211,7 +211,7 @@ function WithdrawDialog({ availableBalance, trigger }: { availableBalance: numbe
   const amountValue = parsePositiveAmount(amount)
   const canSubmit = amountValue > 0 && amountValue <= availableBalance
 
-  // Impide retirar mas del saldo disponible y envia la retirada al backend.
+  // Prevents withdrawing more than the available balance and sends the withdrawal to the backend.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!canSubmit) return
@@ -312,7 +312,7 @@ function WithdrawDialog({ availableBalance, trigger }: { availableBalance: numbe
   )
 }
 
-// Dialogo para transferir efectivo a otro usuario de EZTrade.
+// Dialog for transferring cash to another EZTrade user.
 function TransferDialog({ availableBalance, owner, trigger }: {
   availableBalance: number
   owner?: string
@@ -324,13 +324,13 @@ function TransferDialog({ availableBalance, owner, trigger }: {
   const [description, setDescription] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Normaliza destinatario y evita transferencias al propio usuario.
+  // Normalizes the recipient and prevents transfers to the current user.
   const amountValue = parsePositiveAmount(amount)
   const normalizedRecipient = recipient.trim()
   const isSelfTransfer = Boolean(owner && normalizedRecipient && owner.toLowerCase() === normalizedRecipient.toLowerCase())
   const canSubmit = Boolean(normalizedRecipient) && amountValue > 0 && amountValue <= availableBalance && !isSelfTransfer
 
-  // Envia la transferencia y refresca balance/historial si se completa.
+  // Sends the transfer and refreshes balance/history if it completes.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!canSubmit) return
@@ -445,7 +445,7 @@ function TransferDialog({ availableBalance, owner, trigger }: {
   )
 }
 
-// Traduce codigos del backend a etiquetas entendibles para el historial.
+// Translates backend codes into understandable labels for the history.
 function movementLabel(type: WalletTransaction["movementType"]) {
   switch (type) {
     case "DEPOSIT":
@@ -469,13 +469,13 @@ function movementLabel(type: WalletTransaction["movementType"]) {
   }
 }
 
-// Formatea deltas mostrando siempre el signo que indica entrada o salida.
+// Formats deltas, always showing the sign that indicates inflow or outflow.
 function formatDelta(value: number) {
   if (value === 0) return formatCurrency(0)
   return `${value > 0 ? "+" : "-"}${formatCurrency(Math.abs(value))}`
 }
 
-// Decide el color del importe segun impacto en saldo disponible o tipo de movimiento.
+// Decides the amount color based on available-balance impact or movement type.
 function transactionTone(transaction: WalletTransaction) {
   if (transaction.availableDelta > 0 || transaction.movementType === "TRANSFER_IN") {
     return "text-success"
@@ -486,7 +486,7 @@ function transactionTone(transaction: WalletTransaction) {
   return "text-foreground"
 }
 
-// Dialogo de historial que carga movimientos solo cuando se abre.
+// History dialog that loads movements only when opened.
 function WalletHistoryDialog({ trigger }: { trigger: ReactElement }) {
   const [open, setOpen] = useState(false)
   const { data: transactions, isLoading, mutate: refreshTransactions } = useSWR<WalletTransaction[]>(
@@ -568,7 +568,7 @@ function WalletHistoryDialog({ trigger }: { trigger: ReactElement }) {
 }
 
 export default function WalletPage() {
-  // SWR mantiene el balance cacheado y lo refresca cuando los dialogos mutan datos.
+  // SWR keeps the balance cached and refreshes it when dialogs mutate data.
   const { data: wallet, isLoading } = useSWR<WalletBalance>("wallet", () => walletApi.getBalance())
 
   if (isLoading) {
@@ -579,7 +579,7 @@ export default function WalletPage() {
     )
   }
 
-  // Balances derivados que alimentan tarjetas y validaciones de acciones.
+  // Derived balances that feed cards and action validations.
   const availableBalance = wallet?.availableBalance || 0
   const reservedBalance = wallet?.reservedBalance || 0
   const totalBalance = availableBalance + reservedBalance

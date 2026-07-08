@@ -24,10 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Adaptador de entrada REST del modulo trading.
+ * REST input adapter for the trading module.
  * <p>
- * Expone operaciones para crear, ejecutar, cancelar y consultar ordenes
- * del usuario autenticado.
+ * Exposes operations to create, execute, cancel, and query orders owned by the
+ * authenticated user.
  */
 @RestController
 @RequestMapping("/api/v1/trading/orders")
@@ -39,7 +39,7 @@ public class TradingController {
     private final GetOrdersUseCase getOrdersUseCase;
 
     /**
-     * Constructor con inyeccion de casos de uso de aplicacion.
+     * Constructor with application use case injection.
      */
     public TradingController(PlaceOrderUseCase placeOrderUseCase,
                              ExecuteOrderUseCase executeOrderUseCase,
@@ -52,11 +52,11 @@ public class TradingController {
     }
 
     /**
-     * Crea una nueva orden para el usuario autenticado.
+     * Creates a new order for the authenticated user.
      *
-     * @param request datos de la orden
-     * @param authentication contexto de autenticacion
-     * @return orden creada
+     * @param request order data
+     * @param authentication authentication context
+     * @return created order
      */
     @PostMapping
     public ResponseEntity<TradeOrderResponse> placeOrder(@Valid @RequestBody PlaceOrderRequest request,
@@ -72,19 +72,19 @@ public class TradingController {
     }
 
     /**
-     * Ejecuta una orden por su id.
+     * Executes an order by id.
      *
-     * @param orderId identificador de la orden
-     * @return orden ejecutada
+     * @param orderId order identifier
+     * @return executed order
      */
     @PostMapping("/{orderId}/execute")
     public ResponseEntity<TradeOrderResponse> execute(@PathVariable Long orderId,
                                                       Authentication authentication) {
         TradeOrder existing = ensureOwnerOrForbidden(orderId, authentication);
-        // Una SELL pendiente es una oferta publicada en el marketplace. Si el
-        // vendedor pudiera ejecutarla directamente, wallet abonaria efectivo sin
-        // que existiera un comprador. Por eso solo se permite ejecutarla desde
-        // /offers/{offerId}/buy, donde tambien se crea la BUY del comprador.
+        // A pending SELL is an offer published in the marketplace. If the
+        // seller could execute it directly, wallet would credit cash without an
+        // actual buyer. For that reason it can only be executed through
+        // /offers/{offerId}/buy, where the buyer's BUY order is also created.
         if (existing.side() == OrderSide.SELL) {
             throw new TradingDomainException("Las ofertas de venta deben comprarse mediante /api/v1/trading/offers/{offerId}/buy");
         }
@@ -93,11 +93,11 @@ public class TradingController {
     }
 
     /**
-     * Cancela una orden por su id para el usuario autenticado.
+     * Cancels an order by id for the authenticated user.
      *
-     * @param orderId identificador de la orden
-     * @param authentication contexto de autenticacion
-     * @return orden cancelada
+     * @param orderId order identifier
+     * @param authentication authentication context
+     * @return canceled order
      */
     @PostMapping("/{orderId}/cancel")
     public ResponseEntity<TradeOrderResponse> cancel(@PathVariable Long orderId,
@@ -107,10 +107,10 @@ public class TradingController {
     }
 
     /**
-     * Obtiene una orden por su id.
+     * Gets an order by id.
      *
-     * @param orderId identificador de la orden
-     * @return orden encontrada
+     * @param orderId order identifier
+     * @return found order
      */
     @GetMapping("/{orderId}")
     public ResponseEntity<TradeOrderResponse> getById(@PathVariable Long orderId,
@@ -120,10 +120,10 @@ public class TradingController {
     }
 
     /**
-     * Lista las ordenes del usuario autenticado.
+     * Lists the authenticated user's orders.
      *
-     * @param authentication contexto de autenticacion
-     * @return lista de ordenes del propietario
+     * @param authentication authentication context
+     * @return owner's order list
      */
     @GetMapping
     public ResponseEntity<List<TradeOrderResponse>> getMine(Authentication authentication) {

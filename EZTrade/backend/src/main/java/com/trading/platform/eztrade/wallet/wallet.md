@@ -1,61 +1,61 @@
-# Modulo Wallet
+# Wallet Module
 
-## Proposito
+## Purpose
 
-`wallet` es la fuente de verdad del efectivo de cada usuario. Mantiene saldo disponible, saldo reservado y un ledger auditable de movimientos.
+`wallet` is the source of truth for each user's cash. It maintains available balance, reserved balance, and an auditable movement ledger.
 
-## Responsabilidades
+## Responsibilities
 
-- Crear o reconstruir cuentas de efectivo por usuario.
-- Aplicar depositos, retiradas, comisiones y transferencias.
-- Reservar fondos para ordenes BUY.
-- Liberar fondos al cancelar ordenes.
-- Liquidar compras y ventas cuando trading solicita ejecucion.
-- Publicar eventos de balance y de fondos.
-- Registrar cada movimiento en `WalletTransaction`.
+- Create or rebuild cash accounts per user.
+- Apply deposits, withdrawals, fees, and transfers.
+- Reserve funds for BUY orders.
+- Release funds when orders are cancelled.
+- Settle buys and sells when trading requests execution.
+- Publish balance and funds events.
+- Register each movement in `WalletTransaction`.
 
-## Dominio
+## Domain
 
 ### `WalletAccount`
 
-Entidad inmutable con dos balances:
+Immutable entity with two balances:
 
-- `availableBalance`: efectivo libre para retirar, transferir o reservar.
-- `reservedBalance`: efectivo retenido para ordenes BUY pendientes de liquidar.
+- `availableBalance`: free cash that can be withdrawn, transferred, or reserved.
+- `reservedBalance`: cash held for pending BUY orders waiting for settlement.
 
-Operaciones principales:
+Main operations:
 
-- `deposit(amount)`: aumenta disponible.
-- `withdraw(amount)`: reduce disponible si hay saldo suficiente.
-- `reserve(amount)`: pasa efectivo de disponible a reservado.
-- `release(amount)`: devuelve efectivo reservado a disponible.
-- `settleReservedDebit(amount)`: consume reservado en una compra ejecutada.
-- `settleCredit(amount)`: abona disponible en una venta ejecutada.
-- `chargeFee(amount)`: aplica una comision como retirada.
+- `deposit(amount)`: increases available balance.
+- `withdraw(amount)`: reduces available balance if there are enough funds.
+- `reserve(amount)`: moves cash from available to reserved.
+- `release(amount)`: returns reserved cash to available.
+- `settleReservedDebit(amount)`: consumes reserved cash in an executed buy.
+- `settleCredit(amount)`: credits available cash in an executed sell.
+- `chargeFee(amount)`: applies a fee as a withdrawal.
 
 ### `WalletTransaction`
 
-Ledger inmutable. Guarda:
+Immutable ledger entry. It stores:
 
 - owner,
-- tipo de movimiento,
-- importe base,
-- delta sobre disponible,
-- delta sobre reservado,
-- balances finales,
-- tipo e id de referencia,
-- descripcion,
-- fecha de ocurrencia.
+- movement type,
+- base amount,
+- delta on available balance,
+- delta on reserved balance,
+- final balances,
+- reference type and id,
+- description,
+- occurrence date.
 
 ### Enums
 
-`MovementType` clasifica movimientos como `DEPOSIT`, `WITHDRAWAL`, `TRANSFER_OUT`, `TRANSFER_IN`, `RESERVE`, `RELEASE`, `SETTLEMENT_DEBIT`, `SETTLEMENT_CREDIT` y `FEE`.
+`MovementType` classifies movements such as `DEPOSIT`, `WITHDRAWAL`, `TRANSFER_OUT`, `TRANSFER_IN`, `RESERVE`, `RELEASE`, `SETTLEMENT_DEBIT`, `SETTLEMENT_CREDIT`, and `FEE`.
 
-`ReferenceType` indica si el movimiento viene de una orden o de un ajuste manual.
+`ReferenceType` indicates whether the movement comes from an order or from a manual adjustment.
 
-## Servicio de aplicacion
+## Application Service
 
-`WalletService` implementa:
+`WalletService` implements:
 
 - `HandleOrderPlacedUseCase`
 - `HandleOrderCancelledUseCase`
@@ -65,54 +65,54 @@ Ledger inmutable. Guarda:
 - `GetWalletBalanceUseCase`
 - `GetWalletTransactionsUseCase`
 
-El servicio esta anotado con `@Transactional` para que cuenta y ledger se actualicen de forma atomica.
+The service is annotated with `@Transactional` so the account and ledger are updated atomically.
 
-## API REST
+## REST API
 
 Base: `/api/v1/wallet`
 
-| Metodo | Ruta | Uso |
+| Method | Route | Use |
 |---|---|---|
-| `POST` | `/deposit` | Ingresa fondos manuales. |
-| `POST` | `/withdraw` | Retira fondos disponibles. |
-| `POST` | `/transfer` | Transfiere fondos entre usuarios. |
-| `GET` | `/balance` | Consulta disponible y reservado. |
-| `GET` | `/transactions` | Consulta el ledger del usuario. |
+| `POST` | `/deposit` | Deposits manual funds. |
+| `POST` | `/withdraw` | Withdraws available funds. |
+| `POST` | `/transfer` | Transfers funds between users. |
+| `GET` | `/balance` | Queries available and reserved balances. |
+| `GET` | `/transactions` | Queries the user's ledger. |
 
-## Eventos consumidos de trading
+## Events Consumed from Trading
 
-- `OrderPlacedEvent`: si es BUY, reserva `quantity * price`.
-- `OrderCancelledEvent`: libera reserva si existia y no se liquido.
-- `OrderExecutionRequestEvent`: liquida BUY o SELL. Despues publica `OrderExecutedEvent`.
+- `OrderPlacedEvent`: if it is BUY, reserves `quantity * price`.
+- `OrderCancelledEvent`: releases reservation if it existed and was not settled.
+- `OrderExecutionRequestEvent`: settles BUY or SELL. Then publishes `OrderExecutedEvent`.
 
-## Eventos publicados
+## Events Published
 
-- `FundsReservedEvent`: reserva aplicada.
-- `FundsReleasedEvent`: reserva liberada.
-- `FundsSettledEvent`: liquidacion debit/credit aplicada.
-- `InsufficientFundsEvent`: fondos insuficientes.
-- `AvailableCashUpdatedEvent`: disponible actualizado para que portfolio sincronice su proyeccion.
-- `OrderExecutedEvent`: ejecucion confirmada para portfolio y notifications.
+- `FundsReservedEvent`: reservation applied.
+- `FundsReleasedEvent`: reservation released.
+- `FundsSettledEvent`: debit/credit settlement applied.
+- `InsufficientFundsEvent`: insufficient funds.
+- `AvailableCashUpdatedEvent`: available balance updated so portfolio can synchronize its projection.
+- `OrderExecutedEvent`: confirmed execution for portfolio and notifications.
 
-## Idempotencia y concurrencia
+## Idempotency and Concurrency
 
-Wallet evita duplicar movimientos comprobando `(owner, referenceId, movementType)` antes de aplicar una operacion. Para modificar cuentas usa `findByOwnerForUpdate`, de forma que dos operaciones concurrentes del mismo usuario no calculen balances sobre una foto obsoleta.
+Wallet avoids duplicate movements by checking `(owner, referenceId, movementType)` before applying an operation. To modify accounts, it uses `findByOwnerForUpdate`, so two concurrent operations for the same user do not calculate balances over a stale snapshot.
 
-## Flujo BUY
+## BUY Flow
 
-1. Trading publica `OrderPlacedEvent`.
-2. Wallet reserva el importe de la orden y registra `RESERVE`.
-3. Trading publica `OrderExecutionRequestEvent`.
-4. Wallet comprueba que existe reserva suficiente.
-5. Wallet consume reservado con `SETTLEMENT_DEBIT`.
-6. Wallet publica `OrderExecutedEvent` y `AvailableCashUpdatedEvent`.
+1. Trading publishes `OrderPlacedEvent`.
+2. Wallet reserves the order amount and records `RESERVE`.
+3. Trading publishes `OrderExecutionRequestEvent`.
+4. Wallet checks that enough reservation exists.
+5. Wallet consumes reserved balance with `SETTLEMENT_DEBIT`.
+6. Wallet publishes `OrderExecutedEvent` and `AvailableCashUpdatedEvent`.
 
-## Flujo SELL
+## SELL Flow
 
-1. Trading publica `OrderExecutionRequestEvent`.
-2. Wallet abona el importe en disponible con `SETTLEMENT_CREDIT`.
-3. Wallet publica `OrderExecutedEvent` y `AvailableCashUpdatedEvent`.
+1. Trading publishes `OrderExecutionRequestEvent`.
+2. Wallet credits the amount to available balance with `SETTLEMENT_CREDIT`.
+3. Wallet publishes `OrderExecutedEvent` and `AvailableCashUpdatedEvent`.
 
-## Transferencias
+## Transfers
 
-`transfer(...)` carga las dos cuentas en orden determinista para reducir riesgo de interbloqueos, retira al emisor, ingresa al receptor y escribe dos entradas de ledger: `TRANSFER_OUT` y `TRANSFER_IN`.
+`transfer(...)` loads both accounts in deterministic order to reduce deadlock risk, withdraws from the sender, deposits to the recipient, and writes two ledger entries: `TRANSFER_OUT` and `TRANSFER_IN`.

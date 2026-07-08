@@ -4,9 +4,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento de dominio publicado cuando el wallet <strong>reserva</strong> fondos para una orden (normalmente BUY).
+ * Domain event published when the wallet <strong>reserves</strong> funds for an
+ * order (usually BUY).
  * <p>
- * Informa del importe reservado y de los balances resultantes tras la operación.
+ * Reports the reserved amount and the resulting balances after the operation.
  */
 public record FundsReservedEvent(
         String orderId,

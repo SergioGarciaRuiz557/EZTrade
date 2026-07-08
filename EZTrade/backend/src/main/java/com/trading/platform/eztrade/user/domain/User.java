@@ -1,11 +1,10 @@
 package com.trading.platform.eztrade.user.domain;
 
 /**
- * Agregado de dominio del modulo User.
+ * Domain aggregate for the User module.
  * <p>
- * Mantiene los datos e invariantes propios del usuario sin depender de JPA ni
- * de Spring Security. La persistencia y la adaptacion a UserDetails viven en
- * adaptadores externos.
+ * Keeps user data and invariants without depending on JPA or Spring Security.
+ * Persistence and adaptation to {@code UserDetails} live in external adapters.
  */
 public class User {
 

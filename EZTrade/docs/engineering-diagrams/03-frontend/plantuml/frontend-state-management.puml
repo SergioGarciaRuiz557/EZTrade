@@ -1,17 +1,17 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Frontend - Gestion de estado y flujo de datos cliente
+title EZTrade Frontend - Client State Management and Data Flow
 
 component "AuthProvider\nReact Context" as AuthProvider EZ_FRONTEND
 database "localStorage\n token, user" as LocalStorage EZ_DB
 component "fetchWithAuth\nlib/api-client.ts" as FetchClient
 component "SWR cache\nportfolio, wallet, orders,\ntransactions, offers" as SwrCache EZ_FRONTEND
-component "Estado local de formularios\nuseState en paginas/formularios" as LocalState EZ_FRONTEND
-component "Paginas Next\nHome, Dashboard, Trading,\nWallet, Market" as Pages EZ_FRONTEND
-component "NotificationsWebSocket\ncliente STOMP" as WsClient EZ_FRONTEND
-component "Estado en memoria de toasts\ncomponents/ui/toaster.tsx" as ToastState EZ_FRONTEND
-component "API REST backend" as RestApi EZ_BACKEND
+component "Local form state\nuseState in pages/forms" as LocalState EZ_FRONTEND
+component "Next pages\nHome, Dashboard, Trading,\nWallet, Market" as Pages EZ_FRONTEND
+component "NotificationsWebSocket\nSTOMP client" as WsClient EZ_FRONTEND
+component "In-memory toast state\ncomponents/ui/toaster.tsx" as ToastState EZ_FRONTEND
+component "Backend REST API" as RestApi EZ_BACKEND
 component "Backend STOMP /ws" as StompApi EZ_BACKEND
 
 AuthProvider --> LocalStorage : restore, persist,\nclear token/user
@@ -28,13 +28,13 @@ StompApi --> WsClient : notification payloads
 WsClient --> ToastState : toast({ title, body, variant })
 
 note right of SwrCache
-Evidencia: useSWR in dashboard/page.tsx,
-trading/page.tsx y wallet/page.tsx.
+Evidence: useSWR in dashboard/page.tsx,
+trading/page.tsx, and wallet/page.tsx.
 end note
 
 note bottom
-No se ha encontrado una libreria global de estado como Redux o Zustand.
-El estado se reparte entre React Context, localStorage, SWR y useState local de componente.
+No global state library such as Redux or Zustand was found.
+State is split between React Context, localStorage, SWR, and local component useState.
 end note
 
 @enduml

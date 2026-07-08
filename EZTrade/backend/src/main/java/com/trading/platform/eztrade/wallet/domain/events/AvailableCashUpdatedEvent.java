@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento publicado por wallet para compartir el efectivo disponible actualizado de un usuario.
+ * Event published by the wallet to share a user's updated available cash.
  */
 public record AvailableCashUpdatedEvent(
         String owner,

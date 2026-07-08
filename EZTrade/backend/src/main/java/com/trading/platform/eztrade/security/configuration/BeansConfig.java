@@ -14,23 +14,21 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 
 /**
- * Configuración de beans relacionados con la autenticación y la seguridad.
+ * Bean configuration related to authentication and security.
  * <p>
- * Define los componentes necesarios para la autenticación basada en
- * {@code UserDetailsService}, la gestión de autenticación y el cifrado
- * de contraseñas mediante BCrypt.
+ * Defines the components required for {@code UserDetailsService}-based
+ * authentication, authentication management, and password encryption with BCrypt.
  */
 @Configuration
 public class BeansConfig {
 
     /**
-     * Expone un {@code UserDetailsService} basado en el {@code JwtAuthenticationProvider}.
+     * Exposes a {@code UserDetailsService} based on the {@code JwtAuthenticationProvider}.
      * <p>
-     * Delegará la carga de usuarios en el método {@code loadByUsername} del
-     * proveedor JWT.
+     * Delegates user loading to the JWT provider's {@code loadByUsername} method.
      *
-     * @param jwtAuthenticationProvider proveedor de autenticación JWT usado para cargar usuarios
-     * @return implementación de {@code UserDetailsService} utilizada por Spring Security
+     * @param jwtAuthenticationProvider JWT authentication provider used to load users
+     * @return {@code UserDetailsService} implementation used by Spring Security
      */
     @Bean
     public UserDetailsService userDetailsService(JwtAuthenticationProvider jwtAuthenticationProvider) {
@@ -38,14 +36,13 @@ public class BeansConfig {
     }
 
     /**
-     * Configura el {@code AuthenticationProvider} principal de la aplicación.
+     * Configures the application's main {@code AuthenticationProvider}.
      * <p>
-     * Utiliza un {@code DaoAuthenticationProvider} que delega en el
-     * {@code UserDetailsService} definido y emplea BCrypt como algoritmo
-     * de cifrado de contraseñas.
+     * Uses a {@code DaoAuthenticationProvider} that delegates to the configured
+     * {@code UserDetailsService} and uses BCrypt as the password encryption algorithm.
      *
-     * @param jwtAuthenticationProvider proveedor de autenticación JWT para el servicio de usuarios
-     * @return proveedor de autenticación configurado para validar credenciales
+     * @param jwtAuthenticationProvider JWT authentication provider for the user service
+     * @return authentication provider configured to validate credentials
      */
     @Bean
     public AuthenticationProvider authenticationProvider(JwtAuthenticationProvider jwtAuthenticationProvider) {
@@ -55,12 +52,12 @@ public class BeansConfig {
     }
 
     /**
-     * Expone el {@code AuthenticationManager} que coordina el proceso de autenticación.
+     * Exposes the {@code AuthenticationManager} that coordinates the authentication process.
      * <p>
-     * Se obtiene a partir de la configuración automática de Spring Security.
+     * Obtained from Spring Security's automatic configuration.
      *
-     * @param config configuración de autenticación proporcionada por Spring
-     * @return gestor de autenticación utilizado por el contexto de seguridad
+     * @param config authentication configuration provided by Spring
+     * @return authentication manager used by the security context
      */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
@@ -68,12 +65,11 @@ public class BeansConfig {
     }
 
     /**
-     * Define el codificador de contraseñas utilizado por la aplicación.
+     * Defines the password encoder used by the application.
      * <p>
-     * Emplea el algoritmo {@code BCryptPasswordEncoder} para almacenar
-     * las contraseñas de forma segura.
+     * Uses the {@code BCryptPasswordEncoder} algorithm to store passwords securely.
      *
-     * @return codificador de contraseñas basado en BCrypt
+     * @return BCrypt-based password encoder
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -81,9 +77,9 @@ public class BeansConfig {
     }
 
     /**
-     * Servicio de expresiones de seguridad reutilizable.
-     * Permite verificar si el usuario autenticado es administrador o es el mismo usuario
-     * al que se hace referencia por email.
+     * Reusable security expression service.
+     * Allows checking whether the authenticated user is an administrator or the
+     * same user referenced by email.
      */
     @Bean
     public SecurityPermissionEvaluator securityPermissionEvaluator() {

@@ -1,26 +1,26 @@
-# Modulo Notifications
+# Notifications Module
 
-## Proposito
+## Purpose
 
-`notifications` convierte eventos de negocio en mensajes legibles para el usuario y los entrega por varios canales. No decide reglas de trading, wallet o portfolio: solo informa de lo que ya ocurrio.
+`notifications` converts business events into user-readable messages and delivers them through several channels. It does not decide trading, wallet, or portfolio rules: it only reports what has already happened.
 
-## Dominio
+## Domain
 
-- `NotificationMessage`: mensaje normalizado con destinatario, tipo, titulo, cuerpo y fecha.
-- `NotificationType`: clasifica mensajes como `ORDER_PLACED`, `ORDER_EXECUTED`, `ORDER_CANCELLED`, `INSUFFICIENT_FUNDS` y `PORTFOLIO_VALUATION_UPDATED`.
+- `NotificationMessage`: normalized message with recipient, type, title, body, and date.
+- `NotificationType`: classifies messages as `ORDER_PLACED`, `ORDER_EXECUTED`, `ORDER_CANCELLED`, `INSUFFICIENT_FUNDS`, and `PORTFOLIO_VALUATION_UPDATED`.
 
-## Aplicacion
+## Application
 
-`NotifyOnDomainEventsUseCase` define los eventos que el modulo sabe transformar.
+`NotifyOnDomainEventsUseCase` defines the events that the module knows how to transform.
 
 `NotificationService`:
 
-1. recibe un evento,
-2. construye un `NotificationMessage`,
-3. llama a `dispatch(...)`,
-4. envia el mismo mensaje a todos los puertos de salida.
+1. receives an event,
+2. builds a `NotificationMessage`,
+3. calls `dispatch(...)`,
+4. sends the same message to all output ports.
 
-## Eventos consumidos
+## Events Consumed
 
 - `OrderPlacedEvent`
 - `OrderExecutedEvent`
@@ -28,24 +28,24 @@
 - `InsufficientFundsEvent`
 - `PortfolioValuationUpdatedEvent`
 
-El adaptador de entrada es `DomainEventsListener`, que usa `@EventListener` para delegar cada evento en el caso de uso.
+The input adapter is `DomainEventsListener`, which uses `@EventListener` to delegate each event to the use case.
 
-## Canales de salida
+## Output Channels
 
-- `EmailNotificationPort`: implementado por `LoggingEmailNotificationAdapter`.
-- `PushNotificationPort`: implementado por `LoggingPushNotificationAdapter`.
-- `WebSocketNotificationPort`: implementado por `WebSocketNotificationAdapter`.
-- `InboxNotificationPort`: implementado por `InboxNotificationAdapter`.
+- `EmailNotificationPort`: implemented by `LoggingEmailNotificationAdapter`.
+- `PushNotificationPort`: implemented by `LoggingPushNotificationAdapter`.
+- `WebSocketNotificationPort`: implemented by `WebSocketNotificationAdapter`.
+- `InboxNotificationPort`: implemented by `InboxNotificationAdapter`.
 
-Los canales de email y push actuales escriben en logs. WebSocket usa STOMP cuando existe `SimpMessagingTemplate`. Inbox persiste mensajes en `notification_inbox`.
+The current email and push channels write to logs. WebSocket uses STOMP when `SimpMessagingTemplate` exists. Inbox persists messages in `notification_inbox`.
 
-## Persistencia
+## Persistence
 
-- `InboxNotificationJpaEntity`: entidad de la bandeja.
-- `SpringDataInboxNotificationRepository`: repositorio Spring Data.
-- `InboxNotificationAdapter`: transforma `NotificationMessage` en entidad JPA y la guarda como no leida.
+- `InboxNotificationJpaEntity`: inbox entity.
+- `SpringDataInboxNotificationRepository`: Spring Data repository.
+- `InboxNotificationAdapter`: transforms `NotificationMessage` into a JPA entity and saves it as unread.
 
-## Flujo
+## Flow
 
 ```mermaid
 sequenceDiagram
@@ -53,21 +53,21 @@ sequenceDiagram
     participant Listener as DomainEventsListener
     participant Service as NotificationService
     participant Ports as Email/Push/WebSocket/Inbox
-    participant User as Usuario
+    participant User
 
-    Module-->>Listener: Evento de dominio
+    Module-->>Listener: Domain event
     Listener->>Service: handle(event)
-    Service->>Service: Construye NotificationMessage
+    Service->>Service: Builds NotificationMessage
     Service->>Ports: dispatch(message)
-    Ports-->>User: Entrega o persiste notificacion
+    Ports-->>User: Delivers or persists notification
 ```
 
-## Regla de mantenimiento
+## Maintenance Rule
 
-Si se anade un nuevo evento relevante para el usuario, deben actualizarse:
+If a new user-relevant event is added, update:
 
 - `NotificationType`,
 - `NotifyOnDomainEventsUseCase`,
 - `NotificationService`,
 - `DomainEventsListener`,
-- este documento.
+- this document.

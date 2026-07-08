@@ -26,10 +26,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Configuración central de seguridad de la aplicación.
+ * Central application security configuration.
  * <p>
- * Define la cadena de filtros de seguridad, registra el filtro JWT y configura
- * las políticas de autenticación, autorización y gestión de sesiones.
+ * Defines the security filter chain, registers the JWT filter, and configures
+ * authentication, authorization, and session management policies.
  */
 @Configuration
 @EnableWebSecurity
@@ -37,14 +37,13 @@ import java.util.stream.Collectors;
 public class AuthenticationConfig {
 
     /**
-     * Proveedor de autenticación utilizado por Spring Security
-     * para validar las credenciales de los usuarios.
+     * Authentication provider used by Spring Security to validate user credentials.
      */
     private final AuthenticationProvider authenticationProvider;
 
     /**
-     * HandlerExceptionResolver inyectado para delegar el manejo de
-     * excepciones producidas durante el proceso de filtrado de seguridad.
+     * HandlerExceptionResolver injected to delegate exceptions produced during
+     * the security filtering process.
      */
     @Qualifier("handlerExceptionResolver")
     private final HandlerExceptionResolver handlerExceptionResolver;
@@ -56,10 +55,10 @@ public class AuthenticationConfig {
     private final List<String> allowedOrigins;
 
     /**
-     * Crea una nueva instancia de la configuración de autenticación.
+     * Creates a new authentication configuration instance.
      *
-     * @param authenticationProvider proveedor de autenticación configurado en el contexto
-     * @param handlerExceptionResolver resolvedor de excepciones para el filtro JWT
+     * @param authenticationProvider authentication provider configured in the context
+     * @param handlerExceptionResolver exception resolver for the JWT filter
      */
     public AuthenticationConfig(AuthenticationProvider authenticationProvider,
                                 HandlerExceptionResolver handlerExceptionResolver,
@@ -79,13 +78,13 @@ public class AuthenticationConfig {
     }
 
     /**
-     * Define el filtro de autenticación JWT que se ejecutará antes del
-     * filtro {@link UsernamePasswordAuthenticationFilter}.
+     * Defines the JWT authentication filter that runs before
+     * {@link UsernamePasswordAuthenticationFilter}.
      * <p>
-     * El filtro utiliza {@link JwtService} para extraer y validar el token y
-     * {@link UserDetailsService} para cargar los detalles del usuario asociado.
+     * The filter uses {@link JwtService} to extract and validate the token and
+     * {@link UserDetailsService} to load the associated user details.
      *
-     * @return instancia configurada de {@link JwtAuthFilter}
+     * @return configured {@link JwtAuthFilter} instance
      */
     @Bean
     public JwtAuthFilter jwtAuthFilter() {
@@ -93,19 +92,17 @@ public class AuthenticationConfig {
     }
 
     /**
-     * Configura la cadena de filtros de seguridad de Spring Security.
+     * Configures the Spring Security filter chain.
      * <p>
      *     <ul>
-     *         <li>Deshabilita CSRF para trabajar con JWT y sesiones sin estado.</li>
-     *         <li>Permite el acceso público a los endpoints de registro y login.</li>
-     *         <li>Exige autenticación para el resto de peticiones.</li>
-     *         <li>Establece la política de sesión como STATELESS.</li>
-     *         <li>Registra el proveedor de autenticación y el filtro JWT.</li>
-     *
-     *
+     *         <li>Disables CSRF to work with JWT and stateless sessions.</li>
+     *         <li>Allows public access to registration and login endpoints.</li>
+     *         <li>Requires authentication for the remaining requests.</li>
+     *         <li>Sets the session policy to STATELESS.</li>
+     *         <li>Registers the authentication provider and JWT filter.</li>
      *     </ul>
-     * @param http objeto HttpSecurity proporcionado por Spring para configurar la seguridad HTTP
-     * @return la cadena de filtros de seguridad construida con la configuración definida
+     * @param http {@code HttpSecurity} object provided by Spring to configure HTTP security
+     * @return security filter chain built with the defined configuration
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -119,7 +116,7 @@ public class AuthenticationConfig {
                                 "/ws",
                                 "/ws/**"
                         ).permitAll()
-                        // Endpoints protegidos que requieren usuario autenticado
+                        // Protected endpoints that require an authenticated user
                         .requestMatchers(
                                 "/api/user",
                                 "/api/v1/market/**",

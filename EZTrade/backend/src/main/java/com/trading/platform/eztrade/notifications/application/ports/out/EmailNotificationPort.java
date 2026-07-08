@@ -3,14 +3,14 @@ package com.trading.platform.eztrade.notifications.application.ports.out;
 import com.trading.platform.eztrade.notifications.domain.NotificationMessage;
 
 /**
- * Puerto de salida para enviar notificaciones por email.
+ * Output port for sending email notifications.
  * <p>
- * La aplicacion solo conoce este contrato; la implementacion concreta puede ser
- * un proveedor real de correo o, como en desarrollo, un adaptador de logging.
+ * The application only knows this contract; the concrete implementation can be
+ * a real mail provider or, as in development, a logging adapter.
  */
 public interface EmailNotificationPort {
 
-    /** Envia el mensaje ya formateado al canal de email. */
+    /** Sends the already formatted message to the email channel. */
     void send(NotificationMessage message);
 }
 

@@ -4,18 +4,18 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Punto de entrada principal de la aplicación EzTrade.
+ * Main entry point for the EzTrade application.
  * <p>
- * Esta clase arranca el contexto de Spring Boot y carga todos los
- * componentes configurados de la aplicación.
+ * This class starts the Spring Boot context and loads all configured
+ * application components.
  */
 @SpringBootApplication
 public class EzTradeApplication {
 
     /**
-     * Método principal que inicia la aplicación Spring Boot.
+     * Main method that starts the Spring Boot application.
      *
-     * @param args argumentos de la línea de comandos
+     * @param args command-line arguments
      */
     public static void main(String[] args) {
         SpringApplication.run(EzTradeApplication.class, args);

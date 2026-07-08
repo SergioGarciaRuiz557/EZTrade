@@ -7,9 +7,9 @@ import com.trading.platform.eztrade.trading.domain.Quantity;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
 
 /**
- * Utilidad de mapeo entre modelo de persistencia y modelo de dominio.
+ * Mapping utility between the persistence model and the domain model.
  * <p>
- * Mantiene el dominio desacoplado de anotaciones JPA.
+ * Keeps the domain decoupled from JPA annotations.
  */
 final class TradeOrderMapper {
 
@@ -17,10 +17,10 @@ final class TradeOrderMapper {
     }
 
     /**
-     * Convierte una entidad JPA en agregado de dominio.
+     * Converts a JPA entity into a domain aggregate.
      *
-     * @param entity entidad de persistencia
-     * @return agregado de dominio rehidratado
+     * @param entity persistence entity
+     * @return rehydrated domain aggregate
      */
     static TradeOrder toDomain(TradeOrderJpaEntity entity) {
         return TradeOrder.rehydrate(
@@ -37,10 +37,10 @@ final class TradeOrderMapper {
     }
 
     /**
-     * Convierte un agregado de dominio en entidad JPA.
+     * Converts a domain aggregate into a JPA entity.
      *
-     * @param order agregado de dominio
-     * @return entidad lista para persistencia
+     * @param order domain aggregate
+     * @return entity ready for persistence
      */
     static TradeOrderJpaEntity toEntity(TradeOrder order) {
         TradeOrderJpaEntity entity = new TradeOrderJpaEntity();

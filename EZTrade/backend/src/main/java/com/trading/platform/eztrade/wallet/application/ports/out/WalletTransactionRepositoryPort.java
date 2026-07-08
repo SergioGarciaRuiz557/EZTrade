@@ -7,26 +7,27 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Puerto de salida para persistir y consultar el histórico de movimientos del wallet.
+ * Output port for persisting and querying the wallet movement history.
  * <p>
- * Anteriormente se llamaba "Ledger"; se renombra a "WalletTransaction" para ser más intuitivo sin cambiar el
- * comportamiento: sigue representando entradas auditable/idempotentes.
+ * Previously named "Ledger"; renamed to "WalletTransaction" to be more
+ * intuitive without changing behavior: it still represents auditable/idempotent
+ * entries.
  */
 public interface WalletTransactionRepositoryPort {
 
-    /** Persiste una transacción (movimiento) del wallet. */
+    /** Persists a wallet transaction (movement). */
     WalletTransaction save(WalletTransaction entry);
 
-    /** Busca una transacción por (owner, referencia, tipo de movimiento). */
+    /** Finds a transaction by (owner, reference, movement type). */
     Optional<WalletTransaction> findByOwnerAndReferenceIdAndMovementType(String owner, String referenceId, MovementType movementType);
 
-    /** Devuelve el historico del wallet, primero los movimientos mas recientes. */
+    /** Returns the wallet history, newest movements first. */
     List<WalletTransaction> findByOwnerOrderByOccurredAtDesc(String owner);
 
     /**
-     * Indica si ya existe una transacción por (owner, referencia, tipo de movimiento).
+     * Indicates whether a transaction already exists for (owner, reference, movement type).
      * <p>
-     * Se usa como guard clause para que el caso de uso sea idempotente.
+     * Used as a guard clause to keep the use case idempotent.
      */
     boolean existsByOwnerAndReferenceIdAndMovementType(String owner, String referenceId, MovementType movementType);
 }

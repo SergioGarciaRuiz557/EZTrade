@@ -1,60 +1,60 @@
-EZTrade - Prueba y ejecucion del proyecto
-==========================================
+EZTrade - Project Testing and Execution
+=======================================
 
-El proyecto EZTrade puede probarse actualmente de dos formas:
+The EZTrade project can currently be tested in two ways:
 
-1. Proyecto desplegado en Amazon Web Services
----------------------------------------------
+1. Project Deployed on Amazon Web Services
+------------------------------------------
 
-La aplicacion se encuentra desplegada y disponible para pruebas en el siguiente enlace:
+The application is deployed and available for testing at the following URL:
 
 https://main.d2uwr76rqmp27x.amplifyapp.com/
 
-Este enlace permite acceder directamente a la version desplegada del frontend sin necesidad de instalar ni levantar el entorno localmente.
+This link provides direct access to the deployed frontend without installing or starting the local environment.
 
-2. Ejecucion local mediante Docker
-----------------------------------
+2. Local Execution with Docker
+------------------------------
 
-Ademas del despliegue en AWS, el proyecto tambien puede levantarse en local mediante Docker.
+In addition to the AWS deployment, the project can also be started locally with Docker.
 
-Dentro de la carpeta principal del proyecto se incluye el archivo:
+The main project folder includes this file:
 
 EZTrade/docker-compose.yml
 
-Este archivo permite levantar el entorno completo de desarrollo local, compuesto por:
+This file starts the complete local development environment, composed of:
 
-- Base de datos MySQL.
-- Backend desarrollado con Spring Boot.
-- Frontend desarrollado con Next.js.
+- MySQL database.
+- Backend built with Spring Boot.
+- Frontend built with Next.js.
 
-Para consultar todos los pasos detallados de instalacion, configuracion, arranque y parada del entorno Docker, se debe revisar la documentacion especifica incluida en:
+For all detailed installation, configuration, startup, and shutdown steps for the Docker environment, review the specific documentation included at:
 
 EZTrade/DOCKER.md
 
-En dicha documentacion se explica como ejecutar el proyecto con Docker Compose, que servicios se levantan, que puertos se utilizan y que variables de configuracion pueden modificarse mediante un archivo .env.
+That documentation explains how to run the project with Docker Compose, which services are started, which ports are used, and which configuration variables can be changed through a `.env` file.
 
-Resumen rapido de ejecucion local
----------------------------------
+Quick Local Execution Summary
+-----------------------------
 
-Desde la raiz del proyecto EZTrade, se puede levantar el entorno con:
+From the EZTrade project root, start the environment with:
 
 docker compose up --build
 
-Una vez iniciado, los servicios locales quedan accesibles normalmente en:
+Once started, the local services are normally available at:
 
 - Frontend: http://localhost:3000
 - Backend: http://localhost:8088
-- Base de datos MySQL: localhost:3306
+- MySQL database: localhost:3306
 
-Para detener el entorno:
+To stop the environment:
 
 docker compose down
 
-Para eliminar tambien los datos locales de MySQL:
+To also delete local MySQL data:
 
 docker compose down -v
 
-Nota
+Note
 ----
 
-Si solo se quiere probar la aplicacion como usuario, se recomienda utilizar directamente el enlace desplegado en AWS. Si se quiere revisar, ejecutar o modificar el codigo fuente, se recomienda seguir la documentacion Docker ubicada en EZTrade/DOCKER.md.
+If you only want to test the application as a user, the deployed AWS link is recommended. If you want to review, run, or modify the source code, follow the Docker documentation located at EZTrade/DOCKER.md.

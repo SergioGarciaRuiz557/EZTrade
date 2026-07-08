@@ -1,12 +1,12 @@
 /**
- * Módulo de seguridad de la aplicación.
+ * Application security module.
  * <p>
- * Agrupa los componentes responsables de la autenticación, autorización
- * y gestión de tokens JWT, integrados con Spring Security.
+ * Groups the components responsible for authentication, authorization, and JWT
+ * token management, integrated with Spring Security.
  * <p>
- * Restricciones de dependencias (Spring Modulith):
+ * Dependency constraints (Spring Modulith):
  * <ul>
- *   <li>Solo puede depender del módulo {@code user :: api}.</li>
+ *   <li>May only depend on the {@code user :: api} module.</li>
  * </ul>
  */
 @ApplicationModule(

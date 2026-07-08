@@ -9,10 +9,10 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * Adaptador de salida para la proyeccion local de cash de portfolio.
+ * Output adapter for portfolio's local cash projection.
  * <p>
- * La proyeccion se actualiza a partir de eventos de wallet y se guarda por
- * owner para poder componer rapidamente el snapshot de cartera.
+ * The projection is updated from wallet events and stored by owner so portfolio
+ * snapshots can be composed quickly.
  */
 @Repository
 public class CashProjectionRepositoryAdapter implements CashProjectionRepositoryPort {
@@ -32,7 +32,7 @@ public class CashProjectionRepositoryAdapter implements CashProjectionRepository
     public CashProjection save(CashProjection projection) {
         Optional<CashProjectionJpaEntity> existing = repository.findByOwner(projection.owner());
         CashProjectionJpaEntity toSave = CashProjectionMapper.toEntity(projection);
-        // Owner es unico; si ya existe proyeccion, conservamos su id para actualizar.
+        // Owner is unique; if a projection already exists, preserve its id to update it.
         existing.ifPresent(entity -> toSave.setId(entity.getId()));
         return CashProjectionMapper.toDomain(repository.save(toSave));
     }

@@ -4,23 +4,22 @@ import com.trading.platform.eztrade.user.domain.User;
 import com.trading.platform.eztrade.user.domain.exceptions.UserNotFoundException;
 
 /**
- * Caso de uso de aplicación para la obtención de un {@link User}.
+ * Application use case for retrieving a {@link User}.
  * <p>
- * Define la operación de lectura de usuario que puede ser invocada
- * desde los adaptadores de entrada (por ejemplo, controladores REST
- * o componentes de seguridad).
+ * Defines the user read operation that can be invoked from input adapters such
+ * as REST controllers or security components.
  */
 public interface GetUserUserCase {
 
     /**
-     * Recupera un usuario a partir de su identificador de autenticación.
-     * \<p\>
-     * La implementación deberá resolver el usuario (normalmente usando
-     * su email o username) y lanzar una excepción si no existe.
+     * Retrieves a user from its authentication identifier.
+     * <p>
+     * The implementation must resolve the user (usually using email or username)
+     * and throw an exception if it does not exist.
      *
-     * @param username identificador del usuario (por ejemplo, correo electrónico)
-     * @return la entidad de dominio {@link User} correspondiente
-     * @throws UserNotFoundException si no se encuentra ningún usuario con el identificador dado
+     * @param username user identifier (for example, email address)
+     * @return matching {@link User} domain entity
+     * @throws UserNotFoundException if no user is found with the given identifier
      */
     User getUser(String username) throws UserNotFoundException;
 }

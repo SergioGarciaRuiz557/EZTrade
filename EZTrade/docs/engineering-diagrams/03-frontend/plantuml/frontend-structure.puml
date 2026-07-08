@@ -1,19 +1,19 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Frontend - Estructura del proyecto
+title EZTrade Frontend - Project Structure
 
 package "frontend" as Root EZ_FRONTEND {
   package "app" {
     component "layout.tsx\nRootLayout" as RootLayout
-    component "page.tsx\nInicio publico de mercado" as HomePage
+    component "page.tsx\nPublic market home" as HomePage
     package "(auth)" {
-      component "layout.tsx\nGuard de ruta de autenticacion" as AuthLayout
+      component "layout.tsx\nAuthentication route guard" as AuthLayout
       component "login/page.tsx" as LoginPage
       component "register/page.tsx" as RegisterPage
     }
     package "(dashboard)" {
-      component "layout.tsx\nGuard de ruta protegida + Sidebar" as DashboardLayout
+      component "layout.tsx\nProtected route guard + Sidebar" as DashboardLayout
       component "dashboard/page.tsx" as DashboardPage
       component "trading/page.tsx" as TradingPage
       component "wallet/page.tsx" as WalletPage
@@ -22,8 +22,8 @@ package "frontend" as Root EZ_FRONTEND {
   }
 
   package "components" {
-    component "sidebar.tsx\nnavegacion + menu de usuario" as Sidebar
-    component "notifications/notifications-ws.tsx\ncliente STOMP" as NotificationsWs
+    component "sidebar.tsx\nnavigation + user menu" as Sidebar
+    component "notifications/notifications-ws.tsx\nSTOMP client" as NotificationsWs
     component "ui/*\nbutton, card, dialog, tabs,\nselect, toaster..." as UiKit
   }
 
@@ -74,8 +74,8 @@ ApiBarrel --> WalletFeature
 ApiBarrel --> PortfolioFeature
 
 note bottom
-Evidencia: frontend/app, frontend/components, frontend/features y frontend/lib.
-El proyecto usa clientes API organizados por feature en lugar de server actions.
+Evidence: frontend/app, frontend/components, frontend/features, and frontend/lib.
+The project uses feature-based API clients instead of server actions.
 end note
 
 @enduml

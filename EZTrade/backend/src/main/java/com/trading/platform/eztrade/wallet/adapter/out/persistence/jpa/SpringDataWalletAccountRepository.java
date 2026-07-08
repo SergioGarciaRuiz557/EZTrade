@@ -9,10 +9,10 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 
 /**
- * Repositorio Spring Data JPA para {@link WalletAccountJpaEntity}.
+ * Spring Data JPA repository for {@link WalletAccountJpaEntity}.
  * <p>
- * Provee un método con {@link Lock} en modo {@link LockModeType#PESSIMISTIC_WRITE} para serializar actualizaciones de
- * balance por owner.
+ * Provides a method with {@link Lock} in {@link LockModeType#PESSIMISTIC_WRITE}
+ * mode to serialize balance updates per owner.
  */
 public interface SpringDataWalletAccountRepository extends JpaRepository<WalletAccountJpaEntity, Long> {
 

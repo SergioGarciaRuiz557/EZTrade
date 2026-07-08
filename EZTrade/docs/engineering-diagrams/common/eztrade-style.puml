@@ -1,5 +1,5 @@
-' Estilo visual comun para los diagramas de ingenieria de EZTrade.
-' Diagramas basados en evidencias obtenidas por ingenieria inversa del repositorio.
+' Common visual style for EZTrade engineering diagrams.
+' Diagrams based on evidence obtained by reverse-engineering the repository.
 
 skinparam backgroundColor #FFFFFF
 skinparam shadowing false

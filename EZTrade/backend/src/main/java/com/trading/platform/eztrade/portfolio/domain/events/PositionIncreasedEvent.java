@@ -4,13 +4,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Evento publicado cuando una BUY aumenta una posicion ya existente.
+ * Event published when a BUY increases an existing position.
  *
- * @param owner usuario propietario de la posicion
- * @param symbol simbolo normalizado
- * @param quantity cantidad total tras el incremento
- * @param averageCost nuevo coste medio ponderado
- * @param occurredAt momento de publicacion del evento
+ * @param owner user that owns the position
+ * @param symbol normalized symbol
+ * @param quantity total quantity after the increase
+ * @param averageCost new weighted average cost
+ * @param occurredAt event publication timestamp
  */
 public record PositionIncreasedEvent(
         String owner,

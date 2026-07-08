@@ -1,16 +1,16 @@
 package com.trading.platform.eztrade.security.configuration;
 
 /**
- * Politicas semanticas de acceso que puede usar la configuracion de seguridad.
+ * Semantic access policies that the security configuration can use.
  * <p>
- * Sirven para expresar si un endpoint es publico, requiere autenticacion o
- * queda reservado a administradores.
+ * Express whether an endpoint is public, requires authentication, or is reserved
+ * for administrators.
  */
 public enum SecurityPolicy {
-    /** Endpoint accesible sin JWT. */
+    /** Endpoint accessible without a JWT. */
     PUBLIC,
-    /** Endpoint que requiere usuario autenticado. */
+    /** Endpoint that requires an authenticated user. */
     AUTHENTICATED,
-    /** Endpoint reservado a usuarios con rol de administracion. */
+    /** Endpoint reserved for users with an administrator role. */
     ADMIN
 }

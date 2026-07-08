@@ -1,29 +1,29 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Frontend - Vista general de rutas React / Next
+title EZTrade Frontend - React / Next Routing Overview
 
-actor "Usuario del navegador" as User
+actor "Browser user" as User
 
 rectangle "RootLayout\nAuthProvider + NotificationsWebSocket + Toaster" as Root EZ_FRONTEND
 
-package "Rutas publicas" {
+package "Public routes" {
   component "/\napp/page.tsx" as Home
 }
 
-package "Grupo de rutas de autenticacion (auth)" {
+package "Authentication route group (auth)" {
   component "/login\napp/(auth)/login/page.tsx" as Login
   component "/register\napp/(auth)/register/page.tsx" as Register
-  component "AuthLayout\nredirige usuarios autenticados a /" as AuthGuard
+  component "AuthLayout\nredirects authenticated users to /" as AuthGuard
 }
 
-package "Grupo de rutas protegidas (dashboard)" {
-  component "DashboardLayout\nrequiere token; redirige a /login" as DashboardGuard
+package "Protected route group (dashboard)" {
+  component "DashboardLayout\nrequires token; redirects to /login" as DashboardGuard
   component "/dashboard" as Dashboard
   component "/trading" as Trading
   component "/wallet" as Wallet
   component "/market" as Market
-  component "Sidebar\nenlaces a /, /dashboard,\n/trading, /wallet, /market" as Sidebar
+  component "Sidebar\nlinks to /, /dashboard,\n/trading, /wallet, /market" as Sidebar
 }
 
 User --> Root
@@ -40,15 +40,15 @@ DashboardGuard --> Market
 
 Home --> Login : Link / login redirect\nwhen protected buy action
 Home --> Register : CTA
-Home --> Dashboard : si esta autenticado y compra\nrouter.push("/dashboard")
+Home --> Dashboard : if authenticated and buying\nrouter.push("/dashboard")
 Market --> Trading : Link /trading?symbol=...&side=BUY|SELL
 Market --> Trading : Link /trading?symbol=...&tab=marketplace
 Login --> Home : successful login\nrouter.push("/")
 Register --> Login : successful register\nrouter.push("/login")
 
 note bottom
-Las rutas se infieren desde ficheros Next.js App Router.
-Los guards de ruta son efectos en cliente en app/(auth)/layout.tsx y app/(dashboard)/layout.tsx.
+Routes are inferred from Next.js App Router files.
+Route guards are client effects in app/(auth)/layout.tsx and app/(dashboard)/layout.tsx.
 end note
 
 @enduml

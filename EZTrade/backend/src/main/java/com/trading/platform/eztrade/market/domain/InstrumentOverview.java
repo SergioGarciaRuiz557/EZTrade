@@ -1,10 +1,10 @@
 package com.trading.platform.eztrade.market.domain;
 
 /**
- * Resumen enriquecido de un instrumento financiero.
+ * Enriched summary of a financial instrument.
  * <p>
- * Incluye información básica (símbolo y nombre) junto con datos
- * fundamentales como sector, industria, capitalización y PER.
+ * Includes basic information (symbol and name) together with fundamentals such
+ * as sector, industry, market capitalization, and P/E ratio.
  */
 public record InstrumentOverview(
         String symbol,

@@ -4,10 +4,10 @@ import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
 import { cn } from "@/lib/utils"
 
-// Raiz controlada/no controlada de pestanas basada en Radix.
+// Controlled/uncontrolled tab root based on Radix.
 const Tabs = TabsPrimitive.Root
 
-// Contenedor de triggers con estilo de grupo.
+// Trigger container with group styling.
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
@@ -23,7 +23,7 @@ const TabsList = React.forwardRef<
 ))
 TabsList.displayName = TabsPrimitive.List.displayName
 
-// Boton de cada pestana; Radix anade data-state para aplicar estilos activos.
+// Button for each tab; Radix adds data-state to apply active styles.
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
@@ -39,7 +39,7 @@ const TabsTrigger = React.forwardRef<
 ))
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
-// Panel asociado a una pestana concreta.
+// Panel associated with a specific tab.
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>

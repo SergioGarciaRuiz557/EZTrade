@@ -1,7 +1,7 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Base de datos - Tablas detalladas inferidas desde JPA
+title EZTrade Database - Detailed Tables Inferred from JPA
 
 entity "user" as TUser {
   * id : BIGINT <<PK, identity>>
@@ -97,8 +97,8 @@ TUser ||..o{ TNotification : recipient
 TTrade ||..o{ TWalletLedger : referenceId when ORDER
 
 note bottom
-Los tipos se infieren desde campos Java y anotaciones JPA.
-El DDL real de MySQL puede diferir ligeramente porque Hibernate lo genera en ejecucion con ddl-auto=update.
+Types are inferred from Java fields and JPA annotations.
+The real MySQL DDL may differ slightly because Hibernate generates it at runtime with ddl-auto=update.
 end note
 
 @enduml

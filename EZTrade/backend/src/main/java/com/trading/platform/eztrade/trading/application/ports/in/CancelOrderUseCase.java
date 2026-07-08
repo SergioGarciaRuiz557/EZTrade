@@ -4,16 +4,16 @@ import com.trading.platform.eztrade.trading.domain.OrderId;
 import com.trading.platform.eztrade.trading.domain.TradeOrder;
 
 /**
- * Puerto de entrada para cancelar una orden.
+ * Input port for cancelling an order.
  */
 public interface CancelOrderUseCase {
 
     /**
-     * Cancela una orden pendiente validando el propietario.
+     * Cancels a pending order after validating the owner.
      *
-     * @param orderId identificador de la orden
-     * @param requestedBy usuario que solicita la cancelacion
-     * @return orden cancelada
+     * @param orderId order identifier
+     * @param requestedBy user requesting cancellation
+     * @return cancelled order
      */
     TradeOrder cancel(OrderId orderId, String requestedBy);
 }

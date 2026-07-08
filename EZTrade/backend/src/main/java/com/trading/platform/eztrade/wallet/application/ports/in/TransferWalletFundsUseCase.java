@@ -3,7 +3,7 @@ package com.trading.platform.eztrade.wallet.application.ports.in;
 import java.math.BigDecimal;
 
 /**
- * Puerto de entrada para transferir fondos disponibles entre wallets.
+ * Input port for transferring available funds between wallets.
  */
 public interface TransferWalletFundsUseCase {
 

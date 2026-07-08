@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Implementación del caso de uso {@link SearchInstrumentUserCase}.
+ * Implementation of the {@link SearchInstrumentUserCase} use case.
  * <p>
- * Delegando la búsqueda en el puerto de salida {@link SearchInstrumentProviderPort},
- * permite que la capa de aplicación permanezca desacoplada de la tecnología concreta
- * usada para consultar el mercado (API externa, base de datos, etc.).
+ * By delegating the search to the {@link SearchInstrumentProviderPort} output
+ * port, the application layer remains decoupled from the concrete technology
+ * used to query the market (external API, database, etc.).
  * </p>
  */
 @Service

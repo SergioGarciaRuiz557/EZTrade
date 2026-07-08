@@ -1,24 +1,24 @@
 package com.trading.platform.eztrade.wallet.domain;
 
 /**
- * Tipos de movimientos soportados por el wallet.
+ * Movement types supported by the wallet.
  * <p>
- * Se utilizan tanto en el dominio como en el ledger (persistencia) para:
+ * Used both in the domain and in the ledger (persistence) to:
  * <ul>
- *   <li>Clasificar operaciones.</li>
- *   <li>Proveer idempotencia: la combinación (owner, referenceId, movementType) identifica un movimiento único.</li>
+ *   <li>Classify operations.</li>
+ *   <li>Provide idempotency: the combination (owner, referenceId, movementType) identifies a unique movement.</li>
  * </ul>
- * La semántica típica por tipo es:
+ * Typical semantics by type:
  * <ul>
- *   <li>{@link #DEPOSIT}: incrementa saldo disponible.</li>
- *   <li>{@link #WITHDRAWAL}: decrementa saldo disponible.</li>
- *   <li>{@link #TRANSFER_OUT}: decrementa saldo disponible por una transferencia enviada.</li>
- *   <li>{@link #TRANSFER_IN}: incrementa saldo disponible por una transferencia recibida.</li>
- *   <li>{@link #RESERVE}: mueve fondos de disponible a reservado (previo a ejecutar una orden BUY).</li>
- *   <li>{@link #RELEASE}: mueve fondos de reservado a disponible (cancelación o ejecución por menor importe).</li>
- *   <li>{@link #SETTLEMENT_DEBIT}: consume saldo reservado (liquidación de BUY).</li>
- *   <li>{@link #SETTLEMENT_CREDIT}: incrementa saldo disponible (liquidación de SELL con abono).</li>
- *   <li>{@link #FEE}: cargo de comisión, actualmente modelado como un retiro del disponible.</li>
+ *   <li>{@link #DEPOSIT}: increases available balance.</li>
+ *   <li>{@link #WITHDRAWAL}: decreases available balance.</li>
+ *   <li>{@link #TRANSFER_OUT}: decreases available balance for an outgoing transfer.</li>
+ *   <li>{@link #TRANSFER_IN}: increases available balance for an incoming transfer.</li>
+ *   <li>{@link #RESERVE}: moves funds from available to reserved before executing a BUY order.</li>
+ *   <li>{@link #RELEASE}: moves funds from reserved to available after cancellation or lower-amount execution.</li>
+ *   <li>{@link #SETTLEMENT_DEBIT}: consumes reserved balance for BUY settlement.</li>
+ *   <li>{@link #SETTLEMENT_CREDIT}: increases available balance for SELL settlement credit.</li>
+ *   <li>{@link #FEE}: fee charge, currently modeled as a withdrawal from available balance.</li>
  * </ul>
  */
 public enum MovementType {

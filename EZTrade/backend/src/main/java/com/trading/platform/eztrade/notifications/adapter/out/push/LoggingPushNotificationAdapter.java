@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador push basico. Punto de extension para FCM/APNS u otro proveedor.
+ * Basic push adapter. Extension point for FCM/APNS or another provider.
  */
 @Component
 public class LoggingPushNotificationAdapter implements PushNotificationPort {

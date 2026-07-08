@@ -1,16 +1,16 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade - Dependencias logicas Spring Modulith
+title EZTrade - Logical Spring Modulith Dependencies
 
 package "Spring Modulith application" {
   component "user\n@ApplicationModule" as User EZ_BACKEND
-  component "security\npermitido: user :: api" as Security EZ_BACKEND
+  component "security\nallowed: user :: api" as Security EZ_BACKEND
   component "market\n@ApplicationModule" as Market EZ_BACKEND
-  component "trading\npermitido: market :: api" as Trading EZ_BACKEND
-  component "wallet\npermitido: trading :: events,\nuser :: api" as Wallet EZ_BACKEND
-  component "portfolio\npermitido: trading :: events,\nwallet :: events,\nmarket :: api" as Portfolio EZ_BACKEND
-  component "notifications\npermitido: trading :: events,\nportfolio :: events,\nwallet :: events" as Notifications EZ_BACKEND
+  component "trading\nallowed: market :: api" as Trading EZ_BACKEND
+  component "wallet\nallowed: trading :: events,\nuser :: api" as Wallet EZ_BACKEND
+  component "portfolio\nallowed: trading :: events,\nwallet :: events,\nmarket :: api" as Portfolio EZ_BACKEND
+  component "notifications\nallowed: trading :: events,\nportfolio :: events,\nwallet :: events" as Notifications EZ_BACKEND
 }
 
 Security --> User : LoadUserForSecurityPort\nUserOwnerLookup via api
@@ -22,14 +22,14 @@ Trading ..> Wallet : OrderPlacedEvent\nOrderCancelledEvent\nOrderExecutionReques
 Wallet ..> Trading : OrderExecutedEvent\n(after settlement)
 Trading ..> Portfolio : OrderExecutedEvent
 Wallet ..> Portfolio : AvailableCashUpdatedEvent
-Trading ..> Notifications : eventos de orden
+Trading ..> Notifications : order events
 Wallet ..> Notifications : InsufficientFundsEvent
 Portfolio ..> Notifications : PortfolioValuationUpdatedEvent
 
 note bottom
-Evidencia: los ficheros package-info.java declaran allowedDependencies.
-ModulithStructureTest verifica el grafo de modulos durante la fase de pruebas.
-Las flechas continuas representan dependencias directas de puertos/API; las discontinuas representan eventos de dominio Spring.
+Evidence: package-info.java files declare allowedDependencies.
+ModulithStructureTest verifies the module graph during the test phase.
+Solid arrows represent direct port/API dependencies; dashed arrows represent Spring domain events.
 end note
 
 @enduml

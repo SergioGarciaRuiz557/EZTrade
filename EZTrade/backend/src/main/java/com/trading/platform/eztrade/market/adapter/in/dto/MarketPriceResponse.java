@@ -5,17 +5,17 @@ import com.trading.platform.eztrade.market.domain.MarketPrice;
 import java.time.Instant;
 
 /**
- * DTO de salida REST para el precio actual de mercado.
+ * REST output DTO for the current market price.
  * <p>
- * Expone solo los campos que necesita el cliente HTTP y evita serializar el
- * value object {@link com.trading.platform.eztrade.market.domain.Symbol}.
+ * Exposes only the fields required by the HTTP client and avoids serializing
+ * the {@link com.trading.platform.eztrade.market.domain.Symbol} value object.
  */
 public record MarketPriceResponse(
         String symbol,
         double price,
         Instant timestamp
 ) {
-    /** Convierte el modelo de dominio a una respuesta estable para la API. */
+    /** Converts the domain model into a stable API response. */
     public static MarketPriceResponse from(MarketPrice price) {
         return new MarketPriceResponse(price.symbol().value(), price.price(), price.timestamp());
     }

@@ -5,10 +5,10 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 
 /**
- * Adaptador de salida que publica eventos de portfolio mediante Spring Events.
+ * Output adapter that publishes portfolio events through Spring Events.
  * <p>
- * El nombre del bean evita ambiguedades con otros publicadores equivalentes de
- * modulos como trading o wallet.
+ * The bean name avoids ambiguity with equivalent publishers from modules such
+ * as trading or wallet.
  */
 @Component("portfolioDomainEventPublisher")
 public class SpringDomainEventPublisher implements DomainEventPublisherPort {

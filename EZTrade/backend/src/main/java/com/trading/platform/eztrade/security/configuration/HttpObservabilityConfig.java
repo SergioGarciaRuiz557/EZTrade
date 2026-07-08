@@ -5,7 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.filter.CommonsRequestLoggingFilter;
 
 /**
- * Configuracion para registrar en logs las peticiones HTTP entrantes.
+ * Configuration for logging incoming HTTP requests.
  */
 @Configuration
 public class HttpObservabilityConfig {

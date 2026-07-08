@@ -1,28 +1,29 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade DevOps - Pipeline CI real de GitHub Actions
+title EZTrade DevOps - Real GitHub Actions CI Pipeline
 
 start
-:Desarrollador hace push a main\no abre pull_request a main;
-:GitHub Actions arranca\n"Java CI with Maven";
+:Developer pushes to main\nor opens pull_request to main;
+:GitHub Actions starts\n"Java CI with Maven";
 :Runner ubuntu-latest;
 :actions/checkout@v4;
 :actions/setup-java@v4\njava-version 23\ndistribution oracle\ncache maven;
 :Working directory\nEZTrade/backend;
-:Ejecuta mvn -B clean verify;
+:Runs mvn -B clean verify;
 if (Maven verify succeeds?) then (yes)
-  :Estado CI en verde;
+  :CI status green;
 else (no)
-  :Estado CI fallido;
+  :CI status failed;
 endif
 stop
 
 note right
-Evidencia: ../.github/workflows/maven.yml.
-El flujo de trabajo solo compila y prueba backend.
-No hay compilacion/lint/pruebas de frontend, construccion Docker,
-publicacion de imagen ni job de despliegue declarado.
+Evidence: ../.github/workflows/maven.yml.
+The workflow compiles and tests the backend only.
+There is Docker configuration for local development,
+but no CI Docker build, image publication, deployment job,
+or frontend build/lint/test step declared.
 end note
 
 @enduml

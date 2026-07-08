@@ -1,36 +1,42 @@
 @startuml
 !include ../../common/eztrade-style.puml
 
-title EZTrade Infrastructure - Topologia local inferida desde configuracion
+title EZTrade Infrastructure - Local Runtime Topology with Docker Compose
 
-node "Maquina de desarrollo / entorno local" as Local {
-  node "Proceso frontend" as FrontNode EZ_FRONTEND {
-    component "Next.js dev/start\npuerto inferido por defecto de Next 3000" as Next
-    component "NEXT_PUBLIC_API_URL\nhttp://localhost:8088" as ApiEnv
-    component "NEXT_PUBLIC_WS_URL\nws://localhost:8088/ws" as WsEnv
+node "Developer machine / local environment" as Local {
+  node "Docker Compose" as Compose EZ_DEVOPS {
+    node "frontend service\neztrade-frontend" as FrontNode EZ_FRONTEND {
+      component "Next.js dev server\nnpm run dev -- --hostname 0.0.0.0" as Next
+      component "Port mapping\n${FRONTEND_PORT:-3000}:3000" as FrontPort
+      component "NEXT_PUBLIC_API_URL\nhttp://localhost:8088" as ApiEnv
+      component "NEXT_PUBLIC_WS_URL\nws://localhost:8088/ws" as WsEnv
+    }
+
+    node "backend service\neztrade-backend" as BackNode EZ_BACKEND {
+      component "Spring Boot app\nserver.port=8088" as Spring
+      component "Port mapping\n${BACKEND_PORT:-8088}:8088" as BackPort
+      component "JWT + CORS\nAPP_CORS_ALLOWED_ORIGINS" as SecurityConfig
+      component "Market cache\nTTL from MARKET_CACHE_TTL_SECONDS" as Cache
+      component "Tomcat access logs\nlogs/access*.log" as AccessLogs
+    }
+
+    database "db service\neztrade-db\nmysql:8.4" as MySQL EZ_DB
   }
-
-  node "Proceso backend" as BackNode EZ_BACKEND {
-    component "Spring Boot app\nserver.port=8088" as Spring
-    component "JWT + CORS\nAPP_CORS_ALLOWED_ORIGINS" as SecurityConfig
-    component "Cache de mercado\nTTL desde MARKET_CACHE_TTL_SECONDS" as Cache
-    component "Logs de acceso Tomcat\nlogs/access*.log" as AccessLogs
-  }
-
-  database "MySQL local\nlocalhost:3306/EZTrade" as MySQL EZ_DB
 }
 
 cloud "Alpha Vantage\nhttps://www.alphavantage.co/query" as Alpha EZ_EXTERNAL
 
-Next --> Spring : REST + WebSocket\nlocalhost:8088
-Spring --> MySQL : JDBC MySQL
+Next --> Spring : REST + WebSocket\nlocalhost:8088 from browser
+Spring --> MySQL : JDBC MySQL\njdbc:mysql://db:3306/EZTrade
 Spring --> Alpha : HTTPS RestClient\nALPHA_VANTAGE_API_KEY
 Spring --> AccessLogs : Tomcat access log
 Spring --> Cache : Caffeine
+Compose --> MySQL : named volume\neztrade_mysql_data
 
 note bottom
-Esta topologia se infiere desde .env.example y application.properties.
-No se ha encontrado docker-compose.yml, Dockerfile, reverse proxy ni manifiesto de despliegue productivo.
+Evidence: docker-compose.yml, backend/Dockerfile, frontend/Dockerfile,
+.env.example, and application.properties. The repository defines a local
+Docker Compose runtime; production deployment manifests or IaC were not found.
 end note
 
 @enduml

@@ -4,11 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * Proyeccion local del cash disponible del usuario, sincronizada desde eventos de wallet.
+ * Local projection of the user's available cash, synchronized from wallet events.
  * <p>
- * Portfolio no muta dinero real. Este record guarda la ultima cantidad
- * disponible recibida por {@code AvailableCashUpdatedEvent} para componer
- * snapshots de cartera sin llamar directamente al modulo wallet.
+ * Portfolio does not mutate real money. This record stores the latest available
+ * amount received through {@code AvailableCashUpdatedEvent} to compose
+ * portfolio snapshots without calling the wallet module directly.
  */
 public record CashProjection(
         String owner,
