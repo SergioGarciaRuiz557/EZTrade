@@ -58,7 +58,7 @@ EZTrade/
   .env.example
   docker-compose.yml
   DOCKER.md
-  readme.txt
+  README.md
   docs/engineering-diagrams/
   backend/
     pom.xml
