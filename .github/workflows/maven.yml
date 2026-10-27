@@ -25,5 +25,5 @@ jobs:
 
     # 3️⃣ Build & Test del backend
     - name: Build & Test (backend)
-      working-directory: EZTrade/backend
+      working-directory: backend
       run: mvn -B clean verify

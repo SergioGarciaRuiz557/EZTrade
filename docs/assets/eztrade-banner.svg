@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" fill="none" role="img" aria-labelledby="title description">
+  <title id="title">EZTrade</title>
+  <desc id="description">Explore markets. Follow every trade. A charcoal and gold banner with an abstract market line connecting discovery, trading, and portfolio tracking.</desc>
+  <defs>
+    <linearGradient id="surface" x1="0" y1="0" x2="1280" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#111317"/>
+      <stop offset="1" stop-color="#1D1B14"/>
+    </linearGradient>
+    <radialGradient id="light" cx="0" cy="0" r="1" gradientTransform="translate(1040 110) rotate(90) scale(330 440)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBBF24" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="area" x1="0" y1="110" x2="0" y2="282" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FBBF24" stop-opacity=".20"/>
+      <stop offset="1" stop-color="#FBBF24" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="line" x1="780" y1="252" x2="1190" y2="114" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A87812"/>
+      <stop offset=".5" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#FDE68A"/>
+    </linearGradient>
+    <clipPath id="frame"><rect width="1280" height="400" rx="24"/></clipPath>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1280" height="400" fill="url(#surface)"/>
+    <rect width="1280" height="400" fill="url(#light)"/>
+    <path d="M740 74H1210M740 130H1210M740 186H1210M740 242H1210M740 298H1210M772 62V298M856 62V298M940 62V298M1024 62V298M1108 62V298M1192 62V298" stroke="#F8E7B3" stroke-opacity=".065"/>
+    <path d="M700 50V350" stroke="#FFFFFF" stroke-opacity=".08"/>
+
+    <rect x="64" y="58" width="52" height="52" rx="14" fill="#FBBF24"/>
+    <path d="M77 93L87 83L95 90L105 76M96 76H105V85" stroke="#151515" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="134" y="91" fill="#D5C8A8" font-family="Segoe UI, Arial, sans-serif" font-size="17" font-weight="600" letter-spacing="3">THE CONNECTED TRADING WORKSPACE</text>
+
+    <text x="60" y="216" fill="#FAFAFA" font-family="Segoe UI, Arial, sans-serif" font-size="94" font-weight="700" letter-spacing="-4">EZ<tspan fill="#FBBF24">Trade</tspan></text>
+    <text x="64" y="267" fill="#E8E4DA" font-family="Segoe UI, Arial, sans-serif" font-size="27">Explore markets. Follow every trade.</text>
+
+    <rect x="64" y="316" width="7" height="7" rx="3.5" fill="#FBBF24"/>
+    <text x="84" y="326" fill="#AFAEA8" font-family="Segoe UI, Arial, sans-serif" font-size="17">Market discovery</text>
+    <circle cx="231" cy="320" r="2" fill="#66645C"/>
+    <text x="248" y="326" fill="#AFAEA8" font-family="Segoe UI, Arial, sans-serif" font-size="17">Orders</text>
+    <circle cx="319" cy="320" r="2" fill="#66645C"/>
+    <text x="336" y="326" fill="#AFAEA8" font-family="Segoe UI, Arial, sans-serif" font-size="17">Wallet</text>
+    <circle cx="404" cy="320" r="2" fill="#66645C"/>
+    <text x="421" y="326" fill="#AFAEA8" font-family="Segoe UI, Arial, sans-serif" font-size="17">Portfolio</text>
+
+    <text x="766" y="93" fill="#C6BC9F" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="2.5">ONE JOURNEY. EVERY STEP.</text>
+    <path d="M772 250L818 225L860 236L906 180L948 198L992 157L1035 174L1086 131L1128 146L1188 112V282H772Z" fill="url(#area)"/>
+    <path d="M772 250L818 225L860 236L906 180L948 198L992 157L1035 174L1086 131L1128 146L1188 112" stroke="url(#line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="906" cy="180" r="10" fill="#FBBF24" fill-opacity=".13"/>
+    <circle cx="906" cy="180" r="4" fill="#FBBF24"/>
+    <circle cx="1086" cy="131" r="10" fill="#FBBF24" fill-opacity=".13"/>
+    <circle cx="1086" cy="131" r="4" fill="#FBBF24"/>
+    <circle cx="1188" cy="112" r="13" fill="#FBBF24" fill-opacity=".13"/>
+    <circle cx="1188" cy="112" r="5" fill="#FDE68A"/>
+
+    <rect x="766" y="302" width="126" height="43" rx="10" fill="#FBBF24" fill-opacity=".10" stroke="#FBBF24" stroke-opacity=".25"/>
+    <text x="829" y="329" text-anchor="middle" fill="#F5D674" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="1">DISCOVER</text>
+    <path d="M904 324H919M914 319L919 324L914 329" stroke="#8E8263" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="932" y="302" width="110" height="43" rx="10" fill="#FBBF24" fill-opacity=".10" stroke="#FBBF24" stroke-opacity=".25"/>
+    <text x="987" y="329" text-anchor="middle" fill="#F5D674" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="1">TRADE</text>
+    <path d="M1054 324H1069M1064 319L1069 324L1064 329" stroke="#8E8263" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="1082" y="302" width="110" height="43" rx="10" fill="#FBBF24" fill-opacity=".10" stroke="#FBBF24" stroke-opacity=".25"/>
+    <text x="1137" y="329" text-anchor="middle" fill="#F5D674" font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" letter-spacing="1">TRACK</text>
+    <rect x=".5" y=".5" width="1279" height="399" rx="23.5" stroke="#FFFFFF" stroke-opacity=".10"/>
+  </g>
+</svg>
